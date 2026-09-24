@@ -1,5 +1,5 @@
 /**
- * Birthday Invitation — Backend (with QR tickets + admin scanner + live ticker)
+ * Birthday Invitation — Backend (with QR tickets, admin scanner, live ticker, duplicate prevention)
  * Supports both:
  *   - Apps Script HTML service (doGet)
  *   - Vercel frontend via fetch() (doPost)
@@ -75,9 +75,16 @@ function doPost(e) {
       return jsonResponse(checkInTicket(params.code || ''));
     }
 
-    // --- Recent guests (for the ticker) ---
     if (action === 'recentGuests') {
       return jsonResponse(getRecentGuests());
+    }
+
+    if (action === 'checkExistingRSVP') {
+      return jsonResponse(checkExistingRSVP(params.email || ''));
+    }
+
+    if (action === 'getAllAttendees') {
+      return jsonResponse(getAllAttendees());
     }
 
     return jsonResponse({ success: false, message: 'Unknown action: ' + action });
@@ -233,6 +240,99 @@ function simpleLogin(name, email) {
 }
 
 /* ============================================================
+   EXISTING RSVP CHECK (prevents duplicate submissions)
+   ============================================================ */
+function checkExistingRSVP(email) {
+  try {
+    email = String(email || '').trim().toLowerCase();
+    if (!email) return { success: false, message: 'No email provided.' };
+
+    const sh = getResponsesSheet();
+    const lastRow = sh.getLastRow();
+    if (lastRow < 2) return { success: true, exists: false };
+
+    const data = sh.getRange(2, 1, lastRow - 1, 11).getValues();
+
+    for (let i = 0; i < data.length; i++) {
+      const rowEmail = String(data[i][6] || '').trim().toLowerCase();
+      if (rowEmail && rowEmail === email) {
+        const scriptUrl = ScriptApp.getService().getUrl() || '';
+        const ticketCode = String(data[i][9] || '').trim();
+        const qrData = scriptUrl
+          ? scriptUrl + '?page=scan&code=' + encodeURIComponent(ticketCode)
+          : ticketCode;
+
+        return {
+          success: true,
+          exists: true,
+          ticket: {
+            code: ticketCode,
+            qrCodeUrl: getQrCodeUrl(qrData, 400),
+            name: String(data[i][1] || ''),
+            guests: parseInt(data[i][7] || 1, 10),
+            qrData: qrData
+          }
+        };
+      }
+    }
+
+    return { success: true, exists: false };
+  } catch (e) {
+    Logger.log('checkExistingRSVP error: ' + e.toString());
+    return { success: false, message: e.toString() };
+  }
+}
+
+/* ============================================================
+   GET ALL ATTENDEES (for the "Who's Coming" list)
+   ============================================================ */
+function getAllAttendees() {
+  try {
+    const sh = getResponsesSheet();
+    const lastRow = sh.getLastRow();
+    if (lastRow < 2) {
+      return { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
+    }
+
+    const data = sh.getRange(2, 1, lastRow - 1, 11).getValues();
+
+    const attendees = [];
+    let totalGuests = 0;
+
+    for (let i = 0; i < data.length; i++) {
+      const name = String(data[i][1] || '').trim();
+      const guests = parseInt(data[i][7] || 1, 10);
+
+      if (name) {
+        const nameParts = name.split(' ');
+        const firstName = nameParts[0];
+        const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1].charAt(0).toUpperCase() + '.' : '';
+        const displayName = lastInitial ? firstName + ' ' + lastInitial : firstName;
+
+        attendees.push({
+          name: displayName,
+          guests: guests
+        });
+
+        totalGuests += guests;
+      }
+    }
+
+    attendees.reverse();
+
+    return {
+      success: true,
+      attendees: attendees,
+      totalGuests: totalGuests,
+      totalParties: attendees.length
+    };
+  } catch (e) {
+    Logger.log('getAllAttendees error: ' + e.toString());
+    return { success: false, message: e.toString(), attendees: [] };
+  }
+}
+
+/* ============================================================
    RECENT GUESTS (for the live ticker)
    ============================================================ */
 function getRecentGuests() {
@@ -284,6 +384,20 @@ function submitForm(formData) {
     if (!formData.greetings || !formData.greetings.trim()) return { success: false, message: 'Greetings are required.' };
     if (!formData.selfie || !formData.selfie.data) return { success: false, message: 'Selfie is required.' };
 
+    // --- Duplicate check by email ---
+    const email = (formData.email || '').trim().toLowerCase();
+    if (email) {
+      const dup = checkExistingRSVP(email);
+      if (dup && dup.success && dup.exists) {
+        return {
+          success: false,
+          message: 'You already submitted an RSVP with this email.',
+          duplicate: true,
+          ticket: dup.ticket
+        };
+      }
+    }
+
     const guests = Math.max(1, Math.min(20, parseInt(formData.guests || 1, 10)));
 
     const sheet = getResponsesSheet();
@@ -314,7 +428,7 @@ function submitForm(formData) {
       formData.address.trim(),
       formData.greetings.trim(),
       selfieUrl,
-      (formData.email || '').trim().toLowerCase(),
+      email,
       guests,
       formData.loginMethod || 'unknown',
       ticketCode,
