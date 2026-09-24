@@ -225,9 +225,7 @@
     }
     .login-subtext { font-size: 14px; color: var(--steel); margin-bottom: 24px; }
 
-    /* ============================================================
-       COUNTDOWN
-       ============================================================ */
+    /* COUNTDOWN */
     .countdown-box {
       background: var(--black);
       color: var(--white);
@@ -349,6 +347,24 @@
       .countdown-label { font-size: 8px; }
       .countdown-date { font-size: 11px; }
     }
+
+    /* Preview banner for Vercel/static */
+    .preview-banner {
+      display: none;
+      padding: 12px 14px;
+      margin-bottom: 20px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      font-size: 12px;
+      color: #1e40af;
+      font-weight: 500;
+      align-items: center;
+      gap: 8px;
+      line-height: 1.5;
+    }
+    .preview-banner.show { display: flex; }
+    .preview-banner .ic { font-size: 16px; flex-shrink: 0; }
 
     .deadline-banner {
       display: none; padding: 12px 14px; margin-bottom: 20px;
@@ -1046,7 +1062,13 @@
           <h2 class="login-heading">Welcome.</h2>
           <p class="login-subtext">Enter your details to continue.</p>
 
-          <!-- COUNTDOWN TO OCTOBER 31, 2026 -->
+          <!-- Preview banner (shown only on Vercel/static) -->
+          <div class="preview-banner" id="previewBanner">
+            <span class="ic">ℹ️</span>
+            <span>You're viewing a <strong>static preview</strong>. The full invitation with working RSVP is hosted on Apps Script.</span>
+          </div>
+
+          <!-- COUNTDOWN -->
           <div class="countdown-box" id="countdownBox">
             <div class="countdown-eyebrow">
               <span class="dot-live"></span>
@@ -1286,6 +1308,7 @@
     const pwMessage = $('pwMessage');
     const deadlineBanner = $('deadlineBanner');
     const deadlineText = $('deadlineText');
+    const previewBanner = $('previewBanner');
 
     const rsvpForm = $('rsvpForm');
     const messageEl = $('message');
@@ -1345,9 +1368,17 @@
     }
 
     /* ============================================================
-       COUNTDOWN TO OCTOBER 31, 2026
+       BACKEND AVAILABILITY CHECK
        ============================================================ */
-    // Change this date if the event date changes
+    function hasBackend() {
+      return typeof google !== 'undefined'
+        && google.script
+        && google.script.run;
+    }
+
+    /* ============================================================
+       COUNTDOWN
+       ============================================================ */
     const EVENT_DATE = new Date('2026-10-31T18:00:00'); // October 31, 2026 at 6:00 PM
 
     let countdownInterval = null;
@@ -1367,7 +1398,6 @@
 
       if (!daysEl || !hoursEl || !minsEl || !secsEl) return;
 
-      // Event has passed
       if (diff <= 0) {
         daysEl.textContent = '00';
         hoursEl.textContent = '00';
@@ -1432,6 +1462,13 @@
        APP INIT
        ============================================================ */
     function initApp() {
+      // Show preview banner if running without Apps Script
+      if (!hasBackend()) {
+        previewBanner.classList.add('show');
+        console.log('Static preview — Apps Script backend not available');
+        return;
+      }
+
       google.script.run
         .withSuccessHandler(function(res) {
           if (!res || !res.success) return;
@@ -1464,6 +1501,9 @@
       pwMessage.className = 'message ' + (type || '');
     }
 
+    /* ============================================================
+       LOGIN SUBMIT
+       ============================================================ */
     loginForm.addEventListener('submit', function(e) {
       e.preventDefault();
       const name = $('pwName').value.trim();
@@ -1473,6 +1513,11 @@
       if (!email) { showPwMessage('Please enter your email.', 'error'); return; }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         showPwMessage('Please enter a valid email.', 'error'); return;
+      }
+
+      if (!hasBackend()) {
+        showPwMessage('This is a static preview. The working form is on Apps Script.', 'error');
+        return;
       }
 
       pwBtn.disabled = true;
@@ -1821,10 +1866,18 @@
       messageEl.className = 'message ' + type;
     }
 
+    /* ============================================================
+       RSVP SUBMIT
+       ============================================================ */
     rsvpForm.addEventListener('submit', function(e) {
       e.preventDefault();
       if (appConfig.isPastDeadline) { showMessage('RSVP is closed.', 'error'); return; }
       if (!selfieData) { showMessage('Please take a selfie before submitting.', 'error'); return; }
+
+      if (!hasBackend()) {
+        showMessage('This is a static preview. The working RSVP form is on Apps Script.', 'error');
+        return;
+      }
 
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<span class="spinner"></span>Sending...';
