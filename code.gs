@@ -1,8 +1,12 @@
 /**
- * Birthday Invitation — Backend (with QR tickets, admin scanner, live ticker, duplicate prevention)
- * Supports both:
+ * Birthday Invitation — Backend
+ * Handles:
  *   - Apps Script HTML service (doGet)
- *   - Vercel frontend via fetch() (doPost)
+ *   - Vercel / GitHub Pages frontend via fetch() (doPost)
+ *
+ * doPost now handles both:
+ *   - e.parameter (URL query params)
+ *   - e.postData.contents (raw POST body) — parsed manually for reliability
  */
 
 const SHEET_RESPONSES = 'Responses';
@@ -36,23 +40,75 @@ function doGet(e) {
 }
 
 /* ============================================================
+   PARAM PARSER — handles every possible way Apps Script
+   receives POST data
+   ============================================================ */
+function parseParams(e) {
+  const params = {};
+
+  // 1. URL query params (from GET-style POSTs)
+  if (e && e.parameter) {
+    Object.keys(e.parameter).forEach(function(k) {
+      params[k] = e.parameter[k];
+    });
+  }
+
+  // 2. Raw POST body — parse manually
+  if (e && e.postData && e.postData.contents) {
+    const body = e.postData.contents;
+    if (body) {
+      const pairs = body.split('&');
+      pairs.forEach(function(pair) {
+        const idx = pair.indexOf('=');
+        if (idx > 0) {
+          const key = decodeURIComponent(pair.substring(0, idx).replace(/\+/g, ' '));
+          const val = decodeURIComponent(pair.substring(idx + 1).replace(/\+/g, ' '));
+          // Don't overwrite values already in e.parameter
+          if (params[key] === undefined) {
+            params[key] = val;
+          }
+        }
+      });
+    }
+  }
+
+  // 3. Fallback: sometimes body is JSON
+  if (e && e.postData && e.postData.contents && !params.action) {
+    try {
+      const parsed = JSON.parse(e.postData.contents);
+      if (parsed && parsed.action) {
+        Object.keys(parsed).forEach(function(k) {
+          params[k] = parsed[k];
+        });
+      }
+    } catch (err) { /* not JSON, ignore */ }
+  }
+
+  return params;
+}
+
+/* ============================================================
    API ENTRY (POST) — for Vercel / GitHub Pages frontend
    ============================================================ */
 function doPost(e) {
   try {
-    const params = (e && e.parameter) || {};
+    const params = parseParams(e);
     const action = params.action;
 
     Logger.log('doPost called: action=' + action);
+    Logger.log('Full params: ' + JSON.stringify(params));
 
+    // --- Bootstrap ---
     if (action === 'bootstrap') {
       return jsonResponse(bootstrap());
     }
 
+    // --- Guest login (name + email) ---
     if (action === 'simpleLogin') {
       return jsonResponse(simpleLogin(params.name || '', params.email || ''));
     }
 
+    // --- RSVP submission ---
     if (action === 'submitForm') {
       let formData = {};
       try {
@@ -63,26 +119,32 @@ function doPost(e) {
       return jsonResponse(submitForm(formData));
     }
 
+    // --- Admin login ---
     if (action === 'adminLogin') {
       return jsonResponse(adminLogin(params.password || ''));
     }
 
+    // --- Verify ticket (scanner) ---
     if (action === 'verifyTicket') {
       return jsonResponse(verifyTicket(params.code || ''));
     }
 
+    // --- Check in ticket (scanner) ---
     if (action === 'checkInTicket') {
       return jsonResponse(checkInTicket(params.code || ''));
     }
 
+    // --- Recent guests (ticker) ---
     if (action === 'recentGuests') {
       return jsonResponse(getRecentGuests());
     }
 
+    // --- Check if email already RSVP'd ---
     if (action === 'checkExistingRSVP') {
       return jsonResponse(checkExistingRSVP(params.email || ''));
     }
 
+    // --- Get full attendees list ---
     if (action === 'getAllAttendees') {
       return jsonResponse(getAllAttendees());
     }
@@ -240,7 +302,7 @@ function simpleLogin(name, email) {
 }
 
 /* ============================================================
-   EXISTING RSVP CHECK (prevents duplicate submissions)
+   EXISTING RSVP CHECK
    ============================================================ */
 function checkExistingRSVP(email) {
   try {
@@ -284,7 +346,7 @@ function checkExistingRSVP(email) {
 }
 
 /* ============================================================
-   GET ALL ATTENDEES (for the "Who's Coming" list)
+   GET ALL ATTENDEES
    ============================================================ */
 function getAllAttendees() {
   try {
@@ -306,7 +368,9 @@ function getAllAttendees() {
       if (name) {
         const nameParts = name.split(' ');
         const firstName = nameParts[0];
-        const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1].charAt(0).toUpperCase() + '.' : '';
+        const lastInitial = nameParts.length > 1
+          ? nameParts[nameParts.length - 1].charAt(0).toUpperCase() + '.'
+          : '';
         const displayName = lastInitial ? firstName + ' ' + lastInitial : firstName;
 
         attendees.push({
@@ -333,7 +397,7 @@ function getAllAttendees() {
 }
 
 /* ============================================================
-   RECENT GUESTS (for the live ticker)
+   RECENT GUESTS (for ticker)
    ============================================================ */
 function getRecentGuests() {
   try {
@@ -384,7 +448,7 @@ function submitForm(formData) {
     if (!formData.greetings || !formData.greetings.trim()) return { success: false, message: 'Greetings are required.' };
     if (!formData.selfie || !formData.selfie.data) return { success: false, message: 'Selfie is required.' };
 
-    // --- Duplicate check by email ---
+    // Duplicate check by email
     const email = (formData.email || '').trim().toLowerCase();
     if (email) {
       const dup = checkExistingRSVP(email);
