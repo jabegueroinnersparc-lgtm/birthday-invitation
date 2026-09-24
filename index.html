@@ -1192,7 +1192,7 @@
           <div class="hero-top">
             <div class="brand-mark"><span class="dot-mark"></span><span>Simon Jabeguero</span></div>
             <h1 class="hero-title">A celebration<br><em>worth the wait.</em></h1>
-            <p class="hero-sub">Sign in to view your personal invitation and confirm your attendance. It takes less than a minute.</p>
+            <p class="hero-sub">Sign in with your name and email to view your personal invitation and confirm your attendance. It takes less than a minute.</p>
           </div>
           <div class="hero-bottom">
             <div class="hero-stat"><span class="n">01</span><span class="l">Sign In</span></div>
@@ -1205,7 +1205,7 @@
 
         <div class="login-form-side">
           <h2 class="login-heading">Welcome.</h2>
-          <p class="login-subtext">Create an account or sign in to continue.</p>
+          <p class="login-subtext">Enter your name and email to continue.</p>
 
           <div class="countdown-box">
             <div class="countdown-eyebrow">
@@ -1231,13 +1231,8 @@
               <input type="email" id="pwEmail" required placeholder="you@example.com"
                      autocomplete="email" inputmode="email" autocapitalize="off" autocorrect="off">
             </div>
-            <div class="field">
-              <label class="field-label" for="pwPassword">Password</label>
-              <input type="password" id="pwPassword" required minlength="8" placeholder="Create or enter your password"
-                     autocomplete="new-password">
-            </div>
             <button type="submit" class="btn btn-primary" id="pwBtn">
-              Create account / Sign in
+              Continue
               <span class="btn-arrow">→</span>
             </button>
             <div class="message" id="pwMessage"></div>
@@ -1588,41 +1583,34 @@
       e.preventDefault();
       const name = $('pwName').value.trim();
       const email = $('pwEmail').value.trim().toLowerCase();
-      const password = $('pwPassword').value;
 
       if (!name) { showPwMessage('Please enter your name.', 'error'); return; }
       if (!email) { showPwMessage('Please enter your email.', 'error'); return; }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         showPwMessage('Please enter a valid email.', 'error'); return;
       }
-      if (!password) { showPwMessage('Please enter your password.', 'error'); return; }
-      if (password.length < 8) {
-        showPwMessage('Password must be at least 8 characters.', 'error'); return;
-      }
 
       const btn = $('pwBtn');
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span>Creating account or signing in...';
+      btn.innerHTML = '<span class="spinner"></span>Checking...';
 
       try {
-        const res = await api('simpleLogin', { name: name, email: email, password: password });
-        // The backend either creates a new account or verifies an existing one.
-        // Never treat a name/email lookup alone as authentication.
-        if (res && res.success && res.passwordVerified === true) {
+        const res = await api('simpleLogin', { name: name, email: email });
+        if (res && res.success) {
           currentUser = res.user;
           try { localStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
           try { sessionStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
           completeLogin();
+        } else if (res && res.exists) {
+          showPwMessage('This name and email are already logged in. Please try another name and email.', 'error');
         } else {
-          showPwMessage((res && res.passwordConfigured === false)
-            ? 'Password login is not configured on the server yet.'
-            : 'Incorrect name, email, or password.', 'error');
+          showPwMessage((res && res.message) || 'Something went wrong. Please try again.', 'error');
         }
       } catch (err) {
         showPwMessage('Error: ' + err.message, 'error');
       }
       btn.disabled = false;
-      btn.innerHTML = 'Create account / Sign in <span class="btn-arrow">→</span>';
+      btn.innerHTML = 'Continue <span class="btn-arrow">→</span>';
     });
 
     function showPwMessage(text, type) {
@@ -1829,7 +1817,6 @@
       $('loginView').classList.add('active');
       $('pwName').value = '';
       $('pwEmail').value = '';
-      $('pwPassword').value = '';
       $('goRsvpBtn').style.opacity = '';
       $('goRsvpBtn').style.pointerEvents = '';
       $('goRsvpBtn').querySelector('.action-title').textContent = 'Confirm Attendance';
