@@ -40,64 +40,6 @@
       padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
 
-    /* Redirect overlay — shows briefly while redirecting */
-    .redirect-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 999999;
-      background: var(--black);
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 26px;
-      opacity: 0;
-      transition: opacity 0.4s var(--ease-out);
-    }
-    .redirect-overlay.show {
-      display: flex;
-      opacity: 1;
-    }
-    .redirect-logo {
-      position: relative;
-      width: 90px;
-      height: 90px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .redirect-logo .dot {
-      width: 18px;
-      height: 18px;
-      background: var(--white);
-      border-radius: 50%;
-      box-shadow: 0 0 0 6px rgba(255,255,255,0.15);
-      position: relative;
-      z-index: 2;
-    }
-    .redirect-logo .ring {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      border: 1.5px solid rgba(255,255,255,0.25);
-      animation: redirectRing 2.4s ease-out infinite;
-    }
-    .redirect-logo .ring.delay-1 { animation-delay: 0.8s; }
-    .redirect-logo .ring.delay-2 { animation-delay: 1.6s; }
-    @keyframes redirectRing {
-      0%   { transform: scale(0.4); opacity: 0.9; }
-      80%  { transform: scale(1.3); opacity: 0; }
-      100% { transform: scale(1.3); opacity: 0; }
-    }
-    .redirect-text {
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      font-weight: 600;
-      color: var(--silver);
-    }
-
     /* Background */
     .bg-grid {
       position: fixed; inset: 0; z-index: 0; pointer-events: none;
@@ -517,17 +459,6 @@
 </head>
 <body>
 
-  <!-- Redirect overlay (shown on static hosts, briefly) -->
-  <div class="redirect-overlay" id="redirectOverlay">
-    <div class="redirect-logo">
-      <span class="ring"></span>
-      <span class="ring delay-1"></span>
-      <span class="ring delay-2"></span>
-      <span class="dot"></span>
-    </div>
-    <div class="redirect-text">Opening your invitation…</div>
-  </div>
-
   <div class="bg-grid"></div>
   <div class="bg-noise"></div>
   <div class="orb orb-a"></div>
@@ -632,30 +563,17 @@
 
   <script>
     /* ============================================================
-       AUTO-REDIRECT TO APPS SCRIPT
-       If we're NOT on Apps Script, show the redirect overlay and
-       forward the user to the live app.
+       STATE
        ============================================================ */
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzoNUCRIwXKbndf9QWsalqq5jn026zRc3DUfzCW6dihq8p4fol6GyX2MWp2FkGQz_0/exec';
+    let currentUser = null;
+    let appConfig = { deadline: '', isPastDeadline: false };
 
-    (function checkAndRedirect() {
-      const hasBackend = typeof google !== 'undefined'
-        && google.script
-        && google.script.run;
-
-      // On Apps Script — everything works, no redirect needed
-      if (hasBackend) return;
-
-      // Static host (Vercel, GitHub Pages, etc.) — show overlay + redirect
-      const overlay = document.getElementById('redirectOverlay');
-      if (overlay) {
-        overlay.classList.add('show');
-      }
-
-      setTimeout(function() {
-        window.location.replace(APPS_SCRIPT_URL);
-      }, 900);
-    })();
+    const $ = id => document.getElementById(id);
+    const loginForm = $('loginForm');
+    const pwBtn = $('pwBtn');
+    const pwMessage = $('pwMessage');
+    const deadlineBanner = $('deadlineBanner');
+    const deadlineText = $('deadlineText');
 
     /* ============================================================
        COUNTDOWN TO OCTOBER 31, 2026
@@ -669,10 +587,10 @@
       const now = new Date();
       const diff = EVENT_DATE - now;
 
-      const daysEl = document.getElementById('cdDays');
-      const hoursEl = document.getElementById('cdHours');
-      const minsEl = document.getElementById('cdMinutes');
-      const secsEl = document.getElementById('cdSeconds');
+      const daysEl = $('cdDays');
+      const hoursEl = $('cdHours');
+      const minsEl = $('cdMinutes');
+      const secsEl = $('cdSeconds');
 
       if (!daysEl || !hoursEl || !minsEl || !secsEl) return;
 
@@ -681,7 +599,7 @@
         hoursEl.textContent = '00';
         minsEl.textContent = '00';
         secsEl.textContent = '00';
-        const dateEl = document.getElementById('countdownDate');
+        const dateEl = $('countdownDate');
         if (dateEl) dateEl.innerHTML = '<strong>The celebration has begun 🎉</strong>';
         if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
         return;
@@ -710,23 +628,16 @@
     }
 
     /* ============================================================
-       STATE
+       BACKEND HELPERS
        ============================================================ */
-    let currentUser = null;
-    let appConfig = { deadline: '', isPastDeadline: false };
+    function hasBackend() {
+      return typeof google !== 'undefined'
+        && google.script
+        && google.script.run;
+    }
 
-    const $ = id => document.getElementById(id);
-    const loginForm = $('loginForm');
-    const pwBtn = $('pwBtn');
-    const pwMessage = $('pwMessage');
-    const deadlineBanner = $('deadlineBanner');
-    const deadlineText = $('deadlineText');
-
-    /* ============================================================
-       APP INIT (only runs on Apps Script)
-       ============================================================ */
     function initApp() {
-      if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+      if (!hasBackend()) return;
       google.script.run
         .withSuccessHandler(function(res) {
           if (!res || !res.success) return;
@@ -760,7 +671,7 @@
     }
 
     /* ============================================================
-       LOGIN SUBMIT (only works on Apps Script)
+       LOGIN SUBMIT
        ============================================================ */
     loginForm.addEventListener('submit', function(e) {
       e.preventDefault();
@@ -773,7 +684,11 @@
         showPwMessage('Please enter a valid email.', 'error'); return;
       }
 
-      if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+      // Only works on Apps Script
+      if (!hasBackend()) {
+        showPwMessage('Please open this page from the invitation link.', 'error');
+        return;
+      }
 
       pwBtn.disabled = true;
       pwBtn.innerHTML = '<span class="spinner"></span>Signing in...';
