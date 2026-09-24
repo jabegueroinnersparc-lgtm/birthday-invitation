@@ -343,77 +343,6 @@
       .countdown-date { font-size: 11px; }
     }
 
-    /* PREMIUM CTA (shown only on static preview) */
-    .preview-cta {
-      display: none;
-      text-align: center;
-      padding: 24px 20px;
-      margin-bottom: 8px;
-      background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
-      border: 1.5px solid var(--pearl);
-      border-radius: 18px;
-      animation: countdownIn 0.5s var(--ease-out) 0.2s both;
-    }
-    .preview-cta.show { display: block; }
-    .preview-cta .ic {
-      font-size: 32px;
-      margin-bottom: 10px;
-      display: block;
-    }
-    .preview-cta h3 {
-      font-family: 'Playfair Display', serif;
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      color: var(--black);
-      margin-bottom: 6px;
-    }
-    .preview-cta p {
-      font-size: 13px;
-      color: var(--steel);
-      line-height: 1.55;
-      margin-bottom: 18px;
-      max-width: 320px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    .preview-cta a {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 14px 28px;
-      background: var(--black);
-      color: var(--white);
-      text-decoration: none;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: 0.01em;
-      transition: all 0.3s var(--ease-out);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .preview-cta a:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 28px -6px rgba(0,0,0,0.35);
-    }
-    .preview-cta a .arrow {
-      transition: transform 0.3s var(--ease-out);
-    }
-    .preview-cta a:hover .arrow {
-      transform: translateX(4px);
-    }
-
-    /* Hide login form when in static preview mode */
-    body.static-preview .login-form-side form {
-      display: none !important;
-    }
-    body.static-preview .login-form-side .deadline-banner {
-      display: none !important;
-    }
-    body.static-preview .login-subtext {
-      display: none;
-    }
-
     .deadline-banner {
       display: none; padding: 12px 14px; margin-bottom: 20px;
       background: #fef3c7; border: 1px solid #fde68a;
@@ -1141,17 +1070,6 @@
             </div>
           </div>
 
-          <!-- Premium CTA — shown only on Vercel/static -->
-          <div class="preview-cta" id="previewCta">
-            <span class="ic">🎂</span>
-            <h3>You're invited!</h3>
-            <p>Tap below to open the full invitation and RSVP.</p>
-            <a href="https://script.google.com/macros/s/AKfycbzzoNUCRIwXKbndf9QWsalqq5jn026zRc3DUfzCW6dihq8p4fol6GyX2MWp2FkGQz_0/exec" id="previewCtaLink">
-              Open Invitation
-              <span class="arrow">→</span>
-            </a>
-          </div>
-
           <div class="deadline-banner" id="deadlineBanner">
             <span class="ic">⏰</span>
             <span id="deadlineText">RSVP is open</span>
@@ -1361,7 +1279,6 @@
     const pwMessage = $('pwMessage');
     const deadlineBanner = $('deadlineBanner');
     const deadlineText = $('deadlineText');
-    const previewCta = $('previewCta');
 
     const rsvpForm = $('rsvpForm');
     const messageEl = $('message');
@@ -1420,12 +1337,6 @@
       });
     }
 
-    function hasBackend() {
-      return typeof google !== 'undefined'
-        && google.script
-        && google.script.run;
-    }
-
     /* COUNTDOWN */
     const EVENT_DATE = new Date('2026-10-31T18:00:00');
     let countdownInterval = null;
@@ -1478,14 +1389,6 @@
 
     /* APP INIT */
     function initApp() {
-      if (!hasBackend()) {
-        // Static preview mode — show premium CTA, hide login form
-        document.body.classList.add('static-preview');
-        previewCta.classList.add('show');
-        console.log('Static preview mode — CTA shown, login form hidden');
-        return;
-      }
-
       google.script.run
         .withSuccessHandler(function(res) {
           if (!res || !res.success) return;
@@ -1527,11 +1430,6 @@
       if (!email) { showPwMessage('Please enter your email.', 'error'); return; }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         showPwMessage('Please enter a valid email.', 'error'); return;
-      }
-
-      if (!hasBackend()) {
-        showPwMessage('This is a static preview. The working form is on Apps Script.', 'error');
-        return;
       }
 
       pwBtn.disabled = true;
@@ -1880,11 +1778,6 @@
       e.preventDefault();
       if (appConfig.isPastDeadline) { showMessage('RSVP is closed.', 'error'); return; }
       if (!selfieData) { showMessage('Please take a selfie before submitting.', 'error'); return; }
-
-      if (!hasBackend()) {
-        showMessage('This is a static preview. The working RSVP form is on Apps Script.', 'error');
-        return;
-      }
 
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<span class="spinner"></span>Sending...';
