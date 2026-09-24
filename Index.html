@@ -1,0 +1,1924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Simon Jabeguero</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@500;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #0a0a0a; --ink: #141414; --charcoal: #1c1c1c;
+      --graphite: #2a2a2a; --slate: #3a3a3a; --steel: #6b6b6b;
+      --silver: #a8a8a8; --mist: #d4d4d4; --pearl: #e8e8e8;
+      --fog: #f2f2f2; --white: #ffffff;
+      --success: #16a34a; --danger: #dc2626;
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+      --shadow-lg: 0 20px 40px -12px rgba(0,0,0,0.18), 0 8px 20px -8px rgba(0,0,0,0.08);
+      --shadow-xl: 0 40px 80px -20px rgba(0,0,0,0.25), 0 16px 40px -12px rgba(0,0,0,0.12);
+    }
+
+    html {
+      height: 100%;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--fog);
+      color: var(--ink);
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow-x: hidden;
+      position: relative;
+      line-height: 1.5;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(0,0,0,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+      -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+    }
+    .bg-noise {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    .orb {
+      position: fixed; border-radius: 50%; filter: blur(80px);
+      opacity: 0.5; z-index: 0; pointer-events: none;
+      animation: drift 22s ease-in-out infinite;
+    }
+    .orb-a { width: 500px; height: 500px; background: radial-gradient(circle, #d0d0d0, transparent 70%); top: -180px; left: -180px; }
+    .orb-b { width: 440px; height: 440px; background: radial-gradient(circle, #e5e5e5, transparent 70%); bottom: -160px; right: -160px; animation-delay: -8s; }
+    .orb-c { width: 360px; height: 360px; background: radial-gradient(circle, #c8c8c8, transparent 70%); top: 45%; left: 55%; animation-delay: -15s; }
+    @keyframes drift {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33%      { transform: translate(50px, -40px) scale(1.1); }
+      66%      { transform: translate(-40px, 50px) scale(0.92); }
+    }
+    @media (max-width: 640px) {
+      .orb { filter: blur(60px); opacity: 0.35; }
+      .orb-a, .orb-b { width: 280px; height: 280px; }
+      .orb-c { display: none; }
+      .bg-grid { background-size: 32px 32px; }
+    }
+
+    .app {
+      position: relative; z-index: 2;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    @media (max-width: 640px) {
+      .app {
+        padding: 12px;
+        align-items: flex-start;
+        padding-top: calc(12px + env(safe-area-inset-top));
+        padding-bottom: calc(12px + env(safe-area-inset-bottom));
+      }
+    }
+
+    .view {
+      display: none; width: 100%; max-width: 1100px;
+      animation: viewEnter 0.7s var(--ease-out);
+    }
+    .view.active { display: block; }
+    @keyframes viewEnter {
+      from { opacity: 0; transform: translateY(20px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* LOGIN */
+    .login-wrap {
+      display: grid; grid-template-columns: 1fr;
+      background: var(--white); border-radius: 28px;
+      overflow: hidden; box-shadow: var(--shadow-xl);
+      border: 1px solid var(--pearl);
+      max-width: 980px; margin: 0 auto;
+    }
+    @media (min-width: 900px) {
+      .login-wrap { grid-template-columns: 1.05fr 1fr; min-height: 620px; }
+    }
+    @media (max-width: 640px) { .login-wrap { border-radius: 20px; } }
+
+    .login-hero {
+      display: none; background: var(--black); color: var(--white);
+      padding: 56px 48px; position: relative; overflow: hidden;
+      flex-direction: column; justify-content: space-between;
+    }
+    @media (min-width: 900px) { .login-hero { display: flex; } }
+    .login-hero::before {
+      content: ""; position: absolute; inset: 0;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.08), transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255,255,255,0.05), transparent 50%);
+      pointer-events: none;
+    }
+    .login-hero::after {
+      content: ""; position: absolute; top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: conic-gradient(from 0deg, transparent, rgba(255,255,255,0.06), transparent 30%);
+      animation: sweep 12s linear infinite; pointer-events: none;
+    }
+    @keyframes sweep { to { transform: rotate(360deg); } }
+    .hero-top { position: relative; z-index: 2; }
+    .brand-mark {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-size: 13px; font-weight: 600; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--silver);
+      margin-bottom: 60px;
+    }
+    .brand-mark .dot-mark {
+      width: 10px; height: 10px; background: var(--white);
+      border-radius: 50%;
+      box-shadow: 0 0 0 4px rgba(255,255,255,0.15);
+      animation: pulseDot 2.4s ease-in-out infinite;
+    }
+    @keyframes pulseDot {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(255,255,255,0.15); }
+      50%      { box-shadow: 0 0 0 10px rgba(255,255,255,0); }
+    }
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(38px, 5vw, 54px); font-weight: 700;
+      line-height: 1.05; letter-spacing: -0.02em; margin-bottom: 20px;
+    }
+    .hero-title em { font-style: italic; font-weight: 500; color: var(--silver); }
+    .hero-sub { font-size: 15px; color: var(--silver); line-height: 1.6; max-width: 380px; }
+    .hero-bottom {
+      position: relative; z-index: 2;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .hero-stat { display: flex; flex-direction: column; gap: 2px; }
+    .hero-stat .n { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; }
+    .hero-stat .l { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--steel); }
+    .hero-divider { width: 1px; height: 32px; background: var(--graphite); }
+
+    .mobile-hero {
+      display: block; background: var(--black); color: var(--white);
+      padding: 24px 24px 22px; position: relative; overflow: hidden;
+      border-radius: 20px 20px 0 0;
+    }
+    @media (min-width: 900px) { .mobile-hero { display: none; } }
+    .mobile-hero::before {
+      content: ""; position: absolute; top: -50%; right: -30%;
+      width: 220px; height: 220px;
+      background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 70%);
+      border-radius: 50%; pointer-events: none;
+    }
+    .mobile-hero .mh-brand {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--silver); margin-bottom: 16px;
+      position: relative; z-index: 1;
+    }
+    .mobile-hero .mh-brand .dot-mark {
+      width: 7px; height: 7px; background: var(--white);
+      border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.15);
+    }
+    .mobile-hero .mh-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px; font-weight: 700;
+      line-height: 1.15; letter-spacing: -0.02em;
+      margin-bottom: 8px; position: relative; z-index: 1;
+    }
+    .mobile-hero .mh-title em { font-style: italic; font-weight: 500; color: var(--silver); }
+    .mobile-hero .mh-sub {
+      font-size: 13px; color: var(--silver); line-height: 1.55;
+      max-width: 300px; position: relative; z-index: 1;
+    }
+
+    .login-form-side {
+      padding: 48px 40px;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    @media (max-width: 899px) { .login-form-side { padding: 32px 28px 36px; } }
+    @media (max-width: 480px) { .login-form-side { padding: 26px 22px 30px; } }
+
+    .login-heading {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(24px, 5vw, 32px);
+      font-weight: 700; letter-spacing: -0.02em;
+      margin-bottom: 6px; color: var(--black);
+    }
+    .login-subtext { font-size: 14px; color: var(--steel); margin-bottom: 24px; }
+
+    /* ============================================================
+       COUNTDOWN
+       ============================================================ */
+    .countdown-box {
+      background: var(--black);
+      color: var(--white);
+      border-radius: 18px;
+      padding: 22px 20px 20px;
+      margin-bottom: 22px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 12px 32px -12px rgba(0,0,0,0.35);
+      animation: countdownIn 0.6s var(--ease-out) 0.15s both;
+    }
+    @keyframes countdownIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .countdown-box::before {
+      content: "";
+      position: absolute;
+      top: -60%; right: -20%;
+      width: 220px; height: 220px;
+      background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .countdown-box::after {
+      content: "";
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: conic-gradient(from 0deg, transparent, rgba(255,255,255,0.04), transparent 30%);
+      animation: sweep 14s linear infinite;
+      pointer-events: none;
+    }
+    .countdown-box > * { position: relative; z-index: 1; }
+
+    .countdown-eyebrow {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--silver);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .countdown-eyebrow .dot-live {
+      width: 6px; height: 6px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(34,197,94,0.2);
+      animation: livePulse 2s infinite;
+      flex-shrink: 0;
+    }
+    @keyframes livePulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
+      50%      { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+    }
+
+    .countdown-units {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .countdown-unit {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 10px 4px 8px;
+      text-align: center;
+      transition: background 0.3s;
+    }
+    .countdown-unit:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    .countdown-num {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(22px, 5vw, 28px);
+      font-weight: 700;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+      color: var(--white);
+      margin-bottom: 6px;
+    }
+    .countdown-num.tick {
+      animation: numTick 0.4s var(--ease-out);
+    }
+    @keyframes numTick {
+      0%   { transform: translateY(0); opacity: 1; }
+      50%  { transform: translateY(-6px); opacity: 0.4; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    .countdown-label {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--silver);
+    }
+
+    .countdown-date {
+      font-size: 12px;
+      color: var(--silver);
+      text-align: center;
+      line-height: 1.5;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .countdown-date strong {
+      color: var(--white);
+      font-weight: 600;
+    }
+
+    @media (max-width: 480px) {
+      .countdown-box { padding: 18px 14px 16px; margin-bottom: 18px; }
+      .countdown-num { font-size: 22px; }
+      .countdown-label { font-size: 8px; }
+      .countdown-date { font-size: 11px; }
+    }
+
+    .deadline-banner {
+      display: none; padding: 12px 14px; margin-bottom: 20px;
+      background: #fef3c7; border: 1px solid #fde68a;
+      border-radius: 10px; font-size: 12px;
+      color: #78350f; font-weight: 500;
+      align-items: center; gap: 8px;
+    }
+    .deadline-banner.show { display: flex; }
+    .deadline-banner.closed { background: #fee2e2; border-color: #fca5a5; color: #7f1d1d; }
+    .deadline-banner .ic { font-size: 16px; flex-shrink: 0; }
+
+    .field { margin-bottom: 20px; position: relative; }
+    .field-label {
+      display: block; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--slate); margin-bottom: 8px;
+    }
+    .field input, .field textarea {
+      width: 100%; padding: 14px 16px;
+      border: 1.5px solid var(--mist); border-radius: 12px;
+      font-size: 16px; font-family: inherit;
+      color: var(--black); background: var(--white);
+      transition: all 0.25s var(--ease-out);
+      -webkit-appearance: none; appearance: none;
+    }
+    @media (max-width: 640px) {
+      .field input, .field textarea { padding: 13px 14px; border-radius: 11px; }
+    }
+    .field input::placeholder, .field textarea::placeholder { color: var(--silver); }
+    .field input:hover, .field textarea:hover { border-color: var(--silver); }
+    .field input:focus, .field textarea:focus {
+      outline: none; border-color: var(--black);
+      box-shadow: 0 0 0 4px rgba(10,10,10,0.08);
+    }
+    .field textarea { resize: vertical; min-height: 100px; line-height: 1.55; }
+
+    .btn {
+      position: relative; width: 100%; min-height: 48px;
+      padding: 15px 24px; border: none;
+      border-radius: 12px; font-family: inherit;
+      font-size: 15px; font-weight: 600;
+      letter-spacing: 0.01em; cursor: pointer;
+      overflow: hidden;
+      transition: all 0.3s var(--ease-out);
+      isolation: isolate;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    @media (max-width: 640px) {
+      .btn { padding: 16px 20px; min-height: 50px; }
+    }
+    .btn-primary {
+      background: var(--black); color: var(--white);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    @media (hover: hover) {
+      .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px -6px rgba(0,0,0,0.35);
+      }
+      .btn-primary::before {
+        content: ""; position: absolute;
+        top: 0; left: -100%; width: 100%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+        transition: left 0.6s var(--ease-out); z-index: -1;
+      }
+      .btn-primary:hover::before { left: 100%; }
+      .btn:hover .btn-arrow { transform: translateX(4px); }
+    }
+    .btn-primary:active:not(:disabled) { transform: scale(0.98); }
+    .btn .ripple {
+      position: absolute; border-radius: 50%;
+      background: rgba(255,255,255,0.5);
+      transform: scale(0);
+      animation: rippleGo 0.6s ease-out;
+      pointer-events: none;
+    }
+    @keyframes rippleGo { to { transform: scale(4); opacity: 0; } }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-arrow {
+      display: inline-block; margin-left: 8px;
+      transition: transform 0.3s var(--ease-out);
+    }
+    .spinner {
+      display: inline-block; width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: var(--white); border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px; vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* FORM VIEW */
+    .form-wrap {
+      background: var(--white); border-radius: 28px;
+      overflow: hidden; box-shadow: var(--shadow-xl);
+      border: 1px solid var(--pearl);
+      max-width: 1100px; margin: 0 auto;
+    }
+    @media (min-width: 1000px) {
+      .form-wrap { display: grid; grid-template-columns: 380px 1fr; }
+    }
+    @media (max-width: 640px) { .form-wrap { border-radius: 20px; } }
+
+    .form-sidebar {
+      background: var(--black); color: var(--white);
+      padding: 40px 32px; display: none;
+      flex-direction: column; justify-content: space-between;
+      position: relative; overflow: hidden;
+    }
+    @media (min-width: 1000px) { .form-sidebar { display: flex; } }
+    .form-sidebar::before {
+      content: ""; position: absolute; inset: 0;
+      background:
+        radial-gradient(circle at 80% 10%, rgba(255,255,255,0.06), transparent 45%),
+        radial-gradient(circle at 10% 90%, rgba(255,255,255,0.04), transparent 45%);
+      pointer-events: none;
+    }
+    .form-sidebar > * { position: relative; z-index: 1; }
+    .sb-brand {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 12px; font-weight: 600; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--silver);
+    }
+    .sb-brand .dot-mark {
+      width: 8px; height: 8px; background: var(--white);
+      border-radius: 50%; box-shadow: 0 0 0 4px rgba(255,255,255,0.15);
+    }
+    .sb-middle { margin: 40px 0; }
+    .sb-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 42px; font-weight: 700;
+      line-height: 1.05; letter-spacing: -0.02em; margin-bottom: 20px;
+    }
+    .sb-title em { font-style: italic; font-weight: 500; color: var(--silver); }
+    .sb-desc { color: var(--silver); font-size: 14px; line-height: 1.65; max-width: 300px; }
+    .sb-footer { border-top: 1px solid var(--graphite); padding-top: 24px; }
+    .user-chip { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .user-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--silver), var(--mist));
+      color: var(--black); display: flex;
+      align-items: center; justify-content: center;
+      font-weight: 700; font-size: 15px; flex-shrink: 0;
+      overflow: hidden;
+    }
+    .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .user-meta { flex: 1; min-width: 0; }
+    .user-meta .n {
+      font-size: 13px; font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .user-meta .e {
+      font-size: 11px; color: var(--steel);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .user-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 8px; border-radius: 6px;
+      background: var(--graphite); color: var(--silver);
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .btn-logout {
+      background: transparent; color: var(--silver);
+      border: 1px solid var(--graphite);
+      padding: 10px 14px; border-radius: 8px;
+      font-size: 11px; font-weight: 600; cursor: pointer;
+      font-family: inherit; transition: all 0.2s;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 40px;
+    }
+    @media (hover: hover) {
+      .btn-logout:hover {
+        background: var(--graphite); color: var(--white);
+        border-color: var(--slate);
+      }
+    }
+
+    .mobile-form-header {
+      display: none; background: var(--black); color: var(--white);
+      padding: 20px 22px; position: relative; overflow: hidden;
+    }
+    @media (max-width: 999px) { .mobile-form-header { display: block; } }
+    .mobile-form-header::before {
+      content: ""; position: absolute; top: -60%; right: -20%;
+      width: 220px; height: 220px;
+      background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 70%);
+      border-radius: 50%; pointer-events: none;
+    }
+    .mfh-top {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 16px;
+      position: relative; z-index: 1;
+    }
+    .mfh-brand {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--silver);
+    }
+    .mfh-brand .dot-mark {
+      width: 7px; height: 7px; background: var(--white);
+      border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.15);
+    }
+    .mfh-logout {
+      background: transparent; color: var(--silver);
+      border: 1px solid var(--graphite);
+      padding: 8px 12px; border-radius: 8px;
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      cursor: pointer; font-family: inherit;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 36px;
+    }
+    @media (hover: hover) {
+      .mfh-logout:hover {
+        background: var(--graphite); color: var(--white);
+      }
+    }
+    .mfh-user {
+      display: flex; align-items: center; gap: 12px;
+      position: relative; z-index: 1;
+    }
+    .mfh-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--silver), var(--mist));
+      color: var(--black);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 16px;
+      flex-shrink: 0; overflow: hidden;
+    }
+    .mfh-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .mfh-meta { flex: 1; min-width: 0; }
+    .mfh-meta .n {
+      font-size: 14px; font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+    .mfh-meta .e {
+      font-size: 12px; color: var(--silver);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .mfh-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 8px; border-radius: 5px;
+      background: var(--graphite); color: var(--silver);
+      font-size: 9px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      margin-top: 6px;
+    }
+
+    .form-main { padding: 40px 40px 36px; }
+    @media (max-width: 999px) { .form-main { padding: 28px 24px 32px; } }
+    @media (max-width: 480px) { .form-main { padding: 22px 18px 26px; } }
+
+    .form-head {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 16px; margin-bottom: 24px;
+      padding-bottom: 20px; border-bottom: 1px solid var(--pearl);
+    }
+    @media (max-width: 999px) {
+      .form-head { margin-bottom: 18px; padding-bottom: 16px; }
+    }
+    .form-head-left h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(20px, 4vw, 26px);
+      font-weight: 700; letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+    .form-head-left p { font-size: 13px; color: var(--steel); }
+
+    .progress-wrap {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 24px; padding: 12px 16px;
+      background: var(--fog); border-radius: 12px;
+      border: 1px solid var(--pearl);
+    }
+    @media (max-width: 480px) {
+      .progress-wrap { padding: 10px 14px; gap: 10px; margin-bottom: 20px; }
+    }
+    .progress-bar {
+      flex: 1; height: 4px; background: var(--pearl);
+      border-radius: 100px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; width: 0%; background: var(--black);
+      border-radius: 100px;
+      transition: width 0.5s var(--ease-out);
+    }
+    .progress-pct {
+      font-size: 11px; font-weight: 700; color: var(--ink);
+      letter-spacing: 0.05em; min-width: 40px;
+      text-align: right; font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+
+    .guest-counter {
+      display: flex; align-items: center;
+      border: 1.5px solid var(--mist);
+      border-radius: 12px; overflow: hidden;
+      background: var(--white);
+      width: 100%; max-width: 240px;
+    }
+    @media (max-width: 640px) { .guest-counter { max-width: 100%; } }
+    .guest-btn {
+      width: 52px; height: 52px;
+      background: var(--white); border: none;
+      font-size: 22px; font-weight: 400;
+      color: var(--black); cursor: pointer;
+      transition: background 0.15s;
+      font-family: inherit;
+      display: flex; align-items: center; justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      flex-shrink: 0;
+    }
+    @media (max-width: 640px) {
+      .guest-btn { width: 56px; height: 56px; font-size: 24px; }
+    }
+    .guest-btn:active:not(:disabled) { background: var(--pearl); }
+    .guest-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    @media (hover: hover) {
+      .guest-btn:hover:not(:disabled) { background: var(--fog); }
+    }
+    .guest-value {
+      flex: 1; text-align: center;
+      font-size: 20px; font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      padding: 0 8px;
+      border-left: 1.5px solid var(--mist);
+      border-right: 1.5px solid var(--mist);
+      line-height: 52px; min-width: 60px;
+    }
+    @media (max-width: 640px) { .guest-value { line-height: 56px; } }
+    .guest-hint {
+      font-size: 12px; color: var(--steel);
+      margin-top: 8px; display: block;
+    }
+
+    .camera-box {
+      background: var(--fog);
+      border: 1.5px dashed var(--mist);
+      border-radius: 16px; padding: 28px 20px;
+      text-align: center;
+      transition: all 0.3s var(--ease-out);
+    }
+    @media (max-width: 480px) { .camera-box { padding: 22px 16px; } }
+    .camera-box.filled {
+      border-style: solid; border-color: var(--black);
+      background: var(--white);
+    }
+    .camera-placeholder {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 8px;
+    }
+    .camera-placeholder .cam-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px; background: var(--white);
+      border: 1.5px solid var(--mist);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 6px; box-shadow: var(--shadow-sm);
+    }
+    .camera-placeholder .cam-icon svg { width: 24px; height: 24px; stroke: var(--black); }
+    .camera-placeholder .cam-title { font-size: 14px; font-weight: 600; color: var(--black); }
+    .camera-placeholder .cam-sub {
+      font-size: 12px; color: var(--steel); margin-bottom: 12px;
+    }
+    .btn-camera {
+      background: var(--black); color: var(--white);
+      border: none; padding: 12px 24px;
+      border-radius: 10px; font-size: 13px;
+      font-weight: 600; cursor: pointer;
+      transition: all 0.25s var(--ease-out);
+      font-family: inherit;
+      display: inline-flex; align-items: center; gap: 8px;
+      position: relative; overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 44px;
+      touch-action: manipulation;
+    }
+    .btn-camera:active { transform: scale(0.97); }
+    @media (hover: hover) {
+      .btn-camera:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px -6px rgba(0,0,0,0.3);
+      }
+    }
+    .selfie-preview {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 14px;
+    }
+    .selfie-frame {
+      background: var(--white); padding: 10px;
+      border-radius: 12px; border: 1.5px solid var(--pearl);
+      box-shadow: var(--shadow-md);
+      position: relative;
+      transition: transform 0.3s var(--ease-out);
+    }
+    .selfie-frame img {
+      width: 140px; height: 140px;
+      object-fit: cover; display: block;
+      border-radius: 6px; transform: scaleX(-1);
+    }
+    @media (max-width: 480px) {
+      .selfie-frame img { width: 120px; height: 120px; }
+    }
+    .selfie-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 600;
+      color: var(--success); letter-spacing: 0.02em;
+    }
+    .selfie-badge::before {
+      content: ""; width: 6px; height: 6px;
+      background: var(--success); border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(22,163,74,0.15);
+    }
+    .btn-retake {
+      background: var(--white); color: var(--black);
+      border: 1.5px solid var(--mist);
+      padding: 10px 20px; border-radius: 10px;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+      font-family: inherit; letter-spacing: 0.02em;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 40px;
+      touch-action: manipulation;
+    }
+    .btn-retake:active { transform: scale(0.97); }
+    @media (hover: hover) {
+      .btn-retake:hover { background: var(--fog); border-color: var(--silver); }
+    }
+
+    .message {
+      margin-top: 20px; padding: 14px 16px;
+      border-radius: 12px; text-align: center;
+      font-size: 13px; font-weight: 500;
+      display: none;
+      animation: msgIn 0.35s var(--ease-out);
+    }
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .message.success {
+      background: #f0fdf4; color: #14532d;
+      border: 1px solid #bbf7d0; display: block;
+    }
+    .message.error {
+      background: #fef2f2; color: #7f1d1d;
+      border: 1px solid #fecaca; display: block;
+    }
+
+    .field-row {
+      display: grid; grid-template-columns: 1fr; gap: 0;
+    }
+    @media (min-width: 640px) {
+      .field-row { grid-template-columns: 1fr 1fr; gap: 16px; }
+      .field-row .field { margin-bottom: 20px; }
+    }
+
+    /* QR TICKET SCREEN */
+    .ticket-screen {
+      display: none; text-align: center;
+      padding: 8px 0 4px;
+      animation: viewEnter 0.6s var(--ease-out);
+    }
+    .ticket-screen.show { display: block; }
+
+    .ticket-icon {
+      width: 64px; height: 64px;
+      margin: 0 auto 16px;
+      border-radius: 50%;
+      background: var(--black); color: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 30px; font-weight: 700;
+      box-shadow: 0 12px 32px -8px rgba(0,0,0,0.35);
+      animation: ticketPop 0.6s var(--ease-out);
+    }
+    @keyframes ticketPop {
+      0%   { transform: scale(0); opacity: 0; }
+      60%  { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .ticket-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(22px, 5vw, 28px);
+      font-weight: 700; letter-spacing: -0.02em;
+      margin-bottom: 6px; color: var(--black);
+    }
+    .ticket-sub {
+      font-size: 14px; color: var(--steel);
+      margin-bottom: 24px;
+    }
+    .ticket-card {
+      background: var(--fog);
+      border: 1.5px solid var(--pearl);
+      border-radius: 18px;
+      padding: 24px 20px 20px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .ticket-card::before,
+    .ticket-card::after {
+      content: ""; position: absolute;
+      width: 20px; height: 20px;
+      background: var(--white); border-radius: 50%;
+      top: 50%; transform: translateY(-50%);
+    }
+    .ticket-card::before { left: -11px; }
+    .ticket-card::after { right: -11px; }
+    .ticket-qr {
+      background: var(--white);
+      border-radius: 12px; padding: 14px;
+      display: inline-block; margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+      border: 1.5px solid var(--pearl);
+    }
+    .ticket-qr img {
+      display: block;
+      width: 220px; height: 220px;
+      max-width: 100%;
+    }
+    @media (max-width: 480px) {
+      .ticket-qr img { width: 180px; height: 180px; }
+    }
+    .ticket-code {
+      font-family: 'Inter', monospace;
+      font-size: 22px; font-weight: 800;
+      letter-spacing: 0.15em; color: var(--black);
+      margin-bottom: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+    .ticket-label {
+      font-size: 10px; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--steel);
+      font-weight: 600;
+    }
+    .ticket-details {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 14px; margin-top: 20px;
+      padding-top: 20px; border-top: 1px dashed var(--mist);
+    }
+    .ticket-detail { text-align: left; }
+    .ticket-detail .k {
+      font-size: 10px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--steel);
+      font-weight: 600; margin-bottom: 3px;
+    }
+    .ticket-detail .v {
+      font-size: 14px; font-weight: 600; color: var(--ink);
+    }
+    .ticket-note {
+      background: var(--white);
+      border: 1.5px solid var(--pearl);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 12px; color: var(--steel);
+      line-height: 1.55; margin-bottom: 20px;
+      display: flex; gap: 10px;
+      text-align: left; align-items: flex-start;
+    }
+    .ticket-note .ic {
+      font-size: 16px; flex-shrink: 0; margin-top: 1px;
+    }
+    .ticket-actions {
+      display: flex; gap: 10px;
+    }
+    .ticket-actions .btn {
+      flex: 1; min-height: 48px;
+      padding: 13px 16px; font-size: 14px;
+    }
+    .btn-outline {
+      background: var(--white); color: var(--black);
+      border: 1.5px solid var(--mist);
+      box-shadow: none;
+    }
+    .btn-outline:active:not(:disabled) { transform: scale(0.98); }
+    @media (hover: hover) {
+      .btn-outline:hover:not(:disabled) {
+        background: var(--fog);
+        border-color: var(--silver);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px -6px rgba(0,0,0,0.15);
+      }
+    }
+
+    .toast {
+      position: fixed; top: 24px; left: 50%;
+      transform: translateX(-50%) translateY(-120%);
+      background: var(--black); color: var(--white);
+      padding: 12px 20px; border-radius: 10px;
+      font-size: 13px; font-weight: 500;
+      box-shadow: var(--shadow-lg); z-index: 9999;
+      transition: transform 0.4s var(--ease-out);
+      display: flex; align-items: center; gap: 10px;
+      max-width: calc(100vw - 32px);
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast::before {
+      content: ""; width: 6px; height: 6px;
+      background: var(--white); border-radius: 50%; flex-shrink: 0;
+    }
+    @media (max-width: 640px) {
+      .toast {
+        top: auto;
+        bottom: calc(24px + env(safe-area-inset-bottom));
+        transform: translateX(-50%) translateY(120%);
+        padding: 14px 18px; border-radius: 12px;
+        width: max-content;
+        max-width: calc(100vw - 32px);
+      }
+      .toast.show { transform: translateX(-50%) translateY(0); }
+    }
+
+    .closed-state { padding: 40px 20px; text-align: center; }
+    .closed-state .ic {
+      width: 64px; height: 64px; margin: 0 auto 20px;
+      border-radius: 50%; background: var(--fog);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+    }
+    .closed-state h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px; margin-bottom: 8px;
+    }
+    .closed-state p { color: var(--steel); font-size: 14px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+  <div class="bg-noise"></div>
+  <div class="orb orb-a"></div>
+  <div class="orb orb-b"></div>
+  <div class="orb orb-c"></div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="app">
+
+    <!-- VIEW 1: LOGIN -->
+    <section class="view active" id="loginView">
+      <div class="login-wrap">
+
+        <div class="mobile-hero">
+          <div class="mh-brand">
+            <span class="dot-mark"></span>
+            <span>Simon Jabeguero</span>
+          </div>
+          <h1 class="mh-title">A celebration<br><em>worth the wait.</em></h1>
+          <p class="mh-sub">Sign in to view your personal invitation and RSVP.</p>
+        </div>
+
+        <aside class="login-hero">
+          <div class="hero-top">
+            <div class="brand-mark">
+              <span class="dot-mark"></span>
+              <span>Simon Jabeguero</span>
+            </div>
+            <h1 class="hero-title">
+              A celebration<br>
+              <em>worth the wait.</em>
+            </h1>
+            <p class="hero-sub">
+              Sign in to view your personal invitation and RSVP. It takes less than a minute.
+            </p>
+          </div>
+
+          <div class="hero-bottom">
+            <div class="hero-stat"><span class="n">01</span><span class="l">Sign In</span></div>
+            <div class="hero-divider"></div>
+            <div class="hero-stat"><span class="n">02</span><span class="l">RSVP</span></div>
+            <div class="hero-divider"></div>
+            <div class="hero-stat"><span class="n">03</span><span class="l">Ticket</span></div>
+          </div>
+        </aside>
+
+        <div class="login-form-side">
+          <h2 class="login-heading">Welcome.</h2>
+          <p class="login-subtext">Enter your details to continue.</p>
+
+          <!-- COUNTDOWN TO OCTOBER 31, 2026 -->
+          <div class="countdown-box" id="countdownBox">
+            <div class="countdown-eyebrow">
+              <span class="dot-live"></span>
+              <span>Counting down to the celebration</span>
+            </div>
+
+            <div class="countdown-units">
+              <div class="countdown-unit">
+                <div class="countdown-num" id="cdDays">00</div>
+                <div class="countdown-label">Days</div>
+              </div>
+              <div class="countdown-unit">
+                <div class="countdown-num" id="cdHours">00</div>
+                <div class="countdown-label">Hours</div>
+              </div>
+              <div class="countdown-unit">
+                <div class="countdown-num" id="cdMinutes">00</div>
+                <div class="countdown-label">Minutes</div>
+              </div>
+              <div class="countdown-unit">
+                <div class="countdown-num" id="cdSeconds">00</div>
+                <div class="countdown-label">Seconds</div>
+              </div>
+            </div>
+
+            <div class="countdown-date" id="countdownDate">
+              <strong>October 31, 2026</strong> · 6:00 PM
+            </div>
+          </div>
+
+          <div class="deadline-banner" id="deadlineBanner">
+            <span class="ic">⏰</span>
+            <span id="deadlineText">RSVP is open</span>
+          </div>
+
+          <form id="loginForm" autocomplete="on">
+            <div class="field">
+              <label class="field-label" for="pwName">Your Name</label>
+              <input type="text" id="pwName" required placeholder="Maria Santos" autocomplete="name">
+            </div>
+            <div class="field">
+              <label class="field-label" for="pwEmail">Email Address</label>
+              <input type="email" id="pwEmail" required placeholder="you@example.com"
+                     autocomplete="email" inputmode="email" autocapitalize="off" autocorrect="off">
+            </div>
+            <button type="submit" class="btn btn-primary" id="pwBtn">
+              Continue
+              <span class="btn-arrow">→</span>
+            </button>
+            <div class="message" id="pwMessage"></div>
+          </form>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- VIEW 2: RSVP FORM -->
+    <section class="view" id="formView">
+      <div class="form-wrap">
+
+        <div class="mobile-form-header">
+          <div class="mfh-top">
+            <div class="mfh-brand">
+              <span class="dot-mark"></span>
+              <span>Simon Jabeguero</span>
+            </div>
+            <button class="mfh-logout" id="logoutBtnMobile">Sign Out</button>
+          </div>
+          <div class="mfh-user">
+            <div class="mfh-avatar" id="userAvatarMobile">G</div>
+            <div class="mfh-meta">
+              <div class="n" id="userNameMobile">Guest</div>
+              <div class="e" id="userEmailMobile">guest@email.com</div>
+              <span class="mfh-badge" id="loginMethodBadgeMobile">Signed In</span>
+            </div>
+          </div>
+        </div>
+
+        <aside class="form-sidebar">
+          <div class="sb-brand">
+            <span class="dot-mark"></span>
+            <span>Simon Jabeguero</span>
+          </div>
+
+          <div class="sb-middle">
+            <h2 class="sb-title">
+              You're<br>
+              <em>invited.</em>
+            </h2>
+            <p class="sb-desc">
+              We can't wait to celebrate with you. Please share a few details and a selfie.
+            </p>
+          </div>
+
+          <div class="sb-footer">
+            <span class="user-badge" id="loginMethodBadge">Signed In</span>
+            <div class="user-chip">
+              <div class="user-avatar" id="userAvatar">G</div>
+              <div class="user-meta">
+                <div class="n" id="userName">Guest</div>
+                <div class="e" id="userEmail">guest@email.com</div>
+              </div>
+            </div>
+            <button class="btn-logout" id="logoutBtnDesktop">Sign Out</button>
+          </div>
+        </aside>
+
+        <div class="form-main">
+          <div class="form-head" id="formHead">
+            <div class="form-head-left">
+              <h2>RSVP Details</h2>
+              <p>All fields are required.</p>
+            </div>
+          </div>
+
+          <div class="closed-state" id="closedState" style="display:none;">
+            <div class="ic">🔒</div>
+            <h3>RSVP is closed</h3>
+            <p>The deadline has passed. Please contact the host directly.</p>
+          </div>
+
+          <div id="formContent">
+            <div class="progress-wrap" id="progressWrap">
+              <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+              </div>
+              <span class="progress-pct" id="progressPct">0%</span>
+            </div>
+
+            <form id="rsvpForm" autocomplete="off">
+              <div class="field-row">
+                <div class="field">
+                  <label class="field-label" for="name">Full Name *</label>
+                  <input type="text" id="name" required placeholder="Maria Santos" autocomplete="name">
+                </div>
+                <div class="field">
+                  <label class="field-label" for="mobile">Mobile Number *</label>
+                  <input type="tel" id="mobile" required placeholder="09123456789"
+                         pattern="[0-9+\-\s()]{7,20}"
+                         inputmode="tel" autocomplete="tel">
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="address">Address *</label>
+                <input type="text" id="address" required
+                       placeholder="Your complete address"
+                       autocomplete="street-address">
+              </div>
+
+              <div class="field">
+                <label class="field-label">How many are coming? *</label>
+                <div class="guest-counter">
+                  <button type="button" class="guest-btn" id="guestMinus" aria-label="Decrease">−</button>
+                  <div class="guest-value" id="guestValue">1</div>
+                  <button type="button" class="guest-btn" id="guestPlus" aria-label="Increase">+</button>
+                </div>
+                <span class="guest-hint">Include yourself. Max 20.</span>
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="greetings">Birthday Greetings *</label>
+                <textarea id="greetings" required
+                          placeholder="Write a heartfelt birthday message..."></textarea>
+              </div>
+
+              <div class="field">
+                <label class="field-label">Selfie *</label>
+                <div class="camera-box" id="cameraBox"></div>
+              </div>
+
+              <button type="submit" class="btn btn-primary" id="submitBtn">
+                Send My RSVP
+                <span class="btn-arrow">→</span>
+              </button>
+
+              <div class="message" id="message"></div>
+            </form>
+
+            <div class="ticket-screen" id="ticketScreen">
+              <div class="ticket-icon">✓</div>
+              <h3 class="ticket-title">You're on the list!</h3>
+              <p class="ticket-sub">Show this QR code at the entrance.</p>
+
+              <div class="ticket-card">
+                <div class="ticket-qr">
+                  <img id="ticketQrImg" src="" alt="Ticket QR code">
+                </div>
+                <div class="ticket-code" id="ticketCode">SJG-XXXXXX</div>
+                <div class="ticket-label">Ticket Code</div>
+
+                <div class="ticket-details">
+                  <div class="ticket-detail">
+                    <div class="k">Name</div>
+                    <div class="v" id="ticketName">—</div>
+                  </div>
+                  <div class="ticket-detail">
+                    <div class="k">Guests</div>
+                    <div class="v" id="ticketGuests">—</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ticket-note">
+                <span class="ic">💡</span>
+                <span>Save or screenshot this QR code. You'll need it at the entrance for check-in.</span>
+              </div>
+
+              <div class="ticket-actions">
+                <button type="button" class="btn btn-outline" id="downloadQrBtn">Download QR</button>
+                <button type="button" class="btn btn-primary" id="newRsvpBtn">New RSVP</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    let selfieData = null;
+    let cameraWindow = null;
+    let currentUser = null;
+    let appConfig = { deadline: '', isPastDeadline: false };
+    let guests = 1;
+    let currentTicket = null;
+
+    const $ = id => document.getElementById(id);
+
+    const loginView = $('loginView');
+    const formView = $('formView');
+    const loginForm = $('loginForm');
+    const pwBtn = $('pwBtn');
+    const pwMessage = $('pwMessage');
+    const deadlineBanner = $('deadlineBanner');
+    const deadlineText = $('deadlineText');
+
+    const rsvpForm = $('rsvpForm');
+    const messageEl = $('message');
+    const submitBtn = $('submitBtn');
+    const cameraBox = $('cameraBox');
+    const progressFill = $('progressFill');
+    const progressPct = $('progressPct');
+    const progressWrap = $('progressWrap');
+    const formHead = $('formHead');
+    const closedState = $('closedState');
+    const formContent = $('formContent');
+
+    const ticketScreen = $('ticketScreen');
+    const ticketQrImg = $('ticketQrImg');
+    const ticketCode = $('ticketCode');
+    const ticketName = $('ticketName');
+    const ticketGuests = $('ticketGuests');
+
+    const userNameEl = $('userName');
+    const userEmailEl = $('userEmail');
+    const userAvatar = $('userAvatar');
+    const logoutBtnDesktop = $('logoutBtnDesktop');
+
+    const userNameMobile = $('userNameMobile');
+    const userEmailMobile = $('userEmailMobile');
+    const userAvatarMobile = $('userAvatarMobile');
+    const logoutBtnMobile = $('logoutBtnMobile');
+
+    const toastEl = $('toast');
+    const guestValueEl = $('guestValue');
+    const guestMinusBtn = $('guestMinus');
+    const guestPlusBtn = $('guestPlus');
+
+    let toastTimer = null;
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3000);
+    }
+
+    function attachRipple(btn) {
+      if (!btn) return;
+      btn.addEventListener('click', function(e) {
+        const rect = btn.getBoundingClientRect();
+        const ripple = document.createElement('span');
+        const size = Math.max(rect.width, rect.height);
+        ripple.className = 'ripple';
+        ripple.style.width = ripple.style.height = size + 'px';
+        const x = (e.clientX || (e.touches && e.touches[0] && e.touches[0].clientX) || rect.left + rect.width / 2) - rect.left;
+        const y = (e.clientY || (e.touches && e.touches[0] && e.touches[0].clientY) || rect.top + rect.height / 2) - rect.top;
+        ripple.style.left = (x - size / 2) + 'px';
+        ripple.style.top = (y - size / 2) + 'px';
+        btn.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+      });
+    }
+
+    /* ============================================================
+       COUNTDOWN TO OCTOBER 31, 2026
+       ============================================================ */
+    // Change this date if the event date changes
+    const EVENT_DATE = new Date('2026-10-31T18:00:00'); // October 31, 2026 at 6:00 PM
+
+    let countdownInterval = null;
+
+    function pad(n) {
+      return String(n).padStart(2, '0');
+    }
+
+    function updateCountdown() {
+      const now = new Date();
+      const diff = EVENT_DATE - now;
+
+      const daysEl = $('cdDays');
+      const hoursEl = $('cdHours');
+      const minsEl = $('cdMinutes');
+      const secsEl = $('cdSeconds');
+
+      if (!daysEl || !hoursEl || !minsEl || !secsEl) return;
+
+      // Event has passed
+      if (diff <= 0) {
+        daysEl.textContent = '00';
+        hoursEl.textContent = '00';
+        minsEl.textContent = '00';
+        secsEl.textContent = '00';
+
+        const dateEl = $('countdownDate');
+        if (dateEl) {
+          dateEl.innerHTML = '<strong>The celebration has begun 🎉</strong>';
+        }
+
+        if (countdownInterval) {
+          clearInterval(countdownInterval);
+          countdownInterval = null;
+        }
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      const newDays = String(days);
+      const newHours = pad(hours);
+      const newMins = pad(minutes);
+      const newSecs = pad(seconds);
+
+      if (daysEl.textContent !== newDays) {
+        daysEl.textContent = newDays;
+        daysEl.classList.remove('tick');
+        void daysEl.offsetWidth;
+        daysEl.classList.add('tick');
+      }
+      if (hoursEl.textContent !== newHours) {
+        hoursEl.textContent = newHours;
+        hoursEl.classList.remove('tick');
+        void hoursEl.offsetWidth;
+        hoursEl.classList.add('tick');
+      }
+      if (minsEl.textContent !== newMins) {
+        minsEl.textContent = newMins;
+        minsEl.classList.remove('tick');
+        void minsEl.offsetWidth;
+        minsEl.classList.add('tick');
+      }
+      if (secsEl.textContent !== newSecs) {
+        secsEl.textContent = newSecs;
+        secsEl.classList.remove('tick');
+        void secsEl.offsetWidth;
+        secsEl.classList.add('tick');
+      }
+    }
+
+    function startCountdown() {
+      updateCountdown();
+      if (countdownInterval) clearInterval(countdownInterval);
+      countdownInterval = setInterval(updateCountdown, 1000);
+    }
+
+    /* ============================================================
+       APP INIT
+       ============================================================ */
+    function initApp() {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (!res || !res.success) return;
+          appConfig.deadline = res.deadline || '';
+          appConfig.isPastDeadline = !!res.isPastDeadline;
+          renderDeadlineBanner();
+        })
+        .withFailureHandler(function(err) { console.error(err); })
+        .bootstrap();
+    }
+
+    function renderDeadlineBanner() {
+      if (!appConfig.deadline) { deadlineBanner.classList.remove('show'); return; }
+      const d = new Date(appConfig.deadline);
+      const now = new Date();
+      deadlineBanner.classList.add('show');
+      deadlineBanner.classList.toggle('closed', appConfig.isPastDeadline);
+      if (appConfig.isPastDeadline) {
+        deadlineText.textContent = 'RSVP closed on ' + d.toLocaleDateString();
+      } else {
+        const days = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+        deadlineText.textContent = days > 0
+          ? 'RSVP closes in ' + days + ' day' + (days === 1 ? '' : 's')
+          : 'RSVP closes today';
+      }
+    }
+
+    function showPwMessage(text, type) {
+      pwMessage.textContent = text;
+      pwMessage.className = 'message ' + (type || '');
+    }
+
+    loginForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const name = $('pwName').value.trim();
+      const email = $('pwEmail').value.trim().toLowerCase();
+
+      if (!name) { showPwMessage('Please enter your name.', 'error'); return; }
+      if (!email) { showPwMessage('Please enter your email.', 'error'); return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showPwMessage('Please enter a valid email.', 'error'); return;
+      }
+
+      pwBtn.disabled = true;
+      pwBtn.innerHTML = '<span class="spinner"></span>Signing in...';
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res && res.success) {
+            currentUser = res.user;
+            completeLogin();
+          } else {
+            showPwMessage((res && res.message) || 'Login failed.', 'error');
+          }
+          pwBtn.disabled = false;
+          pwBtn.innerHTML = 'Continue <span class="btn-arrow">→</span>';
+        })
+        .withFailureHandler(function(err) {
+          showPwMessage('Error: ' + err.message, 'error');
+          pwBtn.disabled = false;
+          pwBtn.innerHTML = 'Continue <span class="btn-arrow">→</span>';
+        })
+        .simpleLogin(name, email);
+    });
+
+    function completeLogin() {
+      try { localStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (e) {}
+      try { sessionStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (e) {}
+      updateUserUI(currentUser);
+      $('name').value = currentUser.name;
+      if (appConfig.isPastDeadline) {
+        closedState.style.display = 'block';
+        formContent.style.display = 'none';
+      }
+      loginView.classList.remove('active');
+      formView.classList.add('active');
+      showToast('Welcome, ' + currentUser.name.split(' ')[0] + '!');
+      updateProgress();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateUserUI(user) {
+      const initial = user.name.charAt(0).toUpperCase();
+      userNameEl.textContent = user.name;
+      userEmailEl.textContent = user.email;
+      userAvatar.textContent = initial;
+      userNameMobile.textContent = user.name;
+      userEmailMobile.textContent = user.email;
+      userAvatarMobile.textContent = initial;
+    }
+
+    function logout() {
+      try {
+        localStorage.removeItem('birthdayUser');
+        sessionStorage.removeItem('birthdayUser');
+      } catch (e) {}
+      currentUser = null; selfieData = null; guests = 1; currentTicket = null;
+      guestValueEl.textContent = '1';
+      guestMinusBtn.disabled = true;
+      guestPlusBtn.disabled = false;
+      rsvpForm.reset();
+      renderEmptyCamera();
+      resetAfterTicket(true);
+      updateProgress();
+      showPwMessage('', '');
+      formView.classList.remove('active');
+      loginView.classList.add('active');
+      $('pwName').value = '';
+      $('pwEmail').value = '';
+      showToast('Signed out.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    logoutBtnDesktop.addEventListener('click', logout);
+    logoutBtnMobile.addEventListener('click', logout);
+
+    function restoreSession() {
+      let saved = null;
+      try { saved = localStorage.getItem('birthdayUser') || sessionStorage.getItem('birthdayUser'); } catch (e) {}
+      if (!saved) return false;
+      try {
+        const user = JSON.parse(saved);
+        if (user && user.name && user.email) {
+          currentUser = user;
+          setTimeout(function() {
+            updateUserUI(user);
+            $('name').value = user.name;
+            if (appConfig.isPastDeadline) {
+              closedState.style.display = 'block';
+              formContent.style.display = 'none';
+            }
+            loginView.classList.remove('active');
+            formView.classList.add('active');
+            updateProgress();
+          }, 200);
+          return true;
+        }
+      } catch (e) {
+        try {
+          localStorage.removeItem('birthdayUser');
+          sessionStorage.removeItem('birthdayUser');
+        } catch (_) {}
+      }
+      return false;
+    }
+
+    function updateGuests(delta) {
+      guests = Math.max(1, Math.min(20, guests + delta));
+      guestValueEl.textContent = guests;
+      guestMinusBtn.disabled = guests <= 1;
+      guestPlusBtn.disabled = guests >= 20;
+      updateProgress();
+    }
+    guestMinusBtn.addEventListener('click', () => updateGuests(-1));
+    guestPlusBtn.addEventListener('click', () => updateGuests(1));
+    guestMinusBtn.disabled = true;
+
+    function updateProgress() {
+      const name = $('name').value.trim();
+      const mobile = $('mobile').value.trim();
+      const address = $('address').value.trim();
+      const greetings = $('greetings').value.trim();
+      let filled = 0;
+      if (name) filled++;
+      if (mobile) filled++;
+      if (address) filled++;
+      if (greetings) filled++;
+      if (selfieData) filled++;
+      filled++;
+      const total = 6;
+      const pct = Math.round((filled / total) * 100);
+      progressFill.style.width = pct + '%';
+      progressPct.textContent = pct + '%';
+    }
+
+    ['name', 'mobile', 'address', 'greetings'].forEach(id => {
+      $(id).addEventListener('input', updateProgress);
+    });
+
+    function renderEmptyCamera() {
+      cameraBox.classList.remove('filled');
+      cameraBox.innerHTML = `
+        <div class="camera-placeholder">
+          <div class="cam-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </div>
+          <div class="cam-title">Take a selfie</div>
+          <div class="cam-sub">Camera opens in a new window</div>
+          <button type="button" class="btn-camera" id="openCameraBtn">Open Camera</button>
+        </div>
+      `;
+      $('openCameraBtn').addEventListener('click', openCameraPopup);
+    }
+
+    function renderCapturedCamera(dataUrl) {
+      cameraBox.classList.add('filled');
+      cameraBox.innerHTML = `
+        <div class="selfie-preview">
+          <div class="selfie-frame">
+            <img src="${dataUrl}" alt="Your selfie">
+          </div>
+          <div class="selfie-badge">Selfie captured</div>
+          <button type="button" class="btn-retake" id="retakeBtn">Retake</button>
+        </div>
+      `;
+      $('retakeBtn').addEventListener('click', function() {
+        selfieData = null;
+        renderEmptyCamera();
+        updateProgress();
+      });
+    }
+
+    function openCameraPopup() {
+      const isMobile = window.innerWidth < 640;
+      let width, height;
+      if (isMobile) {
+        width = Math.min(window.innerWidth - 24, 460);
+        height = Math.min(window.innerHeight - 24, 780);
+      } else {
+        width = 480; height = 720;
+      }
+      const left = Math.max(0, (screen.width - width) / 2);
+      const top = Math.max(0, (screen.height - height) / 2);
+      cameraWindow = window.open('', 'SelfieCamera',
+        `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no`);
+      if (!cameraWindow) { alert('Popup blocked. Please allow popups and try again.'); return; }
+      cameraWindow.document.open();
+      cameraWindow.document.write(getCameraHTML());
+      cameraWindow.document.close();
+    }
+
+    function getCameraHTML() {
+      return `<!DOCTYPE html>
+<html>
+<head>
+  <title>Take a Selfie</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0a">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; -webkit-text-size-adjust: 100%; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0a0a; color: #fff;
+      display: flex; flex-direction: column; height: 100vh; height: 100dvh;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+    .topbar { padding: 14px 16px; text-align: center; background: #0a0a0a;
+      border-bottom: 1px solid #1c1c1c; font-weight: 600; font-size: 13px;
+      letter-spacing: 0.15em; text-transform: uppercase; color: #a8a8a8; flex-shrink: 0; }
+    .video-container { flex: 1; position: relative; background: #000; overflow: hidden; min-height: 0; }
+    video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+    .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+    .flash.fire { animation: flashAnim 0.4s ease; }
+    @keyframes flashAnim { 0% { opacity: 0.9; } 100% { opacity: 0; } }
+    .countdown { position: absolute; inset: 0; background: rgba(10,10,10,0.7);
+      display: none; align-items: center; justify-content: center; color: #fff;
+      font-size: clamp(72px, 25vw, 120px); font-weight: 800; letter-spacing: -0.05em; }
+    .countdown.show { display: flex; }
+    .bottom { padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+      background: #0a0a0a; border-top: 1px solid #1c1c1c;
+      display: flex; flex-direction: column; align-items: center; gap: 12px; flex-shrink: 0; }
+    .status { font-size: 12px; color: #6b6b6b; text-align: center; min-height: 16px; padding: 0 8px; }
+    .status.error { color: #dc2626; }
+    button { padding: 14px 32px; border: none; border-radius: 10px; background: #fff;
+      color: #0a0a0a; font-weight: 600; font-size: 14px; cursor: pointer;
+      transition: all 0.2s; font-family: inherit; min-height: 44px;
+      -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+    button:active:not(:disabled) { transform: scale(0.97); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.secondary { background: transparent; border: 1px solid #2a2a2a; color: #a8a8a8;
+      padding: 12px 22px; font-size: 12px; }
+    @media (hover: hover) {
+      button:hover:not(:disabled) { transform: translateY(-1px); background: #e8e8e8; }
+      button.secondary:hover { background: #141414; color: #fff; }
+    }
+    .row { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <div class="topbar">Take a Selfie</div>
+  <div class="video-container">
+    <video id="v" autoplay playsinline muted webkit-playsinline></video>
+    <div class="flash" id="flash"></div>
+    <div class="countdown" id="countdown">3</div>
+  </div>
+  <div class="bottom">
+    <div class="status" id="status">Starting camera...</div>
+    <div class="row">
+      <button id="snap" disabled>Capture</button>
+      <button id="close" class="secondary">Cancel</button>
+    </div>
+  </div>
+  <script>
+    const v = document.getElementById('v');
+    const status = document.getElementById('status');
+    const snapBtn = document.getElementById('snap');
+    const closeBtn = document.getElementById('close');
+    const flash = document.getElementById('flash');
+    const countdownEl = document.getElementById('countdown');
+    let stream = null, countdownTimer = null;
+
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 960 } },
+      audio: false
+    }).then(st => {
+      stream = st;
+      v.srcObject = st;
+      status.textContent = 'Center your face and tap Capture';
+      snapBtn.disabled = false;
+    }).catch(err => {
+      status.classList.add('error');
+      let msg = 'Cannot access camera: ' + err.name;
+      if (err.name === 'NotAllowedError') msg = 'Permission denied. Please allow camera access.';
+      if (err.name === 'NotFoundError') msg = 'No camera detected.';
+      if (err.name === 'NotReadableError') msg = 'Camera in use by another app.';
+      status.textContent = msg;
+    });
+
+    snapBtn.onclick = () => {
+      let count = 3;
+      countdownEl.textContent = count;
+      countdownEl.classList.add('show');
+      snapBtn.disabled = true;
+      countdownTimer = setInterval(() => {
+        count--;
+        if (count > 0) { countdownEl.textContent = count; }
+        else {
+          clearInterval(countdownTimer); countdownTimer = null;
+          countdownEl.classList.remove('show'); doCapture();
+        }
+      }, 700);
+    };
+
+    function doCapture() {
+      flash.classList.add('fire');
+      setTimeout(() => flash.classList.remove('fire'), 400);
+      const w = v.videoWidth, h = v.videoHeight;
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.translate(w, 0); ctx.scale(-1, 1); ctx.drawImage(v, 0, 0, w, h);
+      const maxW = 720;
+      let outCanvas = canvas;
+      if (w > maxW) {
+        const scale = maxW / w;
+        outCanvas = document.createElement('canvas');
+        outCanvas.width = maxW; outCanvas.height = h * scale;
+        outCanvas.getContext('2d').drawImage(canvas, 0, 0, outCanvas.width, outCanvas.height);
+      }
+      const dataUrl = outCanvas.toDataURL('image/jpeg', 0.85);
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({ type: 'SELFIE_CAPTURED', data: dataUrl }, '*');
+      }
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      window.close();
+    }
+
+    closeBtn.onclick = () => {
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      if (countdownTimer) clearInterval(countdownTimer);
+      window.close();
+    };
+
+    window.addEventListener('beforeunload', () => {
+      if (stream) stream.getTracks().forEach(t => t.stop());
+    });
+  <\/script>
+</body>
+</html>`;
+    }
+
+    window.addEventListener('message', function(event) {
+      if (event.data && event.data.type === 'SELFIE_CAPTURED') {
+        selfieData = {
+          data: event.data.data,
+          name: 'selfie_' + Date.now() + '.jpg'
+        };
+        renderCapturedCamera(event.data.data);
+        updateProgress();
+      }
+    });
+
+    function showMessage(text, type) {
+      messageEl.textContent = text;
+      messageEl.className = 'message ' + type;
+    }
+
+    rsvpForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (appConfig.isPastDeadline) { showMessage('RSVP is closed.', 'error'); return; }
+      if (!selfieData) { showMessage('Please take a selfie before submitting.', 'error'); return; }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner"></span>Sending...';
+      messageEl.style.display = 'none';
+
+      const formData = {
+        name: $('name').value.trim(),
+        mobile: $('mobile').value.trim(),
+        address: $('address').value.trim(),
+        greetings: $('greetings').value.trim(),
+        selfie: selfieData,
+        email: currentUser ? currentUser.email : '',
+        loginMethod: 'email',
+        guests: guests
+      };
+
+      google.script.run
+        .withSuccessHandler(function(response) {
+          if (response.success && response.ticket) {
+            showTicket(response.ticket);
+          } else if (response.success) {
+            showMessage(response.message, 'success');
+          } else {
+            showMessage(response.message, 'error');
+          }
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = 'Send My RSVP <span class="btn-arrow">→</span>';
+        })
+        .withFailureHandler(function(err) {
+          showMessage('Error: ' + err.message, 'error');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = 'Send My RSVP <span class="btn-arrow">→</span>';
+        })
+        .submitForm(formData);
+    });
+
+    function showTicket(ticket) {
+      currentTicket = ticket;
+      ticketQrImg.src = ticket.qrCodeUrl;
+      ticketCode.textContent = ticket.code;
+      ticketName.textContent = ticket.name;
+      ticketGuests.textContent = ticket.guests +
+        (ticket.guests === 1 ? ' person' : ' people');
+      rsvpForm.style.display = 'none';
+      formHead.style.display = 'none';
+      progressWrap.style.display = 'none';
+      messageEl.style.display = 'none';
+      ticketScreen.classList.add('show');
+      showToast('RSVP confirmed! 🎉');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetAfterTicket(silent) {
+      currentTicket = null;
+      ticketScreen.classList.remove('show');
+      rsvpForm.style.display = '';
+      formHead.style.display = '';
+      progressWrap.style.display = '';
+      rsvpForm.reset();
+      selfieData = null;
+      guests = 1;
+      guestValueEl.textContent = '1';
+      guestMinusBtn.disabled = true;
+      guestPlusBtn.disabled = false;
+      renderEmptyCamera();
+      updateProgress();
+      if (currentUser && currentUser.name) { $('name').value = currentUser.name; }
+      if (!silent) {
+        showToast('Ready for the next RSVP.');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    $('newRsvpBtn').addEventListener('click', function() { resetAfterTicket(false); });
+    $('downloadQrBtn').addEventListener('click', function() {
+      if (!currentTicket) return;
+      const link = document.createElement('a');
+      link.href = currentTicket.qrCodeUrl;
+      link.download = 'ticket-' + currentTicket.code + '.png';
+      link.target = '_blank';
+      link.rel = 'noopener';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Opening QR — long-press to save.');
+    });
+
+    attachRipple(pwBtn);
+    attachRipple(submitBtn);
+    renderEmptyCamera();
+    restoreSession();
+    initApp();
+    updateProgress();
+    startCountdown();
+  </script>
+</body>
+</html>
