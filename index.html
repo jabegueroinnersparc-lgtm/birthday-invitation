@@ -68,6 +68,131 @@
       .bg-grid { background-size: 32px 32px; }
     }
 
+    /* ============================================================
+       RECENT GUESTS TICKER
+       ============================================================ */
+    .ticker-wrap {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: var(--black);
+      color: var(--white);
+      overflow: hidden;
+      height: 44px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-top: env(safe-area-inset-top);
+      animation: tickerSlideDown 0.8s var(--ease-out);
+    }
+    .ticker-wrap.show { display: flex; align-items: center; }
+    @keyframes tickerSlideDown {
+      from { transform: translateY(-100%); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
+
+    .ticker-label {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 16px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--silver);
+      background: var(--black);
+      height: 100%;
+      position: relative;
+      z-index: 2;
+      border-right: 1px solid rgba(255,255,255,0.08);
+    }
+    .ticker-label .pulse-dot {
+      width: 6px; height: 6px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(34,197,94,0.25);
+      animation: livePulse 2s infinite;
+      flex-shrink: 0;
+    }
+    @keyframes livePulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.25); }
+      50%      { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+    }
+
+    .ticker-track {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      height: 100%;
+      mask-image: linear-gradient(90deg, transparent 0%, black 6%, black 94%, transparent 100%);
+      -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 6%, black 94%, transparent 100%);
+    }
+    .ticker-content {
+      display: inline-flex;
+      align-items: center;
+      gap: 32px;
+      white-space: nowrap;
+      padding-left: 16px;
+      height: 100%;
+      animation: tickerScroll 40s linear infinite;
+      will-change: transform;
+    }
+    @keyframes tickerScroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    .ticker-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--white);
+      flex-shrink: 0;
+    }
+    .ticker-item .name {
+      font-weight: 700;
+      color: var(--white);
+    }
+    .ticker-item .verb {
+      color: var(--silver);
+      font-weight: 400;
+    }
+    .ticker-item .spark {
+      color: #fbbf24;
+      font-size: 12px;
+    }
+
+    .ticker-empty {
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      font-size: 13px;
+      color: var(--silver);
+      font-style: italic;
+      height: 100%;
+    }
+
+    body.has-ticker {
+      padding-top: 44px;
+    }
+    @media (max-width: 640px) {
+      body.has-ticker {
+        padding-top: calc(44px + env(safe-area-inset-top));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .ticker-wrap { height: 40px; }
+      .ticker-label { padding: 0 12px; font-size: 9px; }
+      .ticker-item { font-size: 12px; }
+      .ticker-content { gap: 24px; }
+    }
+
     .app {
       position: relative; z-index: 2;
       min-height: 100vh;
@@ -172,7 +297,6 @@
     }
     .login-subtext { font-size: 14px; color: var(--steel); margin-bottom: 22px; }
 
-    /* COUNTDOWN */
     .countdown-box {
       background: var(--black); color: var(--white);
       border-radius: 18px; padding: 22px 20px 20px;
@@ -198,10 +322,6 @@
       width: 6px; height: 6px; background: #22c55e;
       border-radius: 50%; box-shadow: 0 0 0 3px rgba(34,197,94,0.2);
       animation: livePulse 2s infinite; flex-shrink: 0;
-    }
-    @keyframes livePulse {
-      0%, 100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
-      50%      { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
     }
     .countdown-units { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
     .countdown-unit {
@@ -234,7 +354,6 @@
       .countdown-date { font-size: 11px; }
     }
 
-    /* FIELDS */
     .field { margin-bottom: 18px; position: relative; }
     .field-label {
       display: block; font-size: 11px; font-weight: 600;
@@ -258,7 +377,6 @@
     }
     .field textarea { resize: vertical; min-height: 100px; line-height: 1.55; }
 
-    /* BUTTON */
     .btn {
       position: relative; width: 100%; min-height: 52px;
       padding: 15px 24px; border: none;
@@ -291,7 +409,6 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* MESSAGES */
     .message {
       margin-top: 18px; padding: 14px 16px;
       border-radius: 12px; text-align: center;
@@ -302,7 +419,6 @@
     .message.success { background: #f0fdf4; color: #14532d; border: 1px solid #bbf7d0; display: block; }
     .message.error { background: #fef2f2; color: #7f1d1d; border: 1px solid #fecaca; display: block; }
 
-    /* FORM VIEW */
     .form-wrap {
       background: var(--white); border-radius: 28px;
       overflow: hidden; box-shadow: var(--shadow-xl);
@@ -536,7 +652,6 @@
     .field-row { display: grid; grid-template-columns: 1fr; gap: 0; }
     @media (min-width: 640px) { .field-row { grid-template-columns: 1fr 1fr; gap: 16px; } .field-row .field { margin-bottom: 20px; } }
 
-    /* TICKET SCREEN */
     .ticket-screen { display: none; text-align: center; padding: 8px 0 4px; animation: viewEnter 0.6s var(--ease-out); }
     .ticket-screen.show { display: block; }
     .ticket-icon {
@@ -602,7 +717,6 @@
     .ticket-actions { display: flex; gap: 10px; }
     .ticket-actions .btn { flex: 1; min-height: 48px; padding: 13px 16px; font-size: 14px; }
 
-    /* TOAST */
     .toast {
       position: fixed; top: 24px; left: 50%;
       transform: translateX(-50%) translateY(-120%);
@@ -638,6 +752,19 @@
   <div class="orb orb-b"></div>
   <div class="orb orb-c"></div>
   <div class="toast" id="toast"></div>
+
+  <!-- RECENT GUESTS TICKER -->
+  <div class="ticker-wrap" id="tickerWrap" aria-live="polite">
+    <div class="ticker-label">
+      <span class="pulse-dot"></span>
+      <span>Recent RSVPs</span>
+    </div>
+    <div class="ticker-track">
+      <div class="ticker-content" id="tickerContent">
+        <div class="ticker-empty">Loading recent guests…</div>
+      </div>
+    </div>
+  </div>
 
   <div class="app">
 
@@ -911,6 +1038,65 @@
       el.classList.add('show');
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    /* ============================================================
+       RECENT GUESTS TICKER
+       ============================================================ */
+    let tickerRefreshInterval = null;
+
+    async function loadRecentGuests() {
+      try {
+        const res = await api('recentGuests');
+        if (!res || !res.success) return;
+        const guests = res.guests || [];
+        renderTicker(guests);
+      } catch (e) {
+        console.log('Ticker load failed:', e);
+      }
+    }
+
+    function renderTicker(guests) {
+      const wrap = $('tickerWrap');
+      const content = $('tickerContent');
+      if (!wrap || !content) return;
+
+      if (!guests || guests.length === 0) {
+        wrap.classList.remove('show');
+        document.body.classList.remove('has-ticker');
+        return;
+      }
+
+      wrap.classList.add('show');
+      document.body.classList.add('has-ticker');
+
+      const itemsHTML = guests.map((name, i) => {
+        const verb = i === 0 ? 'just RSVP\'d' : 'is coming';
+        return `
+          <div class="ticker-item">
+            <span class="spark">✨</span>
+            <span class="name">${escapeHtml(name)}</span>
+            <span class="verb">${verb}</span>
+          </div>
+        `;
+      }).join('');
+
+      content.innerHTML = itemsHTML + itemsHTML;
+
+      const duration = Math.max(20, guests.length * 4);
+      content.style.animationDuration = duration + 's';
+    }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[c]);
+    }
+
+    function startTicker() {
+      loadRecentGuests();
+      if (tickerRefreshInterval) clearInterval(tickerRefreshInterval);
+      tickerRefreshInterval = setInterval(loadRecentGuests, 30000);
     }
 
     /* ============================================================
@@ -1360,6 +1546,7 @@
     startCountdown();
     initApp();
     updateProgress();
+    startTicker();
   </script>
 </body>
 </html>
