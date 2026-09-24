@@ -684,12 +684,16 @@
         showPwMessage('Please enter a valid email.', 'error'); return;
       }
 
-      // Only works on Apps Script
+      // If no backend (Vercel, GitHub Pages), gracefully store locally and show welcome
       if (!hasBackend()) {
-        showPwMessage('Please open this page from the invitation link.', 'error');
+        currentUser = { name: name, email: email, method: 'email' };
+        try { localStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (e) {}
+        try { sessionStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (e) {}
+        showPwMessage('Welcome, ' + name.split(' ')[0] + '!', 'success');
         return;
       }
 
+      // On Apps Script — do the real login
       pwBtn.disabled = true;
       pwBtn.innerHTML = '<span class="spinner"></span>Signing in...';
 
