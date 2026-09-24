@@ -233,37 +233,57 @@
 
     /* ATTENDANCE SELECTOR */
     .attendance-grid {
-      display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 4px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 4px;
     }
     @media (min-width: 640px) {
       .attendance-grid { grid-template-columns: repeat(3, 1fr); }
     }
+
     .attendance-option {
       position: relative;
-      display: flex; flex-direction: column; align-items: flex-start;
-      gap: 6px; padding: 16px 14px;
-      border: 1.5px solid var(--mist); border-radius: 14px;
-      background: var(--white); cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 16px 14px;
+      border: 1.5px solid var(--mist);
+      border-radius: 14px;
+      background: var(--white);
+      cursor: pointer;
       transition: all 0.25s var(--ease-out);
-      text-align: left; font-family: inherit;
+      text-align: left;
+      font-family: inherit;
       -webkit-tap-highlight-color: transparent;
     }
-    .attendance-option:hover { border-color: var(--silver); background: var(--fog); }
+    .attendance-option:hover {
+      border-color: var(--silver);
+      background: var(--fog);
+    }
     .attendance-option .ao-icon { font-size: 22px; line-height: 1; }
     .attendance-option .ao-title {
-      font-size: 14px; font-weight: 700; color: var(--black); letter-spacing: -0.01em;
+      font-size: 14px; font-weight: 700;
+      color: var(--black); letter-spacing: -0.01em;
     }
-    .attendance-option .ao-sub { font-size: 11px; color: var(--steel); line-height: 1.4; }
+    .attendance-option .ao-sub {
+      font-size: 11px; color: var(--steel); line-height: 1.4;
+    }
     .attendance-option.selected {
-      border-color: var(--black); background: var(--black);
+      border-color: var(--black);
+      background: var(--black);
       box-shadow: 0 8px 24px -8px rgba(0,0,0,0.35);
       transform: translateY(-1px);
     }
     .attendance-option.selected .ao-title { color: var(--white); }
     .attendance-option.selected .ao-sub { color: var(--silver); }
     .attendance-option.selected::after {
-      content: "✓"; position: absolute; top: 10px; right: 12px;
-      color: var(--white); font-size: 14px; font-weight: 700;
+      content: "✓";
+      position: absolute;
+      top: 10px; right: 12px;
+      color: var(--white);
+      font-size: 14px; font-weight: 700;
     }
 
     .field { margin-bottom: 18px; position: relative; }
@@ -331,14 +351,18 @@
     .message.success { background: #f0fdf4; color: #14532d; border: 1px solid #bbf7d0; display: block; }
     .message.error { background: #fef2f2; color: #7f1d1d; border: 1px solid #fecaca; display: block; }
 
-    /* WELCOME */
+    /* WELCOME VIEW */
     .welcome-wrap {
-      max-width: 720px; margin: 0 auto;
-      background: var(--white); border-radius: 28px;
-      overflow: hidden; box-shadow: var(--shadow-xl);
+      max-width: 720px;
+      margin: 0 auto;
+      background: var(--white);
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: var(--shadow-xl);
       border: 1px solid var(--pearl);
     }
     @media (max-width: 640px) { .welcome-wrap { border-radius: 20px; } }
+
     .welcome-header {
       background: var(--black); color: var(--white);
       padding: 40px 36px 36px;
@@ -355,8 +379,9 @@
     .welcome-header > * { position: relative; z-index: 1; }
     .welcome-brand {
       display: inline-flex; align-items: center; gap: 10px;
-      font-size: 11px; font-weight: 600; letter-spacing: 0.15em;
-      text-transform: uppercase; color: var(--silver); margin-bottom: 24px;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--silver); margin-bottom: 24px;
     }
     .welcome-brand .dot-mark {
       width: 8px; height: 8px; background: var(--white);
@@ -364,17 +389,22 @@
     }
     .welcome-title {
       font-family: 'Playfair Display', serif;
-      font-size: clamp(26px, 5vw, 38px); font-weight: 700;
-      letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 10px;
+      font-size: clamp(26px, 5vw, 38px);
+      font-weight: 700; letter-spacing: -0.02em;
+      line-height: 1.1; margin-bottom: 10px;
     }
     .welcome-title em { font-style: italic; font-weight: 500; color: var(--silver); }
-    .welcome-sub { font-size: 14px; color: var(--silver); line-height: 1.6; max-width: 480px; }
+    .welcome-sub {
+      font-size: 14px; color: var(--silver);
+      line-height: 1.6; max-width: 480px;
+    }
     .welcome-user-chip {
       display: inline-flex; align-items: center; gap: 10px;
       margin-top: 20px; padding: 8px 14px;
       background: rgba(255,255,255,0.08);
       border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 100px; font-size: 13px; color: var(--white);
+      border-radius: 100px;
+      font-size: 13px; color: var(--white);
     }
     .welcome-user-chip .avatar {
       width: 26px; height: 26px; border-radius: 50%;
@@ -383,74 +413,121 @@
       align-items: center; justify-content: center;
       font-weight: 700; font-size: 12px;
     }
+
     .welcome-actions {
-      padding: 32px; display: grid; grid-template-columns: 1fr; gap: 14px;
+      padding: 32px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
     }
     @media (min-width: 640px) {
       .welcome-actions { grid-template-columns: 1fr 1fr; padding: 36px; gap: 16px; }
     }
     @media (max-width: 480px) { .welcome-actions { padding: 22px; } }
+
     .action-btn {
-      position: relative; display: flex; flex-direction: column;
-      align-items: flex-start; gap: 14px; padding: 24px 22px;
-      border: 1.5px solid var(--pearl); border-radius: 18px;
-      background: var(--white); text-align: left; cursor: pointer;
-      font-family: inherit; transition: all 0.3s var(--ease-out);
-      overflow: hidden; -webkit-tap-highlight-color: transparent;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 24px 22px;
+      border: 1.5px solid var(--pearl);
+      border-radius: 18px;
+      background: var(--white);
+      text-align: left;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.3s var(--ease-out);
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
     }
     @media (max-width: 480px) { .action-btn { padding: 20px; } }
     .action-btn:hover {
-      transform: translateY(-3px); border-color: var(--black);
+      transform: translateY(-3px);
+      border-color: var(--black);
       box-shadow: 0 16px 40px -12px rgba(0,0,0,0.15);
     }
     .action-btn:active { transform: scale(0.98); }
+
     .action-icon {
-      width: 52px; height: 52px; border-radius: 14px;
+      width: 52px; height: 52px;
+      border-radius: 14px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 24px; flex-shrink: 0; background: var(--fog);
+      font-size: 24px;
+      flex-shrink: 0;
+      background: var(--fog);
     }
-    .action-btn.primary .action-icon { background: var(--black); color: var(--white); }
+    .action-btn.primary .action-icon {
+      background: var(--black); color: var(--white);
+    }
     .action-btn.primary {
-      background: var(--black); color: var(--white); border-color: var(--black);
+      background: var(--black); color: var(--white);
+      border-color: var(--black);
     }
     .action-btn.primary .action-title { color: var(--white); }
     .action-btn.primary .action-desc { color: var(--silver); }
     .action-btn.primary .action-arrow {
-      background: rgba(255,255,255,0.12); color: var(--white);
+      background: rgba(255,255,255,0.12);
+      color: var(--white);
     }
-    .action-btn.primary:hover { background: var(--ink); border-color: var(--ink); }
+    .action-btn.primary:hover {
+      background: var(--ink);
+      border-color: var(--ink);
+    }
+
     .action-title {
       font-family: 'Playfair Display', serif;
-      font-size: 20px; font-weight: 700;
-      letter-spacing: -0.01em; margin-bottom: 4px; color: var(--black);
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+      color: var(--black);
     }
-    .action-desc { font-size: 13px; color: var(--steel); line-height: 1.5; }
+    .action-desc {
+      font-size: 13px;
+      color: var(--steel);
+      line-height: 1.5;
+    }
     .action-arrow {
-      position: absolute; top: 20px; right: 20px;
-      width: 32px; height: 32px; border-radius: 50%;
-      background: var(--fog); color: var(--black);
+      position: absolute;
+      top: 20px; right: 20px;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--fog);
+      color: var(--black);
       display: flex; align-items: center; justify-content: center;
-      font-size: 14px; transition: transform 0.3s var(--ease-out);
+      font-size: 14px;
+      transition: transform 0.3s var(--ease-out);
     }
     .action-btn:hover .action-arrow { transform: translateX(4px); }
-    .welcome-footer { padding: 0 32px 28px; text-align: center; }
+
+    .welcome-footer {
+      padding: 0 32px 28px;
+      text-align: center;
+    }
     @media (max-width: 480px) { .welcome-footer { padding: 0 22px 22px; } }
     .btn-signout {
       background: none; border: none; color: var(--steel);
-      font-family: inherit; font-size: 12px; cursor: pointer;
-      letter-spacing: 0.05em; text-transform: uppercase; font-weight: 600;
+      font-family: inherit; font-size: 12px;
+      cursor: pointer; letter-spacing: 0.05em;
+      text-transform: uppercase; font-weight: 600;
       padding: 8px; text-decoration: underline;
     }
     .btn-signout:hover { color: var(--black); }
 
     /* ATTENDEES */
     .attendees-wrap {
-      max-width: 720px; margin: 0 auto;
-      background: var(--white); border-radius: 28px;
-      overflow: hidden; box-shadow: var(--shadow-xl);
+      max-width: 720px;
+      margin: 0 auto;
+      background: var(--white);
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: var(--shadow-xl);
       border: 1px solid var(--pearl);
     }
     @media (max-width: 640px) { .attendees-wrap { border-radius: 20px; } }
+
     .attendees-header {
       background: var(--black); color: var(--white);
       padding: 32px 36px 28px;
@@ -463,41 +540,67 @@
       pointer-events: none;
     }
     .attendees-header > * { position: relative; z-index: 1; }
+
     .back-btn {
       display: inline-flex; align-items: center; gap: 6px;
       background: rgba(255,255,255,0.1);
       border: 1px solid rgba(255,255,255,0.15);
-      color: var(--white); padding: 8px 14px;
-      border-radius: 100px; font-size: 12px; font-weight: 600;
-      letter-spacing: 0.05em; cursor: pointer; font-family: inherit;
-      margin-bottom: 18px; transition: all 0.2s;
+      color: var(--white);
+      padding: 8px 14px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      font-family: inherit;
+      margin-bottom: 18px;
+      transition: all 0.2s;
     }
     .back-btn:hover { background: rgba(255,255,255,0.2); }
+
     .attendees-title {
       font-family: 'Playfair Display', serif;
-      font-size: clamp(24px, 5vw, 34px); font-weight: 700;
-      letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 8px;
+      font-size: clamp(24px, 5vw, 34px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 8px;
     }
     .attendees-title em { font-style: italic; font-weight: 500; color: var(--silver); }
     .attendees-sub { font-size: 14px; color: var(--silver); line-height: 1.6; }
+
     .attendees-stats {
-      display: flex; gap: 24px; margin-top: 20px;
-      padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      gap: 24px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
       flex-wrap: wrap;
     }
     .attendee-stat { display: flex; flex-direction: column; gap: 2px; }
-    .attendee-stat .n { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; }
+    .attendee-stat .n {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px; font-weight: 700;
+    }
     .attendee-stat .l {
       font-size: 10px; font-weight: 600;
-      letter-spacing: 0.12em; text-transform: uppercase; color: var(--steel);
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--steel);
     }
+
     .attendees-list {
-      padding: 24px 32px 32px; max-height: 60vh; overflow-y: auto;
+      padding: 24px 32px 32px;
+      max-height: 60vh;
+      overflow-y: auto;
     }
     @media (max-width: 640px) { .attendees-list { padding: 20px 18px 26px; } }
+
     .attendee-row {
-      display: flex; align-items: center; gap: 14px;
-      padding: 14px 16px; border-radius: 14px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border-radius: 14px;
       transition: all 0.2s;
       animation: attendeeIn 0.4s var(--ease-out) both;
     }
@@ -507,26 +610,36 @@
     }
     .attendee-row:hover { background: var(--fog); }
     .attendee-row + .attendee-row { margin-top: 6px; }
+
     .attendee-avatar {
-      width: 44px; height: 44px; border-radius: 50%;
+      width: 44px; height: 44px;
+      border-radius: 50%;
       background: linear-gradient(135deg, var(--silver), var(--mist));
-      color: var(--black); display: flex;
-      align-items: center; justify-content: center;
-      font-weight: 700; font-size: 16px; flex-shrink: 0;
+      color: var(--black);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 16px;
+      flex-shrink: 0;
     }
     .attendee-info { flex: 1; min-width: 0; }
     .attendee-info .n {
-      font-size: 15px; font-weight: 600; color: var(--ink);
+      font-size: 15px; font-weight: 600;
+      color: var(--ink);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .attendee-info .e {
-      font-size: 12px; color: var(--steel); margin-top: 2px;
-      display: inline-flex; align-items: center; gap: 5px;
-      font-weight: 600; letter-spacing: 0.02em;
+      font-size: 12px; color: var(--steel);
+      margin-top: 2px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
     }
     .attendee-info .e::before {
-      content: ""; width: 6px; height: 6px;
-      border-radius: 50%; flex-shrink: 0;
+      content: "";
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
     }
     .attendee-info .e.badge-going { color: #15803d; }
     .attendee-info .e.badge-going::before { background: #16a34a; }
@@ -534,38 +647,68 @@
     .attendee-info .e.badge-planning::before { background: #f59e0b; }
     .attendee-info .e.badge-notgoing { color: #b91c1c; }
     .attendee-info .e.badge-notgoing::before { background: #dc2626; }
+
     .attendee-badge {
-      padding: 6px 12px; border-radius: 100px;
-      background: var(--black); color: var(--white);
-      font-size: 11px; font-weight: 700;
-      letter-spacing: 0.05em; flex-shrink: 0;
+      padding: 6px 12px;
+      border-radius: 100px;
+      background: var(--black);
+      color: var(--white);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      flex-shrink: 0;
     }
-    .attendees-empty { padding: 60px 30px; text-align: center; }
-    .attendees-empty .ic { font-size: 48px; margin-bottom: 14px; display: block; }
+
+    .attendees-empty {
+      padding: 60px 30px;
+      text-align: center;
+    }
+    .attendees-empty .ic {
+      font-size: 48px;
+      margin-bottom: 14px;
+      display: block;
+    }
     .attendees-empty h3 {
-      font-family: 'Playfair Display', serif; font-size: 22px; margin-bottom: 6px;
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      margin-bottom: 6px;
     }
     .attendees-empty p {
-      font-size: 14px; color: var(--steel); line-height: 1.55; margin-bottom: 14px;
+      font-size: 14px;
+      color: var(--steel);
+      line-height: 1.55;
+      margin-bottom: 14px;
     }
     .attendees-empty button {
-      background: var(--black); color: var(--white);
-      border: none; padding: 12px 24px; border-radius: 10px;
-      font-size: 13px; font-weight: 600; cursor: pointer;
-      font-family: inherit; -webkit-tap-highlight-color: transparent;
+      background: var(--black);
+      color: var(--white);
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      -webkit-tap-highlight-color: transparent;
     }
     .attendees-empty button:active { transform: scale(0.98); }
+
     .attendees-loading {
-      padding: 60px 30px; text-align: center;
-      color: var(--steel); font-size: 14px;
-      display: flex; flex-direction: column;
-      align-items: center; gap: 12px;
+      padding: 60px 30px;
+      text-align: center;
+      color: var(--steel);
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
     }
     .attendees-loading .loader-spinner {
       width: 32px; height: 32px;
       border: 3px solid var(--pearl);
       border-top-color: var(--black);
-      border-radius: 50%; animation: spin 0.8s linear infinite;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
     }
 
     /* FORM VIEW */
@@ -577,6 +720,7 @@
     }
     @media (min-width: 1000px) { .form-wrap { display: grid; grid-template-columns: 380px 1fr; } }
     @media (max-width: 640px) { .form-wrap { border-radius: 20px; } }
+
     .form-sidebar {
       background: var(--black); color: var(--white);
       padding: 40px 32px; display: none;
@@ -626,7 +770,8 @@
       padding: 4px 8px; border-radius: 6px;
       background: var(--graphite); color: var(--silver);
       font-size: 10px; font-weight: 600;
-      letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      margin-bottom: 12px;
     }
     .btn-logout {
       background: transparent; color: var(--silver);
@@ -637,6 +782,7 @@
       letter-spacing: 0.1em; text-transform: uppercase;
       -webkit-tap-highlight-color: transparent; min-height: 40px;
     }
+
     .mobile-form-header {
       display: none; background: var(--black); color: var(--white);
       padding: 20px 22px; position: relative; overflow: hidden;
@@ -649,7 +795,8 @@
     .mfh-brand {
       display: flex; align-items: center; gap: 8px;
       font-size: 11px; font-weight: 600;
-      letter-spacing: 0.15em; text-transform: uppercase; color: var(--silver);
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--silver);
     }
     .mfh-brand .dot-mark {
       width: 7px; height: 7px; background: var(--white);
@@ -675,9 +822,11 @@
     .mfh-meta { flex: 1; min-width: 0; }
     .mfh-meta .n { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
     .mfh-meta .e { font-size: 12px; color: var(--silver); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
     .form-main { padding: 40px 40px 36px; }
     @media (max-width: 999px) { .form-main { padding: 28px 24px 32px; } }
     @media (max-width: 480px) { .form-main { padding: 22px 18px 26px; } }
+
     .form-head {
       display: flex; align-items: flex-start; justify-content: space-between;
       gap: 16px; margin-bottom: 24px;
@@ -689,6 +838,7 @@
       font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px;
     }
     .form-head-left p { font-size: 13px; color: var(--steel); }
+
     .progress-wrap {
       display: flex; align-items: center; gap: 14px;
       margin-bottom: 24px; padding: 12px 16px;
@@ -698,6 +848,7 @@
     .progress-bar { flex: 1; height: 4px; background: var(--pearl); border-radius: 100px; overflow: hidden; }
     .progress-fill { height: 100%; width: 0%; background: var(--black); border-radius: 100px; transition: width 0.5s var(--ease-out); }
     .progress-pct { font-size: 11px; font-weight: 700; color: var(--ink); letter-spacing: 0.05em; min-width: 40px; text-align: right; font-variant-numeric: tabular-nums; }
+
     .guest-counter {
       display: flex; align-items: center;
       border: 1.5px solid var(--mist); border-radius: 12px;
@@ -726,14 +877,1392 @@
     }
     @media (max-width: 640px) { .guest-value { line-height: 56px; } }
     .guest-hint { font-size: 12px; color: var(--steel); margin-top: 8px; display: block; }
+
     .camera-box {
       background: var(--fog);
       border: 1.5px dashed var(--mist);
       border-radius: 16px; padding: 28px 20px;
-      text-align: center; transition: all 0.3s var(--ease-out);
+      text-align: center;
+      transition: all 0.3s var(--ease-out);
     }
     @media (max-width: 480px) { .camera-box { padding: 22px 16px; } }
-    .camera-box.filled { border-style: solid; border-color: var(--black); background: var(--white); }
+    .camera-box.filled {
+      border-style: solid; border-color: var(--black);
+      background: var(--white);
+    }
     .camera-placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .camera-placeholder .cam-icon {
-      width: 52px; height
+      width: 52px; height: 52px; border-radius: 14px;
+      background: var(--white); border: 1.5px solid var(--mist);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+    .camera-placeholder .cam-icon svg { width: 24px; height: 24px; stroke: var(--black); }
+    .camera-placeholder .cam-title { font-size: 14px; font-weight: 600; color: var(--black); }
+    .camera-placeholder .cam-sub { font-size: 12px; color: var(--steel); margin-bottom: 12px; }
+    .btn-camera {
+      background: var(--black); color: var(--white);
+      border: none; padding: 12px 24px;
+      border-radius: 10px; font-size: 13px;
+      font-weight: 600; cursor: pointer;
+      transition: all 0.25s var(--ease-out);
+      font-family: inherit;
+      display: inline-flex; align-items: center; gap: 8px;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 44px; touch-action: manipulation;
+    }
+    .btn-camera:active { transform: scale(0.97); }
+    .selfie-preview { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    .selfie-frame {
+      background: var(--white); padding: 10px;
+      border-radius: 12px; border: 1.5px solid var(--pearl);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      position: relative; transition: transform 0.3s var(--ease-out);
+    }
+    .selfie-frame img { width: 140px; height: 140px; object-fit: cover; display: block; border-radius: 6px; transform: scaleX(-1); }
+    @media (max-width: 480px) { .selfie-frame img { width: 120px; height: 120px; } }
+    .selfie-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 600;
+      color: var(--success); letter-spacing: 0.02em;
+    }
+    .selfie-badge::before {
+      content: ""; width: 6px; height: 6px;
+      background: var(--success); border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(22,163,74,0.15);
+    }
+    .btn-retake {
+      background: var(--white); color: var(--black);
+      border: 1.5px solid var(--mist);
+      padding: 10px 20px; border-radius: 10px;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+      font-family: inherit; letter-spacing: 0.02em;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 40px; touch-action: manipulation;
+    }
+
+    .field-row { display: grid; grid-template-columns: 1fr; gap: 0; }
+    @media (min-width: 640px) { .field-row { grid-template-columns: 1fr 1fr; gap: 16px; } .field-row .field { margin-bottom: 20px; } }
+
+    /* ============================================================
+       SUCCESS SCREEN
+       ============================================================ */
+    .success-screen {
+      display: none;
+      text-align: center;
+      padding: 8px 0 4px;
+      animation: viewEnter 0.6s var(--ease-out);
+    }
+    .success-screen.show { display: block; }
+
+    /* Animated checkmark */
+    .success-check-wrap {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .success-check-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 3px solid var(--black);
+      opacity: 0;
+      animation: ringPop 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes ringPop {
+      0%   { transform: scale(0); opacity: 0; }
+      60%  { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .success-check-pulse {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: var(--black);
+      opacity: 0;
+      animation: pulseOut 1.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s infinite;
+    }
+    @keyframes pulseOut {
+      0%   { transform: scale(1); opacity: 0.4; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+    .success-check-svg { width: 60px; height: 60px; position: relative; z-index: 2; }
+    .success-check-svg path {
+      fill: none;
+      stroke: var(--black);
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 48;
+      stroke-dashoffset: 48;
+      animation: checkDraw 0.5s cubic-bezier(0.65, 0, 0.45, 1) 0.4s forwards;
+    }
+    @keyframes checkDraw { to { stroke-dashoffset: 0; } }
+
+    .success-image {
+      max-width: 100%;
+      width: 320px;
+      border-radius: 20px;
+      box-shadow: 0 20px 50px -12px rgba(0,0,0,0.35);
+      margin: 0 auto 24px;
+      display: block;
+      opacity: 0;
+      animation: imageIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.9s forwards;
+    }
+    @keyframes imageIn {
+      0%   { opacity: 0; transform: scale(0.85) translateY(20px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .success-caption {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(26px, 6vw, 38px);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 10px;
+      color: var(--black);
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 2px;
+    }
+    .success-caption .letter {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(20px) scale(0.8);
+      animation: letterIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes letterIn {
+      0%   { opacity: 0; transform: translateY(20px) scale(0.8) rotate(-6deg); }
+      60%  { opacity: 1; transform: translateY(-4px) scale(1.1) rotate(2deg); }
+      100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+    }
+    .success-caption .space { display: inline-block; width: 0.4em; }
+
+    .success-sub {
+      font-size: 14px;
+      color: var(--steel);
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: fadeIn 0.6s ease 1.8s forwards;
+    }
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    /* Sparkles */
+    .sparkle {
+      position: absolute;
+      width: 8px; height: 8px;
+      background: var(--black);
+      border-radius: 50%;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .sparkle.show { animation: sparkleFly 0.8s ease-out forwards; }
+    @keyframes sparkleFly {
+      0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+      100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0); }
+    }
+
+    /* Confetti */
+    .success-confetti {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9998;
+      overflow: hidden;
+      display: none;
+    }
+    .success-confetti.show { display: block; }
+    .confetti-piece {
+      position: absolute;
+      top: -20px;
+      width: 10px; height: 14px;
+      opacity: 0;
+      border-radius: 2px;
+      animation: confettiFall 3s linear forwards;
+    }
+    @keyframes confettiFall {
+      0%   { opacity: 1; transform: translateY(0) rotate(0); }
+      100% { opacity: 0; transform: translateY(105vh) rotate(720deg); }
+    }
+
+    /* Ticket card (inside success screen) */
+    .ticket-card {
+      background: var(--fog); border: 1.5px solid var(--pearl);
+      border-radius: 18px; padding: 24px 20px 20px;
+      margin: 0 auto 20px; position: relative;
+      max-width: 340px;
+    }
+    .ticket-card::before, .ticket-card::after {
+      content: ""; position: absolute;
+      width: 20px; height: 20px;
+      background: var(--white); border-radius: 50%;
+      top: 50%; transform: translateY(-50%);
+    }
+    .ticket-card::before { left: -11px; }
+    .ticket-card::after { right: -11px; }
+    .ticket-qr {
+      background: var(--white); border-radius: 12px; padding: 14px;
+      display: inline-block; margin-bottom: 16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+      border: 1.5px solid var(--pearl);
+    }
+    .ticket-qr img { display: block; width: 220px; height: 220px; max-width: 100%; }
+    @media (max-width: 480px) { .ticket-qr img { width: 180px; height: 180px; } }
+    .ticket-code {
+      font-family: 'Inter', monospace;
+      font-size: 22px; font-weight: 800;
+      letter-spacing: 0.15em; color: var(--black);
+      margin-bottom: 4px; font-variant-numeric: tabular-nums;
+    }
+    .ticket-label { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--steel); font-weight: 600; }
+    .ticket-details { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--mist); }
+    .ticket-detail { text-align: left; }
+    .ticket-detail .k { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--steel); font-weight: 600; margin-bottom: 3px; }
+    .ticket-detail .v { font-size: 14px; font-weight: 600; color: var(--ink); }
+    .ticket-note {
+      background: var(--white); border: 1.5px solid var(--pearl);
+      border-radius: 12px; padding: 12px 14px;
+      font-size: 12px; color: var(--steel); line-height: 1.55;
+      margin: 0 auto 20px; display: flex; gap: 10px;
+      text-align: left; align-items: flex-start;
+      max-width: 340px;
+    }
+    .ticket-note .ic { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .ticket-actions { display: flex; gap: 10px; max-width: 340px; margin: 0 auto; }
+    .ticket-actions .btn { flex: 1; min-height: 48px; padding: 13px 16px; font-size: 14px; }
+
+    @media (max-width: 480px) {
+      .success-check-wrap { width: 84px; height: 84px; margin-bottom: 20px; }
+      .success-check-svg { width: 50px; height: 50px; }
+      .success-image { width: 260px; }
+      .success-caption { font-size: 26px; }
+      .success-sub { margin-bottom: 22px; }
+    }
+
+    .toast {
+      position: fixed; top: 24px; left: 50%;
+      transform: translateX(-50%) translateY(-120%);
+      background: var(--black); color: var(--white);
+      padding: 12px 20px; border-radius: 10px;
+      font-size: 13px; font-weight: 500;
+      box-shadow: 0 20px 40px -12px rgba(0,0,0,0.25);
+      z-index: 9999; transition: transform 0.4s var(--ease-out);
+      max-width: calc(100vw - 32px); pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    @media (max-width: 640px) {
+      .toast { top: auto; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(120%); }
+      .toast.show { transform: translateX(-50%) translateY(0); }
+    }
+
+    .closed-state { padding: 40px 20px; text-align: center; }
+    .closed-state .ic {
+      width: 64px; height: 64px; margin: 0 auto 20px;
+      border-radius: 50%; background: var(--fog);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+    }
+    .closed-state h3 { font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px; }
+    .closed-state p { color: var(--steel); font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+  <div class="bg-noise"></div>
+  <div class="orb orb-a"></div>
+  <div class="orb orb-b"></div>
+  <div class="orb orb-c"></div>
+  <div class="toast" id="toast"></div>
+  <div class="success-confetti" id="successConfetti"></div>
+
+  <div class="app">
+
+    <!-- VIEW 1: LOGIN -->
+    <section class="view active" id="loginView">
+      <div class="login-wrap">
+        <aside class="login-hero">
+          <div class="hero-top">
+            <div class="brand-mark"><span class="dot-mark"></span><span>Simon Jabeguero</span></div>
+            <h1 class="hero-title">A celebration<br><em>worth the wait.</em></h1>
+            <p class="hero-sub">Sign in to view your personal invitation and confirm your attendance. It takes less than a minute.</p>
+          </div>
+          <div class="hero-bottom">
+            <div class="hero-stat"><span class="n">01</span><span class="l">Sign In</span></div>
+            <div class="hero-divider"></div>
+            <div class="hero-stat"><span class="n">02</span><span class="l">Details</span></div>
+            <div class="hero-divider"></div>
+            <div class="hero-stat"><span class="n">03</span><span class="l">Ticket</span></div>
+          </div>
+        </aside>
+
+        <div class="login-form-side">
+          <h2 class="login-heading">Welcome.</h2>
+          <p class="login-subtext">Enter your details to continue.</p>
+
+          <div class="countdown-box">
+            <div class="countdown-eyebrow">
+              <span class="dot-live"></span>
+              <span>Counting down to the celebration</span>
+            </div>
+            <div class="countdown-units">
+              <div class="countdown-unit"><div class="countdown-num" id="cdDays">00</div><div class="countdown-label">Days</div></div>
+              <div class="countdown-unit"><div class="countdown-num" id="cdHours">00</div><div class="countdown-label">Hours</div></div>
+              <div class="countdown-unit"><div class="countdown-num" id="cdMinutes">00</div><div class="countdown-label">Minutes</div></div>
+              <div class="countdown-unit"><div class="countdown-num" id="cdSeconds">00</div><div class="countdown-label">Seconds</div></div>
+            </div>
+            <div class="countdown-date" id="countdownDate"><strong>October 31, 2026</strong> · 6:00 PM</div>
+          </div>
+
+          <form id="loginForm" autocomplete="on">
+            <div class="field">
+              <label class="field-label" for="pwName">Your Name</label>
+              <input type="text" id="pwName" required placeholder="Maria Santos" autocomplete="name">
+            </div>
+            <div class="field">
+              <label class="field-label" for="pwEmail">Email Address</label>
+              <input type="email" id="pwEmail" required placeholder="you@example.com"
+                     autocomplete="email" inputmode="email" autocapitalize="off" autocorrect="off">
+            </div>
+            <button type="submit" class="btn btn-primary" id="pwBtn">
+              Continue
+              <span class="btn-arrow">→</span>
+            </button>
+            <div class="message" id="pwMessage"></div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: WELCOME -->
+    <section class="view" id="welcomeView">
+      <div class="welcome-wrap">
+        <div class="welcome-header">
+          <div class="welcome-brand">
+            <span class="dot-mark"></span>
+            <span>Simon Jabeguero</span>
+          </div>
+          <h1 class="welcome-title">
+            Hi <span id="welcomeName">there</span>,<br>
+            <em>what would you like to do?</em>
+          </h1>
+          <p class="welcome-sub">
+            You're on the guest list. Choose an option below to continue.
+          </p>
+          <div class="welcome-user-chip">
+            <span class="avatar" id="welcomeAvatar">G</span>
+            <span id="welcomeEmail">guest@email.com</span>
+          </div>
+        </div>
+
+        <div class="welcome-actions">
+          <button type="button" class="action-btn primary" id="goRsvpBtn">
+            <div class="action-icon">🎟️</div>
+            <div class="action-title">Confirm Attendance</div>
+            <div class="action-desc">Share your details and a selfie to get your entrance ticket.</div>
+            <span class="action-arrow">→</span>
+          </button>
+
+          <button type="button" class="action-btn" id="seeAttendeesBtn">
+            <div class="action-icon">👥</div>
+            <div class="action-title">See Who's Coming</div>
+            <div class="action-desc">Check out everyone who has confirmed their attendance.</div>
+            <span class="action-arrow">→</span>
+          </button>
+        </div>
+
+        <div class="welcome-footer">
+          <button type="button" class="btn-signout" id="welcomeSignoutBtn">Sign Out</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: ATTENDEES -->
+    <section class="view" id="attendeesView">
+      <div class="attendees-wrap">
+        <div class="attendees-header">
+          <button type="button" class="back-btn" id="backFromAttendeesBtn">← Back</button>
+          <h1 class="attendees-title">
+            Who's<br>
+            <em>coming.</em>
+          </h1>
+          <p class="attendees-sub">
+            Here's everyone who has confirmed their attendance.
+          </p>
+          <div class="attendees-stats">
+            <div class="attendee-stat">
+              <span class="n" id="statParties">0</span>
+              <span class="l">Responses</span>
+            </div>
+            <div class="attendee-stat">
+              <span class="n" id="statGuests">0</span>
+              <span class="l">Guests Going</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="attendees-list" id="attendeesList">
+          <div class="attendees-loading">
+            <div class="loader-spinner"></div>
+            <div>Loading attendees…</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: FORM -->
+    <section class="view" id="formView">
+      <div class="form-wrap">
+
+        <div class="mobile-form-header">
+          <div class="mfh-top">
+            <div class="mfh-brand"><span class="dot-mark"></span><span>Simon Jabeguero</span></div>
+            <button class="mfh-logout" id="logoutBtnMobile">Sign Out</button>
+          </div>
+          <div class="mfh-user">
+            <div class="mfh-avatar" id="userAvatarMobile">G</div>
+            <div class="mfh-meta">
+              <div class="n" id="userNameMobile">Guest</div>
+              <div class="e" id="userEmailMobile">guest@email.com</div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="form-sidebar">
+          <div class="sb-brand"><span class="dot-mark"></span><span>Simon Jabeguero</span></div>
+          <div class="sb-middle">
+            <h2 class="sb-title">You're<br><em>invited.</em></h2>
+            <p class="sb-desc">We can't wait to celebrate with you. Please share a few details and a selfie.</p>
+          </div>
+          <div class="sb-footer">
+            <span class="user-badge">Signed In</span>
+            <div class="user-chip">
+              <div class="user-avatar" id="userAvatar">G</div>
+              <div class="user-meta">
+                <div class="n" id="userName">Guest</div>
+                <div class="e" id="userEmail">guest@email.com</div>
+              </div>
+            </div>
+            <button class="btn-logout" id="logoutBtnDesktop">Sign Out</button>
+          </div>
+        </aside>
+
+        <div class="form-main">
+          <div class="form-head">
+            <div class="form-head-left">
+              <h2>Your Details</h2>
+              <p>All fields are required.</p>
+            </div>
+          </div>
+
+          <div class="closed-state" id="closedState" style="display:none;">
+            <div class="ic">🔒</div>
+            <h3>Confirmations are closed</h3>
+            <p>The deadline has passed. Please contact the host directly.</p>
+          </div>
+
+          <div id="formContent">
+            <div class="progress-wrap">
+              <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+              <span class="progress-pct" id="progressPct">0%</span>
+            </div>
+
+            <form id="rsvpForm" autocomplete="off">
+              <div class="field">
+                <label class="field-label">Your attendance *</label>
+                <div class="attendance-grid" id="attendanceGrid">
+                  <button type="button" class="attendance-option selected" data-value="going">
+                    <span class="ao-icon">🎉</span>
+                    <span class="ao-title">Going</span>
+                    <span class="ao-sub">I'll be there</span>
+                  </button>
+                  <button type="button" class="attendance-option" data-value="planning">
+                    <span class="ao-icon">🤔</span>
+                    <span class="ao-title">Planning</span>
+                    <span class="ao-sub">Still deciding</span>
+                  </button>
+                  <button type="button" class="attendance-option" data-value="not_going">
+                    <span class="ao-icon">😢</span>
+                    <span class="ao-title">Can't Make It</span>
+                    <span class="ao-sub">Won't be able to come</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="field-row">
+                <div class="field">
+                  <label class="field-label" for="name">Full Name *</label>
+                  <input type="text" id="name" required placeholder="Maria Santos" autocomplete="name">
+                </div>
+                <div class="field">
+                  <label class="field-label" for="mobile">Mobile Number *</label>
+                  <input type="tel" id="mobile" required placeholder="09123456789"
+                         pattern="[0-9+\-\s()]{7,20}" inputmode="tel" autocomplete="tel">
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="address">Address *</label>
+                <input type="text" id="address" required placeholder="Your complete address" autocomplete="street-address">
+              </div>
+
+              <div class="field">
+                <label class="field-label">How many are coming? *</label>
+                <div class="guest-counter">
+                  <button type="button" class="guest-btn" id="guestMinus">−</button>
+                  <div class="guest-value" id="guestValue">1</div>
+                  <button type="button" class="guest-btn" id="guestPlus">+</button>
+                </div>
+                <span class="guest-hint">Include yourself. Max 20.</span>
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="greetings">Birthday Greetings *</label>
+                <textarea id="greetings" required placeholder="Write a heartfelt birthday message..."></textarea>
+              </div>
+
+              <div class="field">
+                <label class="field-label">Selfie *</label>
+                <div class="camera-box" id="cameraBox"></div>
+              </div>
+
+              <button type="submit" class="btn btn-primary" id="submitBtn">
+                Confirm Attendance
+                <span class="btn-arrow">→</span>
+              </button>
+
+              <div class="message" id="message"></div>
+            </form>
+
+            <!-- SUCCESS SCREEN -->
+            <div class="success-screen" id="successScreen">
+              <div class="success-check-wrap" id="checkWrap">
+                <div class="success-check-pulse"></div>
+                <div class="success-check-ring"></div>
+                <svg class="success-check-svg" viewBox="0 0 52 52">
+                  <path d="M14 27 L22 35 L38 18"/>
+                </svg>
+              </div>
+
+              <h2 class="success-caption" id="successCaption" aria-label="Shanghai secured"></h2>
+              <p class="success-sub">You're officially on the list. See you there!</p>
+
+              <img
+                class="success-image"
+                src="https://drive.google.com/uc?export=view&id=1W9irZLA08BcU-JXFA__91vvLX_NXR9dE"
+                alt="Shanghai secured"
+                onerror="this.onerror=null;this.src='https://lh3.googleusercontent.com/d/1W9irZLA08BcU-JXFA__91vvLX_NXR9dE';"
+              >
+
+              <div class="ticket-card">
+                <div class="ticket-qr"><img id="ticketQrImg" src="" alt="QR"></div>
+                <div class="ticket-code" id="ticketCode">SJG-XXXXXX</div>
+                <div class="ticket-label">Ticket Code</div>
+                <div class="ticket-details">
+                  <div class="ticket-detail"><div class="k">Name</div><div class="v" id="ticketName">—</div></div>
+                  <div class="ticket-detail"><div class="k">Guests</div><div class="v" id="ticketGuests">—</div></div>
+                </div>
+              </div>
+
+              <div class="ticket-note">
+                <span class="ic">💡</span>
+                <span>Save or screenshot this QR code. You'll need it at the entrance for check-in.</span>
+              </div>
+              <div class="ticket-actions">
+                <button type="button" class="btn btn-outline" id="downloadQrBtn">Download QR</button>
+                <button type="button" class="btn btn-primary" id="newRsvpBtn">Back to Home</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    /* CONFIG */
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzoNUCRIwXKbndf9QWsalqq5jn026zRc3DUfzCW6dihq8p4fol6GyX2MWp2FkGQz_0/exec';
+
+    async function api(action, params) {
+      const body = new URLSearchParams(Object.assign({ action: action }, params || {}));
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString(),
+        redirect: 'follow'
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const text = await res.text();
+      if (text.trim().startsWith('<')) {
+        throw new Error('Server returned HTML instead of JSON — check deployment');
+      }
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        throw new Error('Invalid JSON response');
+      }
+    }
+
+    /* STATE */
+    let selfieData = null;
+    let cameraWindow = null;
+    let currentUser = null;
+    let guests = 1;
+    let currentTicket = null;
+    let selectedAttendance = 'going';
+    let appConfig = { deadline: '', isPastDeadline: false };
+
+    const $ = id => document.getElementById(id);
+
+    /* COUNTDOWN */
+    const EVENT_DATE = new Date('2026-10-31T18:00:00');
+    let countdownInterval = null;
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    function updateCountdown() {
+      const diff = EVENT_DATE - new Date();
+      const d = $('cdDays'), h = $('cdHours'), m = $('cdMinutes'), s = $('cdSeconds');
+      if (!d || !h || !m || !s) return;
+
+      if (diff <= 0) {
+        d.textContent = h.textContent = m.textContent = s.textContent = '00';
+        const dateEl = $('countdownDate');
+        if (dateEl) dateEl.innerHTML = '<strong>The celebration has begun 🎉</strong>';
+        if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+        return;
+      }
+
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      const mins = Math.floor((diff % 3600000) / 60000);
+      const secs = Math.floor((diff % 60000) / 1000);
+
+      const newD = String(days), newH = pad(hours), newM = pad(mins), newS = pad(secs);
+      if (d.textContent !== newD) { d.textContent = newD; d.classList.remove('tick'); void d.offsetWidth; d.classList.add('tick'); }
+      if (h.textContent !== newH) { h.textContent = newH; h.classList.remove('tick'); void h.offsetWidth; h.classList.add('tick'); }
+      if (m.textContent !== newM) { m.textContent = newM; m.classList.remove('tick'); void m.offsetWidth; m.classList.add('tick'); }
+      if (s.textContent !== newS) { s.textContent = newS; s.classList.remove('tick'); void s.offsetWidth; s.classList.add('tick'); }
+    }
+
+    function startCountdown() {
+      updateCountdown();
+      if (countdownInterval) clearInterval(countdownInterval);
+      countdownInterval = setInterval(updateCountdown, 1000);
+    }
+
+    /* TOAST */
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = $('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    /* BOOTSTRAP */
+    async function initApp() {
+      try {
+        const res = await api('bootstrap');
+        if (res && res.success) {
+          appConfig.deadline = res.deadline || '';
+          appConfig.isPastDeadline = !!res.isPastDeadline;
+        }
+      } catch (e) { console.log('Bootstrap failed', e); }
+    }
+
+    /* LOGIN */
+    $('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const name = $('pwName').value.trim();
+      const email = $('pwEmail').value.trim().toLowerCase();
+
+      if (!name) { showPwMessage('Please enter your name.', 'error'); return; }
+      if (!email) { showPwMessage('Please enter your email.', 'error'); return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showPwMessage('Please enter a valid email.', 'error'); return;
+      }
+
+      const btn = $('pwBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Signing in...';
+
+      try {
+        const res = await api('simpleLogin', { name: name, email: email });
+        if (res && res.success) {
+          currentUser = res.user;
+          try { localStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
+          try { sessionStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
+          completeLogin();
+        } else {
+          showPwMessage((res && res.message) || 'Login failed.', 'error');
+        }
+      } catch (err) {
+        showPwMessage('Error: ' + err.message, 'error');
+      }
+      btn.disabled = false;
+      btn.innerHTML = 'Continue <span class="btn-arrow">→</span>';
+    });
+
+    function showPwMessage(text, type) {
+      const el = $('pwMessage');
+      el.textContent = text;
+      el.className = 'message ' + (type || '');
+    }
+
+    async function completeLogin() {
+      updateUserUI(currentUser);
+      $('name').value = currentUser.name;
+
+      $('welcomeName').textContent = currentUser.name.split(' ')[0];
+      $('welcomeEmail').textContent = currentUser.email;
+      $('welcomeAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+
+      if (appConfig.isPastDeadline) {
+        $('closedState').style.display = 'block';
+        $('formContent').style.display = 'none';
+      }
+
+      $('loginView').classList.remove('active');
+      $('welcomeView').classList.add('active');
+      showToast('Welcome, ' + currentUser.name.split(' ')[0] + '!');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      try {
+        const res = await api('checkExistingRSVP', { email: currentUser.email });
+        if (res && res.success && res.exists) {
+          $('goRsvpBtn').style.opacity = '0.5';
+          $('goRsvpBtn').style.pointerEvents = 'none';
+          $('goRsvpBtn').querySelector('.action-title').textContent = 'Already Confirmed';
+          $('goRsvpBtn').querySelector('.action-desc').textContent = 'You already have a ticket. Showing it now…';
+
+          $('ticketQrImg').src = res.ticket.qrCodeUrl;
+          $('ticketCode').textContent = res.ticket.code;
+          $('ticketName').textContent = res.ticket.name;
+          $('ticketGuests').textContent = res.ticket.guests +
+            (res.ticket.guests === 1 ? ' person' : ' people');
+
+          setTimeout(() => {
+            $('welcomeView').classList.remove('active');
+            $('formView').classList.add('active');
+            showTicket(res.ticket);
+          }, 800);
+        }
+      } catch (e) { console.log('Existing RSVP check failed:', e); }
+    }
+
+    function updateUserUI(user) {
+      const initial = user.name.charAt(0).toUpperCase();
+      $('userName').textContent = user.name;
+      $('userEmail').textContent = user.email;
+      $('userAvatar').textContent = initial;
+      $('userNameMobile').textContent = user.name;
+      $('userEmailMobile').textContent = user.email;
+      $('userAvatarMobile').textContent = initial;
+    }
+
+    /* WELCOME BUTTONS */
+    $('goRsvpBtn').addEventListener('click', function() {
+      $('welcomeView').classList.remove('active');
+      $('formView').classList.add('active');
+      $('rsvpForm').style.display = '';
+      document.querySelector('.form-head').style.display = '';
+      document.querySelector('.progress-wrap').style.display = '';
+      $('successScreen').classList.remove('show');
+      updateProgress();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    $('seeAttendeesBtn').addEventListener('click', function() {
+      $('welcomeView').classList.remove('active');
+      $('attendeesView').classList.add('active');
+      loadAttendees();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    $('backFromAttendeesBtn').addEventListener('click', function() {
+      $('attendeesView').classList.remove('active');
+      $('welcomeView').classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    $('welcomeSignoutBtn').addEventListener('click', logout);
+
+    /* ATTENDEES */
+    async function loadAttendees() {
+      const list = $('attendeesList');
+      list.innerHTML = `
+        <div class="attendees-loading">
+          <div class="loader-spinner"></div>
+          <div>Loading attendees…</div>
+        </div>
+      `;
+
+      const timeoutId = setTimeout(() => {
+        if (list.querySelector('.attendees-loading')) {
+          showAttendeesError('Taking too long', 'The server didn\'t respond. Please check your connection and try again.');
+        }
+      }, 15000);
+
+      try {
+        const res = await api('getAllAttendees');
+        clearTimeout(timeoutId);
+
+        if (!res || !res.success) {
+          showAttendeesError('Could not load', (res && res.message) || 'The server returned an error.');
+          return;
+        }
+
+        $('statParties').textContent = res.totalParties || 0;
+        $('statGuests').textContent = res.totalGuests || 0;
+
+        const attendees = res.attendees || [];
+        if (attendees.length === 0) {
+          list.innerHTML = `
+            <div class="attendees-empty">
+              <span class="ic">🎈</span>
+              <h3>No responses yet</h3>
+              <p>Be the first to confirm your attendance!</p>
+              <button type="button" onclick="document.getElementById('backFromAttendeesBtn').click()">Back</button>
+            </div>
+          `;
+          return;
+        }
+
+        list.innerHTML = attendees.map((att, i) => {
+          const initial = att.name.charAt(0).toUpperCase();
+          const guests = att.guests || 1;
+          const attendance = att.attendance || 'going';
+          const delay = Math.min(i * 40, 600);
+
+          let statusText = 'Going';
+          let badgeClass = 'badge-going';
+          if (attendance === 'planning') { statusText = 'Planning'; badgeClass = 'badge-planning'; }
+          if (attendance === 'not_going') { statusText = 'Can\'t Make It'; badgeClass = 'badge-notgoing'; }
+
+          const guestLabel = attendance === 'not_going'
+            ? '—'
+            : `${guests} ${guests === 1 ? 'guest' : 'guests'}`;
+
+          return `
+            <div class="attendee-row" style="animation-delay: ${delay}ms">
+              <div class="attendee-avatar">${escapeHtml(initial)}</div>
+              <div class="attendee-info">
+                <div class="n">${escapeHtml(att.name)}</div>
+                <div class="e ${badgeClass}">${statusText}</div>
+              </div>
+              <div class="attendee-badge">${guestLabel}</div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        clearTimeout(timeoutId);
+        console.error('loadAttendees error:', err);
+        showAttendeesError('Connection error', err.message || 'Please try again.');
+      }
+    }
+
+    function showAttendeesError(title, message) {
+      const list = $('attendeesList');
+      list.innerHTML = `
+        <div class="attendees-empty">
+          <span class="ic">😕</span>
+          <h3>${escapeHtml(title)}</h3>
+          <p>${escapeHtml(message)}</p>
+          <button type="button" id="retryAttendeesBtn">Try Again</button>
+        </div>
+      `;
+      const btn = $('retryAttendeesBtn');
+      if (btn) {
+        btn.addEventListener('click', loadAttendees);
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[c]);
+    }
+
+    /* LOGOUT */
+    function logout() {
+      try { localStorage.removeItem('birthdayUser'); sessionStorage.removeItem('birthdayUser'); } catch (e) {}
+      currentUser = null; selfieData = null; guests = 1; currentTicket = null;
+      selectedAttendance = 'going';
+      const attGridReset = $('attendanceGrid');
+      if (attGridReset) {
+        attGridReset.querySelectorAll('.attendance-option').forEach(function(b, i) {
+          b.classList.toggle('selected', i === 0);
+        });
+      }
+      $('guestValue').textContent = '1';
+      $('guestMinus').disabled = true;
+      $('guestPlus').disabled = false;
+      $('rsvpForm').reset();
+      renderEmptyCamera();
+      resetAfterTicket(true);
+      updateProgress();
+      $('formView').classList.remove('active');
+      $('welcomeView').classList.remove('active');
+      $('attendeesView').classList.remove('active');
+      $('loginView').classList.add('active');
+      $('pwName').value = '';
+      $('pwEmail').value = '';
+      $('goRsvpBtn').style.opacity = '';
+      $('goRsvpBtn').style.pointerEvents = '';
+      $('goRsvpBtn').querySelector('.action-title').textContent = 'Confirm Attendance';
+      $('goRsvpBtn').querySelector('.action-desc').textContent = 'Share your details and a selfie to get your entrance ticket.';
+      showToast('Signed out.');
+    }
+
+    $('logoutBtnDesktop').addEventListener('click', logout);
+    $('logoutBtnMobile').addEventListener('click', logout);
+
+    /* GUEST COUNTER */
+    function updateGuests(delta) {
+      guests = Math.max(1, Math.min(20, guests + delta));
+      $('guestValue').textContent = guests;
+      $('guestMinus').disabled = guests <= 1;
+      $('guestPlus').disabled = guests >= 20;
+      updateProgress();
+    }
+    $('guestMinus').addEventListener('click', () => updateGuests(-1));
+    $('guestPlus').addEventListener('click', () => updateGuests(1));
+    $('guestMinus').disabled = true;
+
+    /* ATTENDANCE SELECTOR */
+    (function initAttendanceSelector() {
+      const grid = $('attendanceGrid');
+      if (!grid) return;
+      grid.querySelectorAll('.attendance-option').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          grid.querySelectorAll('.attendance-option').forEach(function(b) {
+            b.classList.remove('selected');
+          });
+          btn.classList.add('selected');
+          selectedAttendance = btn.dataset.value || 'going';
+          updateProgress();
+        });
+      });
+    })();
+
+    /* PROGRESS */
+    function updateProgress() {
+      const name = $('name').value.trim();
+      const mobile = $('mobile').value.trim();
+      const address = $('address').value.trim();
+      const greetings = $('greetings').value.trim();
+      let filled = 0;
+      if (name) filled++;
+      if (mobile) filled++;
+      if (address) filled++;
+      if (greetings) filled++;
+      if (selfieData) filled++;
+      filled++;
+      const pct = Math.round((filled / 6) * 100);
+      $('progressFill').style.width = pct + '%';
+      $('progressPct').textContent = pct + '%';
+    }
+
+    ['name', 'mobile', 'address', 'greetings'].forEach(id => {
+      $(id).addEventListener('input', updateProgress);
+    });
+
+    /* CAMERA */
+    function renderEmptyCamera() {
+      const box = $('cameraBox');
+      box.classList.remove('filled');
+      box.innerHTML = `
+        <div class="camera-placeholder">
+          <div class="cam-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </div>
+          <div class="cam-title">Take a selfie</div>
+          <div class="cam-sub">Camera opens in a new window</div>
+          <button type="button" class="btn-camera" id="openCameraBtn">Open Camera</button>
+        </div>
+      `;
+      $('openCameraBtn').addEventListener('click', openCameraPopup);
+    }
+
+    function renderCapturedCamera(dataUrl) {
+      const box = $('cameraBox');
+      box.classList.add('filled');
+      box.innerHTML = `
+        <div class="selfie-preview">
+          <div class="selfie-frame"><img src="${dataUrl}" alt="Your selfie"></div>
+          <div class="selfie-badge">Selfie captured</div>
+          <button type="button" class="btn-retake" id="retakeBtn">Retake</button>
+        </div>
+      `;
+      $('retakeBtn').addEventListener('click', function() {
+        selfieData = null;
+        renderEmptyCamera();
+        updateProgress();
+      });
+    }
+
+    function openCameraPopup() {
+      const isMobile = window.innerWidth < 640;
+      let width, height;
+      if (isMobile) {
+        width = Math.min(window.innerWidth - 24, 460);
+        height = Math.min(window.innerHeight - 24, 780);
+      } else {
+        width = 480; height = 720;
+      }
+      const left = Math.max(0, (screen.width - width) / 2);
+      const top = Math.max(0, (screen.height - height) / 2);
+      cameraWindow = window.open('', 'SelfieCamera',
+        `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no`);
+      if (!cameraWindow) { alert('Popup blocked. Please allow popups and try again.'); return; }
+      cameraWindow.document.open();
+      cameraWindow.document.write(getCameraHTML());
+      cameraWindow.document.close();
+    }
+
+    function getCameraHTML() {
+      return `<!DOCTYPE html>
+<html>
+<head>
+  <title>Take a Selfie</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0a">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; -webkit-text-size-adjust: 100%; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0a0a; color: #fff;
+      display: flex; flex-direction: column; height: 100vh; height: 100dvh;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+    .topbar { padding: 14px 16px; text-align: center; background: #0a0a0a;
+      border-bottom: 1px solid #1c1c1c; font-weight: 600; font-size: 13px;
+      letter-spacing: 0.15em; text-transform: uppercase; color: #a8a8a8; flex-shrink: 0; }
+    .video-container { flex: 1; position: relative; background: #000; overflow: hidden; min-height: 0; }
+    video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+    .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+    .flash.fire { animation: flashAnim 0.4s ease; }
+    @keyframes flashAnim { 0% { opacity: 0.9; } 100% { opacity: 0; } }
+    .countdown { position: absolute; inset: 0; background: rgba(10,10,10,0.7);
+      display: none; align-items: center; justify-content: center; color: #fff;
+      font-size: clamp(72px, 25vw, 120px); font-weight: 800; letter-spacing: -0.05em; }
+    .countdown.show { display: flex; }
+    .bottom { padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+      background: #0a0a0a; border-top: 1px solid #1c1c1c;
+      display: flex; flex-direction: column; align-items: center; gap: 12px; flex-shrink: 0; }
+    .status { font-size: 12px; color: #6b6b6b; text-align: center; min-height: 16px; padding: 0 8px; }
+    .status.error { color: #dc2626; }
+    button { padding: 14px 32px; border: none; border-radius: 10px; background: #fff;
+      color: #0a0a0a; font-weight: 600; font-size: 14px; cursor: pointer;
+      transition: all 0.2s; font-family: inherit; min-height: 44px;
+      -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+    button:active:not(:disabled) { transform: scale(0.97); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.secondary { background: transparent; border: 1px solid #2a2a2a; color: #a8a8a8; padding: 12px 22px; font-size: 12px; }
+    .row { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <div class="topbar">Take a Selfie</div>
+  <div class="video-container">
+    <video id="v" autoplay playsinline muted webkit-playsinline></video>
+    <div class="flash" id="flash"></div>
+    <div class="countdown" id="countdown">3</div>
+  </div>
+  <div class="bottom">
+    <div class="status" id="status">Starting camera...</div>
+    <div class="row">
+      <button id="snap" disabled>Capture</button>
+      <button id="close" class="secondary">Cancel</button>
+    </div>
+  </div>
+  <script>
+    const v = document.getElementById('v');
+    const status = document.getElementById('status');
+    const snapBtn = document.getElementById('snap');
+    const closeBtn = document.getElementById('close');
+    const flash = document.getElementById('flash');
+    const countdownEl = document.getElementById('countdown');
+    let stream = null, countdownTimer = null;
+
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 960 } },
+      audio: false
+    }).then(st => {
+      stream = st;
+      v.srcObject = st;
+      status.textContent = 'Center your face and tap Capture';
+      snapBtn.disabled = false;
+    }).catch(err => {
+      status.classList.add('error');
+      let msg = 'Cannot access camera: ' + err.name;
+      if (err.name === 'NotAllowedError') msg = 'Permission denied. Please allow camera access.';
+      if (err.name === 'NotFoundError') msg = 'No camera detected.';
+      if (err.name === 'NotReadableError') msg = 'Camera in use by another app.';
+      status.textContent = msg;
+    });
+
+    snapBtn.onclick = () => {
+      let count = 3;
+      countdownEl.textContent = count;
+      countdownEl.classList.add('show');
+      snapBtn.disabled = true;
+      countdownTimer = setInterval(() => {
+        count--;
+        if (count > 0) { countdownEl.textContent = count; }
+        else {
+          clearInterval(countdownTimer); countdownTimer = null;
+          countdownEl.classList.remove('show'); doCapture();
+        }
+      }, 700);
+    };
+
+    function doCapture() {
+      flash.classList.add('fire');
+      setTimeout(() => flash.classList.remove('fire'), 400);
+      const w = v.videoWidth, h = v.videoHeight;
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.translate(w, 0); ctx.scale(-1, 1); ctx.drawImage(v, 0, 0, w, h);
+      const maxW = 720;
+      let outCanvas = canvas;
+      if (w > maxW) {
+        const scale = maxW / w;
+        outCanvas = document.createElement('canvas');
+        outCanvas.width = maxW; outCanvas.height = h * scale;
+        outCanvas.getContext('2d').drawImage(canvas, 0, 0, outCanvas.width, outCanvas.height);
+      }
+      const dataUrl = outCanvas.toDataURL('image/jpeg', 0.85);
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({ type: 'SELFIE_CAPTURED', data: dataUrl }, '*');
+      }
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      window.close();
+    }
+
+    closeBtn.onclick = () => {
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      if (countdownTimer) clearInterval(countdownTimer);
+      window.close();
+    };
+
+    window.addEventListener('beforeunload', () => {
+      if (stream) stream.getTracks().forEach(t => t.stop());
+    });
+  <\/script>
+</body>
+</html>`;
+    }
+
+    window.addEventListener('message', function(event) {
+      if (event.data && event.data.type === 'SELFIE_CAPTURED') {
+        selfieData = {
+          data: event.data.data,
+          name: 'selfie_' + Date.now() + '.jpg'
+        };
+        renderCapturedCamera(event.data.data);
+        updateProgress();
+      }
+    });
+
+    /* SUBMIT */
+    $('rsvpForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      if (appConfig.isPastDeadline) { showMessage('Confirmations are closed.', 'error'); return; }
+      if (!selfieData) { showMessage('Please take a selfie before submitting.', 'error'); return; }
+
+      const btn = $('submitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Sending...';
+      $('message').style.display = 'none';
+
+      const formData = {
+        name: $('name').value.trim(),
+        mobile: $('mobile').value.trim(),
+        address: $('address').value.trim(),
+        greetings: $('greetings').value.trim(),
+        selfie: selfieData,
+        email: currentUser ? currentUser.email : '',
+        loginMethod: 'email',
+        guests: guests,
+        attendance: selectedAttendance
+      };
+
+      try {
+        const res = await api('submitForm', { data: JSON.stringify(formData) });
+        if (res && res.success && res.ticket) {
+          showTicket(res.ticket);
+        } else if (res && res.duplicate && res.ticket) {
+          showMessage('You already confirmed. Showing your ticket…', 'success');
+          setTimeout(() => showTicket(res.ticket), 800);
+        } else if (res && res.success) {
+          showMessage(res.message, 'success');
+        } else {
+          showMessage((res && res.message) || 'Failed to submit.', 'error');
+        }
+      } catch (err) {
+        showMessage('Error: ' + err.message, 'error');
+      }
+      btn.disabled = false;
+      btn.innerHTML = 'Confirm Attendance <span class="btn-arrow">→</span>';
+    });
+
+    function showMessage(text, type) {
+      const el = $('message');
+      el.textContent = text;
+      el.className = 'message ' + type;
+    }
+
+    /* SHOW SUCCESS SCREEN */
+    function showTicket(ticket) {
+      currentTicket = ticket;
+      $('ticketQrImg').src = ticket.qrCodeUrl;
+      $('ticketCode').textContent = ticket.code;
+      $('ticketName').textContent = ticket.name;
+      $('ticketGuests').textContent = ticket.guests + (ticket.guests === 1 ? ' person' : ' people');
+
+      $('rsvpForm').style.display = 'none';
+      document.querySelector('.form-head').style.display = 'none';
+      document.querySelector('.progress-wrap').style.display = 'none';
+      $('message').style.display = 'none';
+
+      $('successScreen').classList.add('show');
+
+      animateCaption('Shanghai secured');
+      fireConfetti();
+      fireSparkles();
+
+      showToast('You\'re on the list! 🎉');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* Letter by letter caption animation */
+    function animateCaption(text) {
+      const el = $('successCaption');
+      el.innerHTML = '';
+      const letters = text.split('');
+      letters.forEach(function(ch, i) {
+        const span = document.createElement('span');
+        if (ch === ' ') {
+          span.className = 'space';
+        } else {
+          span.className = 'letter';
+          span.textContent = ch;
+          span.style.animationDelay = (1.0 + i * 0.06) + 's';
+        }
+        el.appendChild(span);
+      });
+    }
+
+    /* Sparkles around check */
+    function fireSparkles() {
+      const wrap = $('checkWrap');
+      if (!wrap) return;
+      wrap.querySelectorAll('.sparkle').forEach(s => s.remove());
+
+      const count = 10;
+      for (let i = 0; i < count; i++) {
+        const s = document.createElement('div');
+        s.className = 'sparkle';
+        const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
+        const dist = 70 + Math.random() * 40;
+        s.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+        s.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
+        s.style.animationDelay = (0.9 + Math.random() * 0.3) + 's';
+        wrap.appendChild(s);
+        setTimeout(() => s.classList.add('show'), 900 + i * 30);
+      }
+    }
+
+    /* Confetti burst */
+    function fireConfetti() {
+      const overlay = $('successConfetti');
+      if (!overlay) return;
+      overlay.classList.add('show');
+      overlay.innerHTML = '';
+
+      const colors = ['#0a0a0a', '#2a2a2a', '#6b6b6b', '#a8a8a8', '#fbbf24', '#16a34a'];
+      const pieces = 60;
+
+      for (let i = 0; i < pieces; i++) {
+        const p = document.createElement('div');
+        p.className = 'confetti-piece';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.background = colors[Math.floor(Math.random() * colors.length)];
+        p.style.width = (6 + Math.random() * 8) + 'px';
+        p.style.height = (8 + Math.random() * 10) + 'px';
+        p.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        p.style.animationDelay = (Math.random() * 0.8) + 's';
+        p.style.animationDuration = (2.4 + Math.random() * 1.6) + 's';
+        overlay.appendChild(p);
+      }
+
+      setTimeout(() => {
+        overlay.classList.remove('show');
+        overlay.innerHTML = '';
+      }, 5000);
+    }
+
+    function resetAfterTicket(silent) {
+      currentTicket = null;
+      $('successScreen').classList.remove('show');
+      $('rsvpForm').style.display = '';
+      document.querySelector('.form-head').style.display = '';
+      document.querySelector('.progress-wrap').style.display = '';
+      $('rsvpForm').reset();
+      selfieData = null;
+      guests = 1;
+      selectedAttendance = 'going';
+      const attGridR = $('attendanceGrid');
+      if (attGridR) {
+        attGridR.querySelectorAll('.attendance-option').forEach(function(b, i) {
+          b.classList.toggle('selected', i === 0);
+        });
+      }
+      $('guestValue').textContent = '1';
+      $('guestMinus').disabled = true;
+      $('guestPlus').disabled = false;
+      renderEmptyCamera();
+      updateProgress();
+      if (currentUser && currentUser.name) { $('name').value = currentUser.name; }
+      if (!silent) {
+        $('formView').classList.remove('active');
+        $('welcomeView').classList.add('active');
+        showToast('Ready for the next guest.');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    $('newRsvpBtn').addEventListener('click', () => resetAfterTicket(false));
+    $('downloadQrBtn').addEventListener('click', () => {
+      if (!currentTicket) return;
+      const link = document.createElement('a');
+      link.href = currentTicket.qrCodeUrl;
+      link.download = 'ticket-' + currentTicket.code + '.png';
+      link.target = '_blank';
+      link.rel = 'noopener';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Opening QR — long-press to save.');
+    });
+
+    /* INIT */
+    renderEmptyCamera();
+    startCountdown();
+    initApp();
+    updateProgress();
+  </script>
+</body>
+</html>
