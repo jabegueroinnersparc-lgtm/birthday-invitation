@@ -529,12 +529,6 @@
           </div>
         </div>
 
-        <!-- Deadline banner -->
-        <div class="deadline-banner" id="deadlineBanner">
-          <span class="ic">⏰</span>
-          <span id="deadlineText">RSVP is open</span>
-        </div>
-
         <!-- LOGIN FORM -->
         <form id="loginForm" autocomplete="on">
           <div class="field">
@@ -563,17 +557,17 @@
 
   <script>
     /* ============================================================
+       CONFIG — your Apps Script URL
+       ============================================================ */
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzoNUCRIwXKbndf9QWsalqq5jn026zRc3DUfzCW6dihq8p4fol6GyX2MWp2FkGQz_0/exec';
+
+    /* ============================================================
        STATE
        ============================================================ */
-    let currentUser = null;
-    let appConfig = { deadline: '', isPastDeadline: false };
-
     const $ = id => document.getElementById(id);
     const loginForm = $('loginForm');
     const pwBtn = $('pwBtn');
     const pwMessage = $('pwMessage');
-    const deadlineBanner = $('deadlineBanner');
-    const deadlineText = $('deadlineText');
 
     /* ============================================================
        COUNTDOWN TO OCTOBER 31, 2026
@@ -628,101 +622,54 @@
     }
 
     /* ============================================================
-       BACKEND HELPERS
+       SHOW MESSAGE
        ============================================================ */
-    function hasBackend() {
-      return typeof google !== 'undefined'
-        && google.script
-        && google.script.run;
-    }
-
-    function initApp() {
-      if (!hasBackend()) return;
-      google.script.run
-        .withSuccessHandler(function(res) {
-          if (!res || !res.success) return;
-          appConfig.deadline = res.deadline || '';
-          appConfig.isPastDeadline = !!res.isPastDeadline;
-          renderDeadlineBanner();
-        })
-        .withFailureHandler(function(err) { console.error(err); })
-        .bootstrap();
-    }
-
-    function renderDeadlineBanner() {
-      if (!appConfig.deadline) { deadlineBanner.classList.remove('show'); return; }
-      const d = new Date(appConfig.deadline);
-      const now = new Date();
-      deadlineBanner.classList.add('show');
-      deadlineBanner.classList.toggle('closed', appConfig.isPastDeadline);
-      if (appConfig.isPastDeadline) {
-        deadlineText.textContent = 'RSVP closed on ' + d.toLocaleDateString();
-      } else {
-        const days = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
-        deadlineText.textContent = days > 0
-          ? 'RSVP closes in ' + days + ' day' + (days === 1 ? '' : 's')
-          : 'RSVP closes today';
-      }
-    }
-
     function showPwMessage(text, type) {
       pwMessage.textContent = text;
       pwMessage.className = 'message ' + (type || '');
     }
 
     /* ============================================================
-       LOGIN SUBMIT
+       LOGIN SUBMIT — redirects to Apps Script
        ============================================================ */
     loginForm.addEventListener('submit', function(e) {
       e.preventDefault();
       const name = $('pwName').value.trim();
       const email = $('pwEmail').value.trim().toLowerCase();
 
+      // --- Validation ---
       if (!name) { showPwMessage('Please enter your name.', 'error'); return; }
       if (!email) { showPwMessage('Please enter your email.', 'error'); return; }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         showPwMessage('Please enter a valid email.', 'error'); return;
       }
 
-      // If no backend (Vercel, GitHub Pages), gracefully store locally and show welcome
-      if (!hasBackend()) {
-        currentUser = { name: name, email: email, method: 'email' };
-        try { localStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (e) {}
-        try { sessionStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (e) {}
-        showPwMessage('Welcome, ' + name.split(' ')[0] + '!', 'success');
-        return;
-      }
-
-      // On Apps Script — do the real login
+      // --- Loading state ---
       pwBtn.disabled = true;
-      pwBtn.innerHTML = '<span class="spinner"></span>Signing in...';
+      pwBtn.innerHTML = '<span class="spinner"></span>Opening…';
+      showPwMessage('Opening your invitation…', 'success');
 
-      google.script.run
-        .withSuccessHandler(function(res) {
-          if (res && res.success) {
-            currentUser = res.user;
-            try { localStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (e) {}
-            try { sessionStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (e) {}
-            showPwMessage('Welcome, ' + currentUser.name.split(' ')[0] + '!', 'success');
-          } else {
-            showPwMessage((res && res.message) || 'Login failed.', 'error');
-          }
-          pwBtn.disabled = false;
-          pwBtn.innerHTML = 'Continue <span class="btn-arrow">→</span>';
-        })
-        .withFailureHandler(function(err) {
-          showPwMessage('Error: ' + err.message, 'error');
-          pwBtn.disabled = false;
-          pwBtn.innerHTML = 'Continue <span class="btn-arrow">→</span>';
-        })
-        .simpleLogin(name, email);
+      // --- Save name/email so they're available if needed later ---
+      try {
+        sessionStorage.setItem('birthdayPrefillName', name);
+        sessionStorage.setItem('birthdayPrefillEmail', email);
+      } catch (err) {}
+
+      // --- Redirect to Apps Script after a short pause ---
+      setTimeout(function() {
+        // Build URL with the user's data as query params (optional — helpful for prefill)
+        const target = APPS_SCRIPT_URL
+          + '?name=' + encodeURIComponent(name)
+          + '&email=' + encodeURIComponent(email);
+
+        window.location.href = target;
+      }, 700);
     });
 
     /* ============================================================
        INIT
        ============================================================ */
     startCountdown();
-    initApp();
   </script>
 </body>
 </html>
