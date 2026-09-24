@@ -349,6 +349,28 @@ function getWhitelistAccount(email) {
   return account;
 }
 
+function createGuestAccount(name, email, password) {
+  const whitelist = getSheet(SHEET_WHITELIST, true);
+  if (whitelist.getLastRow() === 0) {
+    whitelist.appendRow(['Email', 'Name']);
+  }
+
+  const passwords = createPasswordSheet();
+  const salt = Utilities.getUuid().replace(/-/g, '');
+  const hash = hashGuestPassword(password, salt);
+
+  whitelist.appendRow([email, name]);
+  passwords.appendRow([email, salt, hash]);
+
+  Logger.log('Created guest account for ' + email + '.');
+  return {
+    success: true,
+    created: true,
+    passwordVerified: true,
+    user: { name: name, email: email, method: 'password' }
+  };
+}
+
 function simpleLogin(name, email, password) {
   try {
     name = String(name || '').trim();
@@ -362,10 +384,35 @@ function simpleLogin(name, email, password) {
       return { success: false, message: 'Please enter a valid email.' };
     }
 
-    const check = checkWhitelist(email);
-    if (!check.allowed) return { success: false, passwordVerified: false, message: 'Invalid credentials.' };
-
     const account = getWhitelistAccount(email);
+    if (!account) {
+      // First-time users are registered automatically. The script lock prevents
+      // two simultaneous requests from creating duplicate rows.
+      const lock = LockService.getScriptLock();
+      lock.waitLock(10000);
+      try {
+        const existingAccount = getWhitelistAccount(email);
+        if (existingAccount) {
+          const existingHash = existingAccount.hash;
+          if (!existingAccount.salt || !existingHash) {
+            return { success: false, passwordConfigured: false, passwordVerified: false };
+          }
+          const existingCandidate = hashGuestPassword(password, existingAccount.salt);
+          if (!constantTimeEqual(existingCandidate, existingHash)) {
+            return { success: false, passwordVerified: false, message: 'Invalid credentials.' };
+          }
+          return {
+            success: true,
+            passwordVerified: true,
+            user: { name: existingAccount.name || name, email: email, method: 'password' }
+          };
+        }
+        return createGuestAccount(name, email, password);
+      } finally {
+        lock.releaseLock();
+      }
+    }
+
     if (!account || !account.salt || !account.hash) {
       Logger.log('Password not configured for guest: ' + email);
       return { success: false, passwordConfigured: false, passwordVerified: false };
