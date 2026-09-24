@@ -68,9 +68,7 @@
       .bg-grid { background-size: 32px 32px; }
     }
 
-    /* ============================================================
-       TICKER
-       ============================================================ */
+    /* TICKER */
     .ticker-wrap {
       display: none;
       position: fixed;
@@ -365,9 +363,7 @@
     .message.success { background: #f0fdf4; color: #14532d; border: 1px solid #bbf7d0; display: block; }
     .message.error { background: #fef2f2; color: #7f1d1d; border: 1px solid #fecaca; display: block; }
 
-    /* ============================================================
-       WELCOME / CHOOSE VIEW
-       ============================================================ */
+    /* WELCOME VIEW */
     .welcome-wrap {
       max-width: 720px;
       margin: 0 auto;
@@ -534,9 +530,7 @@
     }
     .btn-signout:hover { color: var(--black); }
 
-    /* ============================================================
-       ATTENDEES LIST VIEW
-       ============================================================ */
+    /* ATTENDEES */
     .attendees-wrap {
       max-width: 720px;
       margin: 0 auto;
@@ -680,13 +674,38 @@
       font-size: 14px;
       color: var(--steel);
       line-height: 1.55;
+      margin-bottom: 14px;
     }
+    .attendees-empty button {
+      background: var(--black);
+      color: var(--white);
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .attendees-empty button:active { transform: scale(0.98); }
 
     .attendees-loading {
       padding: 60px 30px;
       text-align: center;
       color: var(--steel);
       font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .attendees-loading .loader-spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--pearl);
+      border-top-color: var(--black);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
     }
 
     /* FORM VIEW */
@@ -1095,7 +1114,7 @@
       </div>
     </section>
 
-    <!-- VIEW 2: WELCOME / CHOOSE -->
+    <!-- VIEW 2: WELCOME -->
     <section class="view" id="welcomeView">
       <div class="welcome-wrap">
         <div class="welcome-header">
@@ -1138,7 +1157,7 @@
       </div>
     </section>
 
-    <!-- VIEW 3: ATTENDEES LIST -->
+    <!-- VIEW 3: ATTENDEES -->
     <section class="view" id="attendeesView">
       <div class="attendees-wrap">
         <div class="attendees-header">
@@ -1163,7 +1182,10 @@
         </div>
 
         <div class="attendees-list" id="attendeesList">
-          <div class="attendees-loading">Loading attendees…</div>
+          <div class="attendees-loading">
+            <div class="loader-spinner"></div>
+            <div>Loading attendees…</div>
+          </div>
         </div>
       </div>
     </section>
@@ -1300,9 +1322,7 @@
   </div>
 
   <script>
-    /* ============================================================
-       CONFIG
-       ============================================================ */
+    /* CONFIG */
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzoNUCRIwXKbndf9QWsalqq5jn026zRc3DUfzCW6dihq8p4fol6GyX2MWp2FkGQz_0/exec';
 
     async function api(action, params) {
@@ -1314,7 +1334,16 @@
         redirect: 'follow'
       });
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      return res.json();
+      const text = await res.text();
+      // Guard: if the server returns HTML (error page), don't try to parse as JSON
+      if (text.trim().startsWith('<')) {
+        throw new Error('Server returned HTML instead of JSON — check deployment');
+      }
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        throw new Error('Invalid JSON response');
+      }
     }
 
     /* STATE */
@@ -1559,14 +1588,29 @@
 
     $('welcomeSignoutBtn').addEventListener('click', logout);
 
+    /* ATTENDEES — with timeout + retry */
     async function loadAttendees() {
       const list = $('attendeesList');
-      list.innerHTML = '<div class="attendees-loading">Loading attendees…</div>';
+      list.innerHTML = `
+        <div class="attendees-loading">
+          <div class="loader-spinner"></div>
+          <div>Loading attendees…</div>
+        </div>
+      `;
+
+      // Timeout safety — 15 seconds
+      const timeoutId = setTimeout(() => {
+        if (list.querySelector('.attendees-loading')) {
+          showAttendeesError('Taking too long', 'The server didn\'t respond. Please check your connection and try again.');
+        }
+      }, 15000);
 
       try {
         const res = await api('getAllAttendees');
+        clearTimeout(timeoutId);
+
         if (!res || !res.success) {
-          list.innerHTML = '<div class="attendees-empty"><span class="ic">😕</span><h3>Could not load</h3><p>Please try again.</p></div>';
+          showAttendeesError('Could not load', (res && res.message) || 'The server returned an error.');
           return;
         }
 
@@ -1580,6 +1624,7 @@
               <span class="ic">🎈</span>
               <h3>No RSVPs yet</h3>
               <p>Be the first to confirm your attendance!</p>
+              <button type="button" onclick="document.getElementById('backFromAttendeesBtn').click()">Back</button>
             </div>
           `;
           return;
@@ -1600,8 +1645,26 @@
             </div>
           `;
         }).join('');
-      } catch (e) {
-        list.innerHTML = '<div class="attendees-empty"><span class="ic">😕</span><h3>Error</h3><p>' + escapeHtml(e.message) + '</p></div>';
+      } catch (err) {
+        clearTimeout(timeoutId);
+        console.error('loadAttendees error:', err);
+        showAttendeesError('Connection error', err.message || 'Please try again.');
+      }
+    }
+
+    function showAttendeesError(title, message) {
+      const list = $('attendeesList');
+      list.innerHTML = `
+        <div class="attendees-empty">
+          <span class="ic">😕</span>
+          <h3>${escapeHtml(title)}</h3>
+          <p>${escapeHtml(message)}</p>
+          <button type="button" id="retryAttendeesBtn">Try Again</button>
+        </div>
+      `;
+      const btn = $('retryAttendeesBtn');
+      if (btn) {
+        btn.addEventListener('click', loadAttendees);
       }
     }
 
@@ -1894,7 +1957,6 @@
         if (res && res.success && res.ticket) {
           showTicket(res.ticket);
         } else if (res && res.duplicate && res.ticket) {
-          // Duplicate detected — show their existing ticket
           showMessage('You already RSVP\'d. Showing your ticket…', 'success');
           setTimeout(() => showTicket(res.ticket), 800);
         } else if (res && res.success) {
@@ -1946,7 +2008,6 @@
       updateProgress();
       if (currentUser && currentUser.name) { $('name').value = currentUser.name; }
       if (!silent) {
-        // Take user back to welcome
         $('formView').classList.remove('active');
         $('welcomeView').classList.add('active');
         showToast('Ready for the next RSVP.');
