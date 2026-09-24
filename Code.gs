@@ -1,5 +1,8 @@
 /**
  * Birthday Invitation — Backend (with QR tickets + admin scanner)
+ * Supports both:
+ *   - Apps Script HTML service (doGet)
+ *   - Vercel frontend via fetch() (doPost)
  */
 
 const SHEET_RESPONSES = 'Responses';
@@ -14,7 +17,7 @@ const RESPONSES_HEADERS = [
 ];
 
 /* ============================================================
-   WEB APP ENTRY
+   WEB APP ENTRY (GET)
    ============================================================ */
 function doGet(e) {
   const page = (e && e.parameter && e.parameter.page) || 'index';
@@ -30,6 +33,67 @@ function doGet(e) {
     .setTitle('Simon Jabeguero')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/* ============================================================
+   API ENTRY (POST) — for Vercel / GitHub Pages frontend
+   ============================================================ */
+function doPost(e) {
+  try {
+    // CORS-friendly: parse form-encoded parameters
+    const params = (e && e.parameter) || {};
+    const action = params.action;
+
+    Logger.log('doPost called: action=' + action);
+
+    // --- Bootstrap (deadline info) ---
+    if (action === 'bootstrap') {
+      return jsonResponse(bootstrap());
+    }
+
+    // --- Simple login (name + email) ---
+    if (action === 'simpleLogin') {
+      return jsonResponse(simpleLogin(params.name || '', params.email || ''));
+    }
+
+    // --- RSVP submission ---
+    if (action === 'submitForm') {
+      let formData = {};
+      try {
+        // Sent as JSON string in "data"
+        formData = JSON.parse(params.data || '{}');
+      } catch (err) {
+        return jsonResponse({ success: false, message: 'Invalid form data.' });
+      }
+      return jsonResponse(submitForm(formData));
+    }
+
+    // --- Admin login ---
+    if (action === 'adminLogin') {
+      return jsonResponse(adminLogin(params.password || ''));
+    }
+
+    // --- Verify ticket (scanner) ---
+    if (action === 'verifyTicket') {
+      return jsonResponse(verifyTicket(params.code || ''));
+    }
+
+    // --- Check in ticket (scanner) ---
+    if (action === 'checkInTicket') {
+      return jsonResponse(checkInTicket(params.code || ''));
+    }
+
+    return jsonResponse({ success: false, message: 'Unknown action: ' + action });
+  } catch (err) {
+    Logger.log('doPost error: ' + err.toString());
+    return jsonResponse({ success: false, message: err.toString() });
+  }
+}
+
+function jsonResponse(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 /* ============================================================
@@ -433,43 +497,4 @@ function setupSheets() {
 
   Logger.log('=== Setup complete ===');
   return 'Setup complete.';
-}
-
-/**
- * Handle requests from GitHub Pages.
- * The action parameter tells us what to do.
- */
-function doPost(e) {
-  try {
-    const params = e.parameter || {};
-    const action = params.action;
-
-    // --- Admin Login ---
-    if (action === 'adminLogin') {
-      const result = adminLogin(params.password || '');
-      return jsonResponse(result);
-    }
-
-    // --- Verify Ticket ---
-    if (action === 'verifyTicket') {
-      const result = verifyTicket(params.code || '');
-      return jsonResponse(result);
-    }
-
-    // --- Check In Ticket ---
-    if (action === 'checkInTicket') {
-      const result = checkInTicket(params.code || '');
-      return jsonResponse(result);
-    }
-
-    return jsonResponse({ success: false, message: 'Unknown action: ' + action });
-  } catch (err) {
-    return jsonResponse({ success: false, message: err.toString() });
-  }
-}
-
-function jsonResponse(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
 }
