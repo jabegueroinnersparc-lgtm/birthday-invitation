@@ -4,9 +4,11 @@
  *   - Apps Script HTML service (doGet)
  *   - Vercel / GitHub Pages frontend via fetch() (doPost)
  *
- * doPost now handles both:
+ * doPost handles both:
  *   - e.parameter (URL query params)
- *   - e.postData.contents (raw POST body) — parsed manually for reliability
+ *   - e.postData.contents (raw POST body) — parsed manually
+ *
+ * Attendance values: 'going' | 'planning' | 'not_going'
  */
 
 const SHEET_RESPONSES = 'Responses';
@@ -17,7 +19,7 @@ const FOLDER_NAME     = 'Birthday Selfies';
 const RESPONSES_HEADERS = [
   'Timestamp', 'Name', 'Mobile', 'Address', 'Greetings',
   'Selfie URL', 'Email', 'Guests', 'Login Method',
-  'Ticket Code', 'Checked In'
+  'Ticket Code', 'Checked In', 'Attendance'
 ];
 
 /* ============================================================
@@ -40,20 +42,17 @@ function doGet(e) {
 }
 
 /* ============================================================
-   PARAM PARSER — handles every possible way Apps Script
-   receives POST data
+   PARAM PARSER
    ============================================================ */
 function parseParams(e) {
   const params = {};
 
-  // 1. URL query params (from GET-style POSTs)
   if (e && e.parameter) {
     Object.keys(e.parameter).forEach(function(k) {
       params[k] = e.parameter[k];
     });
   }
 
-  // 2. Raw POST body — parse manually
   if (e && e.postData && e.postData.contents) {
     const body = e.postData.contents;
     if (body) {
@@ -63,7 +62,6 @@ function parseParams(e) {
         if (idx > 0) {
           const key = decodeURIComponent(pair.substring(0, idx).replace(/\+/g, ' '));
           const val = decodeURIComponent(pair.substring(idx + 1).replace(/\+/g, ' '));
-          // Don't overwrite values already in e.parameter
           if (params[key] === undefined) {
             params[key] = val;
           }
@@ -72,7 +70,6 @@ function parseParams(e) {
     }
   }
 
-  // 3. Fallback: sometimes body is JSON
   if (e && e.postData && e.postData.contents && !params.action) {
     try {
       const parsed = JSON.parse(e.postData.contents);
@@ -88,7 +85,7 @@ function parseParams(e) {
 }
 
 /* ============================================================
-   API ENTRY (POST) — for Vercel / GitHub Pages frontend
+   API ENTRY (POST)
    ============================================================ */
 function doPost(e) {
   try {
@@ -96,19 +93,15 @@ function doPost(e) {
     const action = params.action;
 
     Logger.log('doPost called: action=' + action);
-    Logger.log('Full params: ' + JSON.stringify(params));
 
-    // --- Bootstrap ---
     if (action === 'bootstrap') {
       return jsonResponse(bootstrap());
     }
 
-    // --- Guest login (name + email) ---
     if (action === 'simpleLogin') {
       return jsonResponse(simpleLogin(params.name || '', params.email || ''));
     }
 
-    // --- RSVP submission ---
     if (action === 'submitForm') {
       let formData = {};
       try {
@@ -119,32 +112,22 @@ function doPost(e) {
       return jsonResponse(submitForm(formData));
     }
 
-    // --- Admin login ---
     if (action === 'adminLogin') {
       return jsonResponse(adminLogin(params.password || ''));
     }
 
-    // --- Verify ticket (scanner) ---
     if (action === 'verifyTicket') {
       return jsonResponse(verifyTicket(params.code || ''));
     }
 
-    // --- Check in ticket (scanner) ---
     if (action === 'checkInTicket') {
       return jsonResponse(checkInTicket(params.code || ''));
     }
 
-    // --- Recent guests (ticker) ---
-    if (action === 'recentGuests') {
-      return jsonResponse(getRecentGuests());
-    }
-
-    // --- Check if email already RSVP'd ---
     if (action === 'checkExistingRSVP') {
       return jsonResponse(checkExistingRSVP(params.email || ''));
     }
 
-    // --- Get full attendees list ---
     if (action === 'getAllAttendees') {
       return jsonResponse(getAllAttendees());
     }
@@ -313,7 +296,7 @@ function checkExistingRSVP(email) {
     const lastRow = sh.getLastRow();
     if (lastRow < 2) return { success: true, exists: false };
 
-    const data = sh.getRange(2, 1, lastRow - 1, 11).getValues();
+    const data = sh.getRange(2, 1, lastRow - 1, 12).getValues();
 
     for (let i = 0; i < data.length; i++) {
       const rowEmail = String(data[i][6] || '').trim().toLowerCase();
@@ -332,7 +315,8 @@ function checkExistingRSVP(email) {
             qrCodeUrl: getQrCodeUrl(qrData, 400),
             name: String(data[i][1] || ''),
             guests: parseInt(data[i][7] || 1, 10),
-            qrData: qrData
+            qrData: qrData,
+            attendance: String(data[i][11] || 'going').trim().toLowerCase()
           }
         };
       }
@@ -356,7 +340,7 @@ function getAllAttendees() {
       return { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
     }
 
-    const data = sh.getRange(2, 1, lastRow - 1, 11).getValues();
+    const data = sh.getRange(2, 1, lastRow - 1, 12).getValues();
 
     const attendees = [];
     let totalGuests = 0;
@@ -364,6 +348,7 @@ function getAllAttendees() {
     for (let i = 0; i < data.length; i++) {
       const name = String(data[i][1] || '').trim();
       const guests = parseInt(data[i][7] || 1, 10);
+      const attendance = String(data[i][11] || 'going').trim().toLowerCase();
 
       if (name) {
         const nameParts = name.split(' ');
@@ -375,10 +360,13 @@ function getAllAttendees() {
 
         attendees.push({
           name: displayName,
-          guests: guests
+          guests: guests,
+          attendance: attendance
         });
 
-        totalGuests += guests;
+        if (attendance === 'going') {
+          totalGuests += guests;
+        }
       }
     }
 
@@ -397,35 +385,6 @@ function getAllAttendees() {
 }
 
 /* ============================================================
-   RECENT GUESTS (for ticker)
-   ============================================================ */
-function getRecentGuests() {
-  try {
-    const sh = getResponsesSheet();
-    const lastRow = sh.getLastRow();
-    if (lastRow < 2) return { success: true, guests: [] };
-
-    const startRow = Math.max(2, lastRow - 19);
-    const numRows = lastRow - startRow + 1;
-    const data = sh.getRange(startRow, 1, numRows, 2).getValues();
-
-    const guests = [];
-    for (let i = data.length - 1; i >= 0; i--) {
-      const name = String(data[i][1] || '').trim();
-      if (name) {
-        const firstName = name.split(' ')[0];
-        guests.push(firstName);
-      }
-    }
-
-    return { success: true, guests: guests, total: lastRow - 1 };
-  } catch (e) {
-    Logger.log('getRecentGuests error: ' + e.toString());
-    return { success: false, message: e.toString(), guests: [] };
-  }
-}
-
-/* ============================================================
    RSVP SUBMISSION
    ============================================================ */
 function submitForm(formData) {
@@ -437,7 +396,7 @@ function submitForm(formData) {
     if (deadlineStr) {
       const deadline = new Date(deadlineStr);
       if (new Date() > deadline) {
-        return { success: false, message: 'RSVP is closed — the deadline has passed.' };
+        return { success: false, message: 'Confirmations are closed — the deadline has passed.' };
       }
     }
 
@@ -448,14 +407,19 @@ function submitForm(formData) {
     if (!formData.greetings || !formData.greetings.trim()) return { success: false, message: 'Greetings are required.' };
     if (!formData.selfie || !formData.selfie.data) return { success: false, message: 'Selfie is required.' };
 
-    // Duplicate check by email
+    const attendance = String(formData.attendance || 'going').trim().toLowerCase();
+    const validAttendance = ['going', 'planning', 'not_going'];
+    if (!validAttendance.includes(attendance)) {
+      return { success: false, message: 'Please choose an attendance option.' };
+    }
+
     const email = (formData.email || '').trim().toLowerCase();
     if (email) {
       const dup = checkExistingRSVP(email);
       if (dup && dup.success && dup.exists) {
         return {
           success: false,
-          message: 'You already submitted an RSVP with this email.',
+          message: 'You already confirmed with this email.',
           duplicate: true,
           ticket: dup.ticket
         };
@@ -496,7 +460,8 @@ function submitForm(formData) {
       guests,
       formData.loginMethod || 'unknown',
       ticketCode,
-      ''
+      '',
+      attendance
     ]);
 
     const scriptUrl = ScriptApp.getService().getUrl() || '';
@@ -507,13 +472,14 @@ function submitForm(formData) {
 
     return {
       success: true,
-      message: 'Thank you! Your RSVP has been received. 🎉',
+      message: 'Thank you! Your attendance is confirmed. 🎉',
       ticket: {
         code: ticketCode,
         qrCodeUrl: qrCodeUrl,
         name: formData.name.trim(),
         guests: guests,
-        qrData: qrData
+        qrData: qrData,
+        attendance: attendance
       }
     };
   } catch (error) {
@@ -573,7 +539,7 @@ function verifyTicket(code) {
     const lastRow = sh.getLastRow();
     if (lastRow < 2) return { success: false, message: 'No registrations yet.' };
 
-    const data = sh.getRange(2, 1, lastRow - 1, 11).getValues();
+    const data = sh.getRange(2, 1, lastRow - 1, 12).getValues();
 
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
@@ -595,7 +561,8 @@ function verifyTicket(code) {
             email: String(row[6] || ''),
             guests: parseInt(row[7] || 1, 10),
             ticketCode: rowCode,
-            selfieUrl: String(row[5] || '')
+            selfieUrl: String(row[5] || ''),
+            attendance: String(row[11] || 'going').trim().toLowerCase()
           }
         };
       }
@@ -617,7 +584,7 @@ function checkInTicket(code) {
     const lastRow = sh.getLastRow();
     if (lastRow < 2) return { success: false, message: 'No registrations.' };
 
-    const data = sh.getRange(2, 1, lastRow - 1, 11).getValues();
+    const data = sh.getRange(2, 1, lastRow - 1, 12).getValues();
 
     for (let i = 0; i < data.length; i++) {
       const rowCode = String(data[i][9] || '').trim().toUpperCase();
