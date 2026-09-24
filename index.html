@@ -1231,6 +1231,11 @@
               <input type="email" id="pwEmail" required placeholder="you@example.com"
                      autocomplete="email" inputmode="email" autocapitalize="off" autocorrect="off">
             </div>
+            <div class="field">
+              <label class="field-label" for="pwPassword">Password</label>
+              <input type="password" id="pwPassword" required minlength="8" placeholder="Enter your password"
+                     autocomplete="current-password">
+            </div>
             <button type="submit" class="btn btn-primary" id="pwBtn">
               Continue
               <span class="btn-arrow">→</span>
@@ -1583,11 +1588,16 @@
       e.preventDefault();
       const name = $('pwName').value.trim();
       const email = $('pwEmail').value.trim().toLowerCase();
+      const password = $('pwPassword').value;
 
       if (!name) { showPwMessage('Please enter your name.', 'error'); return; }
       if (!email) { showPwMessage('Please enter your email.', 'error'); return; }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         showPwMessage('Please enter a valid email.', 'error'); return;
+      }
+      if (!password) { showPwMessage('Please enter your password.', 'error'); return; }
+      if (password.length < 8) {
+        showPwMessage('Password must be at least 8 characters.', 'error'); return;
       }
 
       const btn = $('pwBtn');
@@ -1595,14 +1605,19 @@
       btn.innerHTML = '<span class="spinner"></span>Signing in...';
 
       try {
-        const res = await api('simpleLogin', { name: name, email: email });
-        if (res && res.success) {
+        const res = await api('simpleLogin', { name: name, email: email, password: password });
+        // Fail closed: the client must never treat a successful name/email lookup
+        // as authentication. The backend must verify the password and return the
+        // explicit passwordVerified flag only after a successful comparison.
+        if (res && res.success && res.passwordVerified === true) {
           currentUser = res.user;
           try { localStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
           try { sessionStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
           completeLogin();
         } else {
-          showPwMessage((res && res.message) || 'Login failed.', 'error');
+          showPwMessage((res && res.passwordConfigured === false)
+            ? 'Password login is not configured on the server yet.'
+            : 'Incorrect name, email, or password.', 'error');
         }
       } catch (err) {
         showPwMessage('Error: ' + err.message, 'error');
@@ -1815,6 +1830,7 @@
       $('loginView').classList.add('active');
       $('pwName').value = '';
       $('pwEmail').value = '';
+      $('pwPassword').value = '';
       $('goRsvpBtn').style.opacity = '';
       $('goRsvpBtn').style.pointerEvents = '';
       $('goRsvpBtn').querySelector('.action-title').textContent = 'Confirm Attendance';
