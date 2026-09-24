@@ -231,6 +231,72 @@
       .countdown-date { font-size: 11px; }
     }
 
+    /* ============================================================
+       ATTENDANCE SELECTOR
+       ============================================================ */
+    .attendance-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    @media (min-width: 640px) {
+      .attendance-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .attendance-option {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 16px 14px;
+      border: 1.5px solid var(--mist);
+      border-radius: 14px;
+      background: var(--white);
+      cursor: pointer;
+      transition: all 0.25s var(--ease-out);
+      text-align: left;
+      font-family: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .attendance-option:hover {
+      border-color: var(--silver);
+      background: var(--fog);
+    }
+    .attendance-option .ao-icon {
+      font-size: 22px;
+      line-height: 1;
+    }
+    .attendance-option .ao-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--black);
+      letter-spacing: -0.01em;
+    }
+    .attendance-option .ao-sub {
+      font-size: 11px;
+      color: var(--steel);
+      line-height: 1.4;
+    }
+    .attendance-option.selected {
+      border-color: var(--black);
+      background: var(--black);
+      box-shadow: 0 8px 24px -8px rgba(0,0,0,0.35);
+      transform: translateY(-1px);
+    }
+    .attendance-option.selected .ao-title { color: var(--white); }
+    .attendance-option.selected .ao-sub { color: var(--silver); }
+    .attendance-option.selected::after {
+      content: "✓";
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      color: var(--white);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
     .field { margin-bottom: 18px; position: relative; }
     .field-label {
       display: block; font-size: 11px; font-weight: 600;
@@ -524,6 +590,7 @@
       margin-top: 20px;
       padding-top: 20px;
       border-top: 1px solid rgba(255,255,255,0.1);
+      flex-wrap: wrap;
     }
     .attendee-stat { display: flex; flex-direction: column; gap: 2px; }
     .attendee-stat .n {
@@ -577,7 +644,25 @@
     .attendee-info .e {
       font-size: 12px; color: var(--steel);
       margin-top: 2px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
     }
+    .attendee-info .e::before {
+      content: "";
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .attendee-info .e.badge-going { color: #15803d; }
+    .attendee-info .e.badge-going::before { background: #16a34a; }
+    .attendee-info .e.badge-planning { color: #b45309; }
+    .attendee-info .e.badge-planning::before { background: #f59e0b; }
+    .attendee-info .e.badge-notgoing { color: #b91c1c; }
+    .attendee-info .e.badge-notgoing::before { background: #dc2626; }
+
     .attendee-badge {
       padding: 6px 12px;
       border-radius: 100px;
@@ -1092,11 +1177,11 @@
           <div class="attendees-stats">
             <div class="attendee-stat">
               <span class="n" id="statParties">0</span>
-              <span class="l">Parties</span>
+              <span class="l">Responses</span>
             </div>
             <div class="attendee-stat">
               <span class="n" id="statGuests">0</span>
-              <span class="l">Total Guests</span>
+              <span class="l">Guests Going</span>
             </div>
           </div>
         </div>
@@ -1168,6 +1253,27 @@
             </div>
 
             <form id="rsvpForm" autocomplete="off">
+              <div class="field">
+                <label class="field-label">Your attendance *</label>
+                <div class="attendance-grid" id="attendanceGrid">
+                  <button type="button" class="attendance-option selected" data-value="going">
+                    <span class="ao-icon">🎉</span>
+                    <span class="ao-title">Going</span>
+                    <span class="ao-sub">I'll be there</span>
+                  </button>
+                  <button type="button" class="attendance-option" data-value="planning">
+                    <span class="ao-icon">🤔</span>
+                    <span class="ao-title">Planning</span>
+                    <span class="ao-sub">Still deciding</span>
+                  </button>
+                  <button type="button" class="attendance-option" data-value="not_going">
+                    <span class="ao-icon">😢</span>
+                    <span class="ao-title">Can't Make It</span>
+                    <span class="ao-sub">Won't be able to come</span>
+                  </button>
+                </div>
+              </div>
+
               <div class="field-row">
                 <div class="field">
                   <label class="field-label" for="name">Full Name *</label>
@@ -1271,6 +1377,7 @@
     let currentUser = null;
     let guests = 1;
     let currentTicket = null;
+    let selectedAttendance = 'going';
     let appConfig = { deadline: '', isPastDeadline: false };
 
     const $ = id => document.getElementById(id);
@@ -1486,7 +1593,7 @@
           list.innerHTML = `
             <div class="attendees-empty">
               <span class="ic">🎈</span>
-              <h3>No confirmations yet</h3>
+              <h3>No responses yet</h3>
               <p>Be the first to confirm your attendance!</p>
               <button type="button" onclick="document.getElementById('backFromAttendeesBtn').click()">Back</button>
             </div>
@@ -1497,15 +1604,26 @@
         list.innerHTML = attendees.map((att, i) => {
           const initial = att.name.charAt(0).toUpperCase();
           const guests = att.guests || 1;
+          const attendance = att.attendance || 'going';
           const delay = Math.min(i * 40, 600);
+
+          let statusText = 'Going';
+          let badgeClass = 'badge-going';
+          if (attendance === 'planning') { statusText = 'Planning'; badgeClass = 'badge-planning'; }
+          if (attendance === 'not_going') { statusText = 'Can\'t Make It'; badgeClass = 'badge-notgoing'; }
+
+          const guestLabel = attendance === 'not_going'
+            ? '—'
+            : `${guests} ${guests === 1 ? 'guest' : 'guests'}`;
+
           return `
             <div class="attendee-row" style="animation-delay: ${delay}ms">
               <div class="attendee-avatar">${escapeHtml(initial)}</div>
               <div class="attendee-info">
                 <div class="n">${escapeHtml(att.name)}</div>
-                <div class="e">Confirmed</div>
+                <div class="e ${badgeClass}">${statusText}</div>
               </div>
-              <div class="attendee-badge">${guests} ${guests === 1 ? 'guest' : 'guests'}</div>
+              <div class="attendee-badge">${guestLabel}</div>
             </div>
           `;
         }).join('');
@@ -1542,6 +1660,13 @@
     function logout() {
       try { localStorage.removeItem('birthdayUser'); sessionStorage.removeItem('birthdayUser'); } catch (e) {}
       currentUser = null; selfieData = null; guests = 1; currentTicket = null;
+      selectedAttendance = 'going';
+      const attGridReset = $('attendanceGrid');
+      if (attGridReset) {
+        attGridReset.querySelectorAll('.attendance-option').forEach(function(b, i) {
+          b.classList.toggle('selected', i === 0);
+        });
+      }
       $('guestValue').textContent = '1';
       $('guestMinus').disabled = true;
       $('guestPlus').disabled = false;
@@ -1577,6 +1702,22 @@
     $('guestPlus').addEventListener('click', () => updateGuests(1));
     $('guestMinus').disabled = true;
 
+    /* ATTENDANCE SELECTOR */
+    (function initAttendanceSelector() {
+      const grid = $('attendanceGrid');
+      if (!grid) return;
+      grid.querySelectorAll('.attendance-option').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          grid.querySelectorAll('.attendance-option').forEach(function(b) {
+            b.classList.remove('selected');
+          });
+          btn.classList.add('selected');
+          selectedAttendance = btn.dataset.value || 'going';
+          updateProgress();
+        });
+      });
+    })();
+
     /* PROGRESS */
     function updateProgress() {
       const name = $('name').value.trim();
@@ -1589,7 +1730,7 @@
       if (address) filled++;
       if (greetings) filled++;
       if (selfieData) filled++;
-      filled++;
+      filled++; // attendance always selected
       const pct = Math.round((filled / 6) * 100);
       $('progressFill').style.width = pct + '%';
       $('progressPct').textContent = pct + '%';
@@ -1819,7 +1960,8 @@
         selfie: selfieData,
         email: currentUser ? currentUser.email : '',
         loginMethod: 'email',
-        guests: guests
+        guests: guests,
+        attendance: selectedAttendance
       };
 
       try {
@@ -1871,6 +2013,13 @@
       $('rsvpForm').reset();
       selfieData = null;
       guests = 1;
+      selectedAttendance = 'going';
+      const attGridR = $('attendanceGrid');
+      if (attGridR) {
+        attGridR.querySelectorAll('.attendance-option').forEach(function(b, i) {
+          b.classList.toggle('selected', i === 0);
+        });
+      }
       $('guestValue').textContent = '1';
       $('guestMinus').disabled = true;
       $('guestPlus').disabled = false;
