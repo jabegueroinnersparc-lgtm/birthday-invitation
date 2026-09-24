@@ -13,8 +13,10 @@
 
 const SHEET_RESPONSES = 'Responses';
 const SHEET_WHITELIST = 'Whitelist';
+const SHEET_PASSWORDS = 'GuestPasswords';
 const SHEET_SETTINGS  = 'Settings';
 const FOLDER_NAME     = 'Birthday Selfies';
+const PASSWORD_HASH_ITERATIONS = 12000;
 
 const RESPONSES_HEADERS = [
   'Timestamp', 'Name', 'Mobile', 'Address', 'Greetings',
@@ -99,7 +101,11 @@ function doPost(e) {
     }
 
     if (action === 'simpleLogin') {
-      return jsonResponse(simpleLogin(params.name || '', params.email || ''));
+      return jsonResponse(simpleLogin(
+        params.name || '',
+        params.email || '',
+        params.password || ''
+      ));
     }
 
     if (action === 'submitForm') {
@@ -159,6 +165,20 @@ function getSheet(name, createIfMissing) {
   let sh = spreadsheet.getSheetByName(name);
   if (!sh && createIfMissing) sh = spreadsheet.insertSheet(name);
   return sh;
+}
+
+function createPasswordSheet() {
+  const spreadsheet = ss();
+  let passwords = spreadsheet.getSheetByName(SHEET_PASSWORDS);
+  if (!passwords) {
+    passwords = spreadsheet.insertSheet(SHEET_PASSWORDS);
+    passwords.appendRow(['Email', 'Password Salt', 'Password Hash']);
+    Logger.log('✓ Created "' + SHEET_PASSWORDS + '"');
+  } else {
+    passwords.getRange(1, 1, 1, 3)
+      .setValues([['Email', 'Password Salt', 'Password Hash']]);
+  }
+  return passwords;
 }
 
 function getResponsesSheet() {
@@ -261,26 +281,113 @@ function checkWhitelist(email) {
   }
 }
 
-function simpleLogin(name, email) {
+function bytesToHex(bytes) {
+  return bytes.map(function(byte) {
+    const value = byte < 0 ? byte + 256 : byte;
+    return ('0' + value.toString(16)).slice(-2);
+  }).join('');
+}
+
+function hashGuestPassword(password, salt) {
+  let value = String(salt) + ':' + String(password);
+  for (let i = 0; i < PASSWORD_HASH_ITERATIONS; i++) {
+    const digest = Utilities.computeDigest(
+      Utilities.DigestAlgorithm.SHA_256,
+      value,
+      Utilities.Charset.UTF_8
+    );
+    value = bytesToHex(digest);
+  }
+  return value;
+}
+
+function constantTimeEqual(a, b) {
+  a = String(a || '');
+  b = String(b || '');
+  let result = a.length ^ b.length;
+  const length = Math.max(a.length, b.length);
+  for (let i = 0; i < length; i++) {
+    result |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  }
+  return result === 0;
+}
+
+function getWhitelistAccount(email) {
+  const whitelist = getSheet(SHEET_WHITELIST, false);
+  if (!whitelist || whitelist.getLastRow() < 2) return null;
+
+  const values = whitelist.getRange(2, 1, whitelist.getLastRow() - 1, 2).getValues();
+  const target = String(email || '').trim().toLowerCase();
+  let account = null;
+
+  for (let i = 0; i < values.length; i++) {
+    const rowEmail = String(values[i][0] || '').trim().toLowerCase();
+    if (rowEmail === target) {
+      account = {
+        email: rowEmail,
+        name: String(values[i][1] || '').trim()
+      };
+      break;
+    }
+  }
+
+  if (!account) return null;
+
+  const passwordSheet = getSheet(SHEET_PASSWORDS, false);
+  if (!passwordSheet || passwordSheet.getLastRow() < 2) return account;
+
+  // GuestPasswords columns: A Email, B Password Salt, C Password Hash.
+  const passwordRows = passwordSheet.getRange(2, 1, passwordSheet.getLastRow() - 1, 3).getValues();
+  for (let i = 0; i < passwordRows.length; i++) {
+    const rowEmail = String(passwordRows[i][0] || '').trim().toLowerCase();
+    if (rowEmail === target) {
+      account.salt = String(passwordRows[i][1] || '').trim();
+      account.hash = String(passwordRows[i][2] || '').trim();
+      break;
+    }
+  }
+  return account;
+}
+
+function simpleLogin(name, email, password) {
   try {
     name = String(name || '').trim();
     email = String(email || '').trim().toLowerCase();
+    password = String(password || '');
 
     if (!name) return { success: false, message: 'Please enter your name.' };
     if (!email) return { success: false, message: 'Please enter your email.' };
+    if (!password) return { success: false, message: 'Please enter your password.' };
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return { success: false, message: 'Please enter a valid email.' };
     }
 
     const check = checkWhitelist(email);
-    if (!check.allowed) return { success: false, message: check.reason };
+    if (!check.allowed) return { success: false, passwordVerified: false, message: 'Invalid credentials.' };
+
+    const account = getWhitelistAccount(email);
+    if (!account || !account.salt || !account.hash) {
+      Logger.log('Password not configured for guest: ' + email);
+      return { success: false, passwordConfigured: false, passwordVerified: false };
+    }
+
+    const candidateHash = hashGuestPassword(password, account.salt);
+    if (!constantTimeEqual(candidateHash, account.hash)) {
+      Logger.log('Guest login failed for: ' + email);
+      return { success: false, passwordVerified: false, message: 'Invalid credentials.' };
+    }
+
+    // Use the server-side name, not the user-supplied name, after authentication.
+    const authenticatedName = account.name || name;
 
     return {
       success: true,
-      user: { name: name, email: email, method: 'email' }
+      passwordVerified: true,
+      user: { name: authenticatedName, email: email, method: 'password' }
     };
   } catch (e) {
-    return { success: false, message: e.toString() };
+    Logger.log('simpleLogin error: ' + e.toString());
+    return { success: false, passwordVerified: false, message: 'Unable to sign in.' };
   }
 }
 
@@ -661,11 +768,64 @@ function setupSheets() {
     whitelist = spreadsheet.insertSheet(SHEET_WHITELIST);
     whitelist.appendRow(['Email', 'Name']);
     Logger.log('✓ Created "' + SHEET_WHITELIST + '"');
+  } else {
+    whitelist.getRange(1, 1, 1, 2).setValues([['Email', 'Name']]);
+    Logger.log('✓ Updated headers on "' + SHEET_WHITELIST + '"');
   }
+
+  createPasswordSheet();
 
   const folder = getOrCreateFolder();
   Logger.log('✓ Drive folder: ' + folder.getUrl());
 
   Logger.log('=== Setup complete ===');
   return 'Setup complete.';
+}
+
+/* ============================================================
+   GUEST PASSWORD SETUP
+   Run setGuestPassword once for each guest from the Apps Script editor.
+   Example: setGuestPassword('maria@example.com', 'a-long-password');
+   The plaintext password is never saved to the sheet.
+   ============================================================ */
+function setGuestPassword(email, password) {
+  email = String(email || '').trim().toLowerCase();
+  password = String(password || '');
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error('Enter a valid guest email.');
+  }
+  if (password.length < 8) {
+    throw new Error('Password must be at least 8 characters.');
+  }
+
+  const whitelist = getSheet(SHEET_WHITELIST, false);
+  if (!whitelist || whitelist.getLastRow() < 2) throw new Error('Add the guest to the Whitelist sheet first.');
+
+  const emails = whitelist.getRange(2, 1, whitelist.getLastRow() - 1, 1).getValues();
+  for (let i = 0; i < emails.length; i++) {
+    const rowEmail = String(emails[i][0] || '').trim().toLowerCase();
+    if (rowEmail === email) {
+      const salt = Utilities.getUuid().replace(/-/g, '');
+      const hash = hashGuestPassword(password, salt);
+      const passwords = createPasswordSheet();
+
+      const passwordRows = passwords.getLastRow() > 1
+        ? passwords.getRange(2, 1, passwords.getLastRow() - 1, 3).getValues()
+        : [];
+      for (let j = 0; j < passwordRows.length; j++) {
+        if (String(passwordRows[j][0] || '').trim().toLowerCase() === email) {
+          passwords.getRange(j + 2, 1, 1, 3).setValues([[email, salt, hash]]);
+          Logger.log('Password saved for ' + email + '.');
+          return 'Password saved for ' + email + '.';
+        }
+      }
+
+      passwords.appendRow([email, salt, hash]);
+      Logger.log('Password saved for ' + email + '.');
+      return 'Password saved for ' + email + '.';
+    }
+  }
+
+  throw new Error('Guest email was not found in the Whitelist sheet.');
 }
