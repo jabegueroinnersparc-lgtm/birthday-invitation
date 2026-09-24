@@ -1017,28 +1017,6 @@
     $('logoutBtnMobile').addEventListener('click', logout);
 
     /* ============================================================
-       RESTORE SESSION
-       ============================================================ */
-    (function restoreSession() {
-      let saved = null;
-      try { saved = localStorage.getItem('birthdayUser') || sessionStorage.getItem('birthdayUser'); } catch (e) {}
-      if (!saved) return;
-      try {
-        const user = JSON.parse(saved);
-        if (user && user.name && user.email) {
-          currentUser = user;
-          setTimeout(() => {
-            updateUserUI(user);
-            $('name').value = user.name;
-            $('loginView').classList.remove('active');
-            $('formView').classList.add('active');
-            updateProgress();
-          }, 200);
-        }
-      } catch (e) {}
-    })();
-
-    /* ============================================================
        GUEST COUNTER
        ============================================================ */
     function updateGuests(delta) {
