@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0a">
+  <title>Admin • Check-In Scanner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --black: #0a0a0a; --ink: #141414; --graphite: #2a2a2a;
+      --slate: #3a3a3a; --steel: #6b6b6b; --silver: #a8a8a8;
+      --mist: #d4d4d4; --pearl: #e8e8e8; --fog: #f2f2f2;
+      --white: #ffffff; --success: #16a34a; --danger: #dc2626;
+      --warn: #f59e0b;
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    html, body { height: 100%; -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--fog); color: var(--ink); min-height: 100dvh;
+      display: flex; flex-direction: column;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
+    /* LOGIN GATE */
+    .login-gate {
+      position: fixed; inset: 0; z-index: 1000;
+      background: var(--black);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px; animation: gateIn 0.5s var(--ease-out);
+    }
+    .login-gate.hidden { display: none; }
+    @keyframes gateIn { from { opacity: 0; } to { opacity: 1; } }
+    .login-gate::before {
+      content: ""; position: absolute; inset: 0;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.06), transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255,255,255,0.04), transparent 50%);
+      pointer-events: none;
+    }
+    .login-card {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 380px;
+      background: var(--ink); border: 1px solid var(--graphite);
+      border-radius: 24px; padding: 36px 28px 32px;
+      color: var(--white); box-shadow: 0 40px 80px -20px rgba(0,0,0,0.6);
+      animation: cardUp 0.6s var(--ease-out);
+    }
+    @keyframes cardUp {
+      from { opacity: 0; transform: translateY(20px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .login-lock {
+      width: 60px; height: 60px; margin: 0 auto 20px;
+      border-radius: 16px; background: var(--graphite);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; border: 1px solid var(--slate);
+    }
+    .login-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px; font-weight: 700; text-align: center;
+      letter-spacing: -0.02em; margin-bottom: 6px;
+    }
+    .login-sub {
+      font-size: 13px; color: var(--silver);
+      text-align: center; margin-bottom: 28px; line-height: 1.5;
+    }
+    .login-field { margin-bottom: 16px; }
+    .login-field label {
+      display: block; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--silver); margin-bottom: 8px;
+    }
+    .login-field input {
+      width: 100%; padding: 14px 16px;
+      border: 1.5px solid var(--graphite); border-radius: 12px;
+      font-size: 16px; font-family: inherit;
+      color: var(--white); background: var(--black);
+      transition: all 0.25s var(--ease-out);
+      -webkit-appearance: none; appearance: none;
+    }
+    .login-field input::placeholder { color: var(--steel); }
+    .login-field input:focus {
+      outline: none; border-color: var(--white);
+      box-shadow: 0 0 0 4px rgba(255,255,255,0.08);
+    }
+    .login-error {
+      display: none; padding: 10px 14px;
+      border-radius: 10px;
+      background: rgba(220, 38, 38, 0.15);
+      border: 1px solid rgba(220, 38, 38, 0.4);
+      color: #fca5a5; font-size: 13px;
+      margin-bottom: 16px; text-align: center;
+    }
+    .login-error.show { display: block; }
+    .login-btn {
+      width: 100%; min-height: 48px;
+      padding: 14px 24px; border: none;
+      border-radius: 12px; background: var(--white);
+      color: var(--black); font-family: inherit;
+      font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: all 0.25s var(--ease-out);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .login-btn:active:not(:disabled) { transform: scale(0.98); }
+    .login-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    @media (hover: hover) {
+      .login-btn:hover:not(:disabled) {
+        background: var(--pearl); transform: translateY(-2px);
+        box-shadow: 0 12px 28px -6px rgba(255,255,255,0.15);
+      }
+    }
+    .login-hint {
+      font-size: 11px; color: var(--steel);
+      text-align: center; margin-top: 16px; line-height: 1.5;
+    }
+    .spinner {
+      display: inline-block; width: 16px; height: 16px;
+      border: 2px solid rgba(0,0,0,0.2);
+      border-top-color: var(--black); border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px; vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ADMIN APP */
+    .admin-app { display: none; flex-direction: column; min-height: 100dvh; }
+    .admin-app.active { display: flex; }
+
+    .scanner-topbar {
+      background: var(--black); color: var(--white);
+      padding: 14px 18px; display: flex;
+      align-items: center; justify-content: space-between;
+      gap: 12px; flex-shrink: 0;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .scanner-brand {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--silver); min-width: 0;
+    }
+    .scanner-brand .dot-mark {
+      width: 7px; height: 7px; background: var(--white);
+      border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.15);
+      flex-shrink: 0;
+    }
+    .scanner-brand strong {
+      color: var(--white); font-weight: 700;
+      margin-left: 4px; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    @media (max-width: 480px) {
+      .scanner-brand { font-size: 10px; letter-spacing: 0.1em; }
+      .scanner-brand span:not(.dot-mark) { display: none; }
+    }
+    .admin-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .admin-mode {
+      display: flex; gap: 4px;
+      background: var(--graphite); padding: 3px;
+      border-radius: 100px;
+    }
+    .admin-mode button {
+      padding: 6px 12px; border: none; background: transparent;
+      color: var(--silver); font-size: 10px; font-weight: 600;
+      border-radius: 100px; cursor: pointer;
+      font-family: inherit; letter-spacing: 0.05em;
+      text-transform: uppercase; transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .admin-mode button.active {
+      background: var(--white); color: var(--black);
+    }
+    .logout-btn {
+      background: transparent; color: var(--silver);
+      border: 1px solid var(--graphite);
+      padding: 6px 10px; border-radius: 100px;
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      cursor: pointer; font-family: inherit;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    @media (hover: hover) {
+      .logout-btn:hover {
+        background: var(--graphite); color: var(--white);
+        border-color: var(--slate);
+      }
+    }
+    .scanner-main {
+      flex: 1; display: flex; flex-direction: column;
+      max-width: 640px; width: 100%;
+      margin: 0 auto; padding: 16px;
+      gap: 14px; overflow-y: auto;
+    }
+    @media (max-width: 640px) {
+      .scanner-main { padding: 12px; gap: 12px; }
+    }
+
+    /* Camera placeholder (used for desktop inline & as mobile hint) */
+    .camera-panel {
+      width: 100%; aspect-ratio: 1;
+      max-height: 60vh;
+      border-radius: 18px;
+      background: var(--black);
+      box-shadow: 0 20px 40px -12px rgba(0,0,0,0.2);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 14px; padding: 24px;
+      text-align: center;
+      color: var(--white);
+    }
+    .camera-panel.hidden { display: none; }
+    .camera-panel .ic { font-size: 56px; }
+    .camera-panel h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px; font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .camera-panel p {
+      font-size: 13px;
+      color: var(--silver);
+      max-width: 300px;
+      line-height: 1.55;
+    }
+    .camera-panel button {
+      background: var(--white);
+      color: var(--black);
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 6px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .camera-panel button:active { transform: scale(0.97); }
+
+    #reader {
+      width: 100%; aspect-ratio: 1;
+      max-height: 60vh; border-radius: 18px;
+      overflow: hidden; background: var(--black);
+      box-shadow: 0 20px 40px -12px rgba(0,0,0,0.2);
+    }
+    #reader.hidden { display: none; }
+    #reader video { border-radius: 18px; }
+
+    .manual-panel {
+      display: none; background: var(--white);
+      border-radius: 18px; padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      border: 1px solid var(--pearl);
+    }
+    .manual-panel.show { display: block; }
+    .field { margin-bottom: 14px; }
+    .field-label {
+      display: block; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--slate); margin-bottom: 8px;
+    }
+    .field input {
+      width: 100%; padding: 14px 16px;
+      border: 1.5px solid var(--mist); border-radius: 12px;
+      font-size: 16px; font-family: inherit;
+      color: var(--black); background: var(--white);
+      -webkit-appearance: none;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      font-weight: 600;
+    }
+    .field input:focus {
+      outline: none; border-color: var(--black);
+      box-shadow: 0 0 0 4px rgba(10,10,10,0.08);
+    }
+    .btn {
+      width: 100%; min-height: 48px;
+      padding: 14px 24px; border: none;
+      border-radius: 12px; font-family: inherit;
+      font-size: 15px; font-weight: 600;
+      cursor: pointer; transition: all 0.3s var(--ease-out);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .btn-primary { background: var(--black); color: var(--white); }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-white-spinner {
+      display: inline-block; width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: var(--white); border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px; vertical-align: middle;
+    }
+    .result {
+      display: none; border-radius: 18px; padding: 22px;
+      animation: resultIn 0.4s var(--ease-out);
+    }
+    .result.show { display: block; }
+    @keyframes resultIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .result.valid {
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+      border: 1.5px solid #6ee7b7;
+    }
+    .result.invalid {
+      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+      border: 1.5px solid #fca5a5;
+    }
+    .result.duplicate {
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      border: 1.5px solid #fcd34d;
+    }
+    .result-icon {
+      width: 56px; height: 56px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; font-weight: 900;
+      margin-bottom: 16px; color: #fff;
+    }
+    .result.valid .result-icon { background: #10b981; }
+    .result.invalid .result-icon { background: #ef4444; }
+    .result.duplicate .result-icon { background: #f59e0b; }
+    .result-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px; font-weight: 700;
+      margin-bottom: 4px; letter-spacing: -0.02em;
+    }
+    .result.valid .result-title { color: #065f46; }
+    .result.invalid .result-title { color: #991b1b; }
+    .result.duplicate .result-title { color: #78350f; }
+    .result-sub { font-size: 14px; margin-bottom: 20px; }
+    .result.valid .result-sub { color: #047857; }
+    .result.invalid .result-sub { color: #b91c1c; }
+    .result.duplicate .result-sub { color: #92400e; }
+    .guest-details {
+      background: rgba(255,255,255,0.7);
+      border-radius: 14px; padding: 18px;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 14px 20px;
+    }
+    .guest-details .row {
+      display: flex; flex-direction: column;
+      gap: 2px; min-width: 0;
+    }
+    .guest-details .row.full { grid-column: 1 / -1; }
+    .guest-details .k {
+      font-size: 10px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--steel);
+      font-weight: 600;
+    }
+    .guest-details .v {
+      font-size: 15px; font-weight: 600;
+      color: var(--ink); word-break: break-word;
+    }
+    .guest-avatar {
+      grid-column: 1 / -1;
+      display: flex; align-items: center;
+      gap: 14px; margin-bottom: 6px;
+    }
+    .guest-avatar .initials {
+      width: 60px; height: 60px; border-radius: 50%;
+      background: var(--black); color: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 22px;
+      border: 3px solid #fff; flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .guest-avatar .name {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px; font-weight: 700;
+      letter-spacing: -0.01em; word-break: break-word;
+    }
+    .result-actions {
+      display: flex; gap: 10px; margin-top: 20px;
+    }
+    .btn-secondary {
+      background: rgba(255,255,255,0.75);
+      color: var(--ink);
+      border: 1.5px solid rgba(0,0,0,0.1);
+    }
+    .btn-secondary:active { transform: scale(0.98); }
+    .history {
+      background: var(--white); border-radius: 18px;
+      padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      border: 1px solid var(--pearl);
+    }
+    .history-title {
+      font-size: 11px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--steel);
+      font-weight: 600; margin-bottom: 12px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .history-clear {
+      font-size: 10px; color: var(--steel);
+      background: none; border: none; cursor: pointer;
+      font-family: inherit; letter-spacing: 0.05em;
+      text-decoration: underline; padding: 2px;
+    }
+    .history-empty {
+      font-size: 13px; color: var(--steel);
+      text-align: center; padding: 12px 0;
+    }
+    .history-list {
+      display: flex; flex-direction: column;
+      gap: 6px; max-height: 240px; overflow-y: auto;
+    }
+    .history-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; border-radius: 10px;
+      font-size: 13px; background: var(--fog);
+    }
+    .history-item .ic {
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+      flex-shrink: 0; color: #fff;
+    }
+    .history-item.valid .ic { background: var(--success); }
+    .history-item.invalid .ic { background: var(--danger); }
+    .history-item.duplicate .ic { background: var(--warn); }
+    .history-item .code {
+      font-family: 'Inter', monospace;
+      font-weight: 700; letter-spacing: 0.05em;
+      font-size: 12px; flex-shrink: 0;
+    }
+    .history-item .name {
+      flex: 1; overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap; color: var(--steel); min-width: 0;
+    }
+    .history-item .time {
+      font-size: 10px; color: var(--steel); flex-shrink: 0;
+    }
+    .toast {
+      position: fixed; top: 24px; left: 50%;
+      transform: translateX(-50%) translateY(-120%);
+      background: var(--black); color: var(--white);
+      padding: 12px 20px; border-radius: 10px;
+      font-size: 13px; font-weight: 500;
+      box-shadow: 0 20px 40px -12px rgba(0,0,0,0.25);
+      z-index: 9999; transition: transform 0.4s var(--ease-out);
+      max-width: calc(100vw - 32px); pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    @media (max-width: 640px) {
+      .toast {
+        top: auto; bottom: calc(24px + env(safe-area-inset-bottom));
+        transform: translateX(-50%) translateY(120%);
+      }
+      .toast.show { transform: translateX(-50%) translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN GATE -->
+<div class="login-gate" id="loginGate">
+  <div class="login-card">
+    <div class="login-lock">🔐</div>
+    <h2 class="login-title">Admin Access</h2>
+    <p class="login-sub">Enter the admin password to open the check-in scanner.</p>
+
+    <div class="login-error" id="loginError"></div>
+
+    <form id="adminLoginForm">
+      <div class="login-field">
+        <label for="adminPassword">Admin Password</label>
+        <input type="password" id="adminPassword" required
+               placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button type="submit" class="login-btn" id="adminLoginBtn">
+        Unlock Scanner
+      </button>
+    </form>
+
+    <p class="login-hint">Only the event host can access this page.</p>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div class="admin-app" id="adminApp">
+
+  <div class="scanner-topbar">
+    <div class="scanner-brand">
+      <span class="dot-mark"></span>
+      <span>Simon Jabeguero</span><strong>Check-In</strong>
+    </div>
+    <div class="admin-actions">
+      <div class="admin-mode">
+        <button id="modeCamera" class="active">Camera</button>
+        <button id="modeManual">Manual</button>
+      </div>
+      <button class="logout-btn" id="adminLogoutBtn">Logout</button>
+    </div>
+  </div>
+
+  <div class="scanner-main">
+
+    <!-- Camera launch panel (shown on mobile) -->
+    <div class="camera-panel" id="cameraPanel">
+      <div class="ic">📷</div>
+      <h3>Ready to scan</h3>
+      <p>Tap below to open the camera. It will appear in a small window, then close when it reads a QR code.</p>
+      <button type="button" id="openCameraBtn">Open Camera</button>
+    </div>
+
+    <!-- Inline camera (shown on desktop only) -->
+    <div id="reader" class="hidden"></div>
+
+    <!-- Manual entry -->
+    <div class="manual-panel" id="manualPanel">
+      <div class="field">
+        <label class="field-label" for="manualCode">Ticket Code</label>
+        <input type="text" id="manualCode" placeholder="SJG-XXXXXX"
+               autocapitalize="characters" autocomplete="off" spellcheck="false">
+      </div>
+      <button class="btn btn-primary" id="manualVerifyBtn">Verify Code</button>
+    </div>
+
+    <!-- Result -->
+    <div class="result" id="result">
+      <div class="result-icon" id="resultIcon">✓</div>
+      <div class="result-title" id="resultTitle">Valid Ticket</div>
+      <div class="result-sub" id="resultSub">Welcome to the party!</div>
+
+      <div class="guest-details" id="guestDetails" style="display:none;">
+        <div class="guest-avatar">
+          <div class="initials" id="guestInitials">G</div>
+          <div class="name" id="guestName">—</div>
+        </div>
+        <div class="row">
+          <span class="k">Ticket Code</span>
+          <span class="v" id="guestCode">—</span>
+        </div>
+        <div class="row">
+          <span class="k">Guests</span>
+          <span class="v" id="guestCount">—</span>
+        </div>
+        <div class="row full">
+          <span class="k">Email</span>
+          <span class="v" id="guestEmail">—</span>
+        </div>
+        <div class="row full">
+          <span class="k">Mobile</span>
+          <span class="v" id="guestMobile">—</span>
+        </div>
+      </div>
+
+      <div class="result-actions" id="resultActions" style="display:none;">
+        <button class="btn btn-secondary" id="scanAgainBtn">Scan Again</button>
+        <button class="btn btn-primary" id="checkInBtn" style="display:none;">Confirm Check In</button>
+      </div>
+    </div>
+
+    <div class="history">
+      <div class="history-title">
+        <span>Recent Scans</span>
+        <button class="history-clear" id="clearHistoryBtn" type="button">Clear</button>
+      </div>
+      <div class="history-list" id="historyList">
+        <div class="history-empty" id="historyEmpty">No scans yet</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  let html5QrCode = null;
+  let isScanning = false;
+  let lastScannedCode = '';
+  let lastScanTime = 0;
+  let pendingCheckInCode = null;
+  let cameraPopup = null;
+  const SCAN_DEBOUNCE_MS = 2500;
+
+  /* ============================================================
+     AUTH
+     ============================================================ */
+  function isAdminAuthed() {
+    try { return sessionStorage.getItem('adminAuthed') === 'true'; }
+    catch (e) { return false; }
+  }
+  function setAdminAuthed(v) {
+    try {
+      if (v) sessionStorage.setItem('adminAuthed', 'true');
+      else sessionStorage.removeItem('adminAuthed');
+    } catch (e) {}
+  }
+  function showAdminApp() {
+    $('loginGate').classList.add('hidden');
+    $('adminApp').classList.add('active');
+  }
+  function showLoginGate() {
+    $('loginGate').classList.remove('hidden');
+    $('adminApp').classList.remove('active');
+    stopInlineScanner();
+  }
+
+  /* ============================================================
+     TOAST
+     ============================================================ */
+  let toastTimer = null;
+  function showToast(msg) {
+    $('toast').textContent = msg;
+    $('toast').classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2800);
+  }
+
+  /* ============================================================
+     LOGIN
+     ============================================================ */
+  $('adminLoginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const password = $('adminPassword').value;
+    if (!password) { showLoginError('Please enter the password.'); return; }
+
+    const btn = $('adminLoginBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Verifying...';
+    hideLoginError();
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res && res.success) {
+          setAdminAuthed(true);
+          $('adminPassword').value = '';
+          showAdminApp();
+          showToast('Welcome, admin.');
+          // Auto-detect device and choose camera mode
+          setupCameraUI();
+        } else {
+          showLoginError((res && res.message) || 'Login failed.');
+        }
+        btn.disabled = false;
+        btn.textContent = 'Unlock Scanner';
+      })
+      .withFailureHandler(function(err) {
+        showLoginError('Error: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Unlock Scanner';
+      })
+      .adminLogin(password);
+  });
+
+  function showLoginError(msg) {
+    const el = $('loginError');
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+  function hideLoginError() { $('loginError').classList.remove('show'); }
+
+  /* ============================================================
+     LOGOUT
+     ============================================================ */
+  $('adminLogoutBtn').addEventListener('click', function() {
+    if (!confirm('Sign out of admin mode?')) return;
+    setAdminAuthed(false);
+    stopInlineScanner();
+    closeCameraPopup();
+    showLoginGate();
+    showToast('Signed out.');
+  });
+
+  /* ============================================================
+     CAMERA UI SETUP
+     ============================================================ */
+  function setupCameraUI() {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      // Mobile: use popup camera
+      $('cameraPanel').classList.remove('hidden');
+      $('reader').classList.add('hidden');
+    } else {
+      // Desktop: use inline camera
+      $('cameraPanel').classList.add('hidden');
+      $('reader').classList.remove('hidden');
+      startInlineScanner();
+    }
+  }
+
+  /* ============================================================
+     MODE SWITCH
+     ============================================================ */
+  $('modeCamera').addEventListener('click', () => switchMode('camera'));
+  $('modeManual').addEventListener('click', () => switchMode('manual'));
+
+  function switchMode(mode) {
+    if (mode === 'camera') {
+      $('modeCamera').classList.add('active');
+      $('modeManual').classList.remove('active');
+      $('manualPanel').classList.remove('show');
+      setupCameraUI();
+    } else {
+      $('modeManual').classList.add('active');
+      $('modeCamera').classList.remove('active');
+      $('cameraPanel').classList.add('hidden');
+      $('reader').classList.add('hidden');
+      $('manualPanel').classList.add('show');
+      stopInlineScanner();
+      closeCameraPopup();
+      setTimeout(() => $('manualCode').focus(), 200);
+    }
+  }
+
+  /* ============================================================
+     INLINE SCANNER (desktop)
+     ============================================================ */
+  function startInlineScanner() {
+    if (isScanning) return;
+    if (!html5QrCode) html5QrCode = new Html5Qrcode('reader');
+
+    const config = {
+      fps: 10,
+      qrbox: (w, h) => {
+        const m = Math.min(w, h);
+        const size = Math.floor(m * 0.7);
+        return { width: size, height: size };
+      },
+      aspectRatio: 1.0
+    };
+
+    html5QrCode.start(
+      { facingMode: 'environment' },
+      config,
+      onScanSuccess,
+      () => {}
+    ).then(() => {
+      isScanning = true;
+    }).catch(err => {
+      console.error('Inline camera error:', err);
+      showToast('Camera unavailable. Try Manual mode.');
+    });
+  }
+
+  function stopInlineScanner() {
+    if (!html5QrCode || !isScanning) return;
+    html5QrCode.stop().then(() => { isScanning = false; })
+      .catch(() => { isScanning = false; });
+  }
+
+  /* ============================================================
+     POPUP SCANNER (mobile)
+     ============================================================ */
+  $('openCameraBtn').addEventListener('click', openCameraPopup);
+
+  function openCameraPopup() {
+    const w = Math.min(window.innerWidth - 20, 480);
+    const h = Math.min(window.innerHeight - 20, 780);
+    const left = Math.max(0, (screen.width - w) / 2);
+    const top = Math.max(0, (screen.height - h) / 2);
+
+    cameraPopup = window.open(
+      '', 'QRScanner',
+      `width=${w},height=${h},left=${left},top=${top},` +
+      `menubar=no,toolbar=no,location=no,status=no,resizable=yes`
+    );
+
+    if (!cameraPopup) {
+      showToast('Please allow popups to use the camera.');
+      return;
+    }
+
+    cameraPopup.document.open();
+    cameraPopup.document.write(getScannerPopupHTML());
+    cameraPopup.document.close();
+  }
+
+  function closeCameraPopup() {
+    try { if (cameraPopup && !cameraPopup.closed) cameraPopup.close(); } catch (e) {}
+    cameraPopup = null;
+  }
+
+  function getScannerPopupHTML() {
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0a">
+  <title>Scan QR</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"><\/script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #0a0a0a; color: #fff;
+      display: flex; flex-direction: column;
+      height: 100vh; height: 100dvh;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    .topbar {
+      padding: 14px 16px; text-align: center;
+      background: #0a0a0a; border-bottom: 1px solid #1c1c1c;
+      font-weight: 600; font-size: 13px;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: #a8a8a8; flex-shrink: 0;
+    }
+    #reader {
+      flex: 1; position: relative;
+      background: #000; overflow: hidden; min-height: 0;
+    }
+    #reader video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .bottom {
+      padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+      background: #0a0a0a; border-top: 1px solid #1c1c1c;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .status {
+      font-size: 12px; color: #6b6b6b; text-align: center;
+      min-height: 16px; padding: 0 8px;
+    }
+    .status.error { color: #dc2626; }
+    button {
+      padding: 12px 26px; border: none; border-radius: 10px;
+      background: #fff; color: #0a0a0a; font-weight: 600;
+      font-size: 13px; cursor: pointer; font-family: inherit;
+      min-height: 44px;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    button:active { transform: scale(0.97); }
+  </style>
+</head>
+<body>
+  <div class="topbar">Scan QR Code</div>
+  <div id="reader"></div>
+  <div class="bottom">
+    <div class="status" id="status">Starting camera...</div>
+    <button id="close">Cancel</button>
+  </div>
+  <script>
+    const status = document.getElementById('status');
+    let qr = new Html5Qrcode('reader');
+    let hasSent = false;
+
+    qr.start(
+      { facingMode: 'environment' },
+      {
+        fps: 10,
+        qrbox: (w, h) => {
+          const m = Math.min(w, h);
+          return { width: Math.floor(m * 0.7), height: Math.floor(m * 0.7) };
+        }
+      },
+      function(decodedText) {
+        if (hasSent) return;
+        hasSent = true;
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage({ type: 'QR_SCANNED', data: decodedText }, '*');
+        }
+        qr.stop().then(() => window.close()).catch(() => window.close());
+      },
+      function() {}
+    ).then(() => {
+      status.textContent = 'Point at the QR code';
+    }).catch(err => {
+      status.classList.add('error');
+      let msg = 'Camera error: ' + err.name;
+      if (err.name === 'NotAllowedError') msg = 'Permission denied. Allow camera access.';
+      if (err.name === 'NotFoundError') msg = 'No camera found.';
+      if (err.name === 'NotReadableError') msg = 'Camera in use by another app.';
+      status.textContent = msg;
+    });
+
+    document.getElementById('close').addEventListener('click', function() {
+      try { qr.stop(); } catch (e) {}
+      window.close();
+    });
+  <\/script>
+</body>
+</html>`;
+  }
+
+  /* ============================================================
+     HANDLE SCAN RESULTS (from popup OR inline)
+     ============================================================ */
+  function onScanSuccess(decodedText) {
+    const now = Date.now();
+    const code = extractCode(decodedText);
+    if (code === lastScannedCode && (now - lastScanTime) < SCAN_DEBOUNCE_MS) return;
+    lastScannedCode = code;
+    lastScanTime = now;
+    beep();
+    verifyCode(code);
+  }
+
+  // Listen for popup scans
+  window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'QR_SCANNED') {
+      onScanSuccess(event.data.data);
+    }
+  });
+
+  function extractCode(text) {
+    if (!text) return '';
+    try {
+      if (text.indexOf('code=') !== -1) {
+        const match = text.match(/[?&]code=([^&]+)/);
+        if (match && match[1]) return decodeURIComponent(match[1]).toUpperCase();
+      }
+    } catch (e) {}
+    return String(text).trim().toUpperCase();
+  }
+
+  /* ============================================================
+     MANUAL
+     ============================================================ */
+  $('manualVerifyBtn').addEventListener('click', () => {
+    const code = $('manualCode').value.trim().toUpperCase();
+    if (!code) { showToast('Please enter a code.'); return; }
+    verifyCode(code);
+  });
+  $('manualCode').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') $('manualVerifyBtn').click();
+  });
+
+  /* ============================================================
+     VERIFY
+     ============================================================ */
+  function verifyCode(code) {
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res && res.success && res.valid) {
+          if (res.alreadyCheckedIn) {
+            showResult('duplicate', res.guest, 'Already checked in at ' + formatTime(res.checkedInAt));
+          } else {
+            showResult('valid', res.guest);
+          }
+        } else {
+          showResult('invalid', null, (res && res.message) || 'Ticket not found.');
+        }
+        addToHistory(code, res);
+      })
+      .withFailureHandler(function(err) {
+        showToast('Error: ' + err.message);
+        showResult('invalid', null, 'Server error.');
+      })
+      .verifyTicket(code);
+  }
+
+  /* ============================================================
+     RESULT
+     ============================================================ */
+  function showResult(type, guest, customSub) {
+    const el = $('result');
+    el.className = 'result show ' + type;
+    const icons = { valid: '✓', invalid: '✕', duplicate: '!' };
+    $('resultIcon').textContent = icons[type] || '✓';
+
+    if (type === 'valid') {
+      $('resultTitle').textContent = 'Valid Ticket';
+      $('resultSub').textContent = customSub || 'Welcome to the party!';
+    } else if (type === 'duplicate') {
+      $('resultTitle').textContent = 'Already Checked In';
+      $('resultSub').textContent = customSub || 'This guest has already been scanned.';
+    } else {
+      $('resultTitle').textContent = 'Invalid Ticket';
+      $('resultSub').textContent = customSub || 'This code does not match any registration.';
+    }
+
+    if (guest) {
+      $('guestDetails').style.display = 'grid';
+      $('guestInitials').textContent = (guest.name || 'G').charAt(0).toUpperCase();
+      $('guestName').textContent = guest.name || '—';
+      $('guestCode').textContent = guest.ticketCode || '—';
+      $('guestCount').textContent = (guest.guests || 1) +
+        ((guest.guests || 1) === 1 ? ' person' : ' people');
+      $('guestEmail').textContent = guest.email || '—';
+      $('guestMobile').textContent = guest.mobile || '—';
+    } else {
+      $('guestDetails').style.display = 'none';
+    }
+
+    $('resultActions').style.display = 'flex';
+    if (type === 'valid' && guest) {
+      $('checkInBtn').style.display = 'block';
+      $('checkInBtn').textContent = 'Confirm Check In';
+      pendingCheckInCode = guest.ticketCode;
+    } else {
+      $('checkInBtn').style.display = 'none';
+      pendingCheckInCode = null;
+    }
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  /* ============================================================
+     CHECK IN
+     ============================================================ */
+  $('checkInBtn').addEventListener('click', function() {
+    if (!pendingCheckInCode) return;
+    const btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-white-spinner"></span>Checking in...';
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        btn.disabled = false;
+        btn.textContent = 'Confirm Check In';
+        if (res && res.success) {
+          if (res.alreadyCheckedIn) {
+            showResult('duplicate', res.guest, 'Already checked in at ' + formatTime(res.checkedInAt));
+            showToast('Already checked in.');
+          } else {
+            showResult('valid', res.guest, '✓ Checked in successfully!');
+            showToast('✓ Checked in!');
+            beepSuccess();
+          }
+          addToHistory(res.guest.ticketCode, { valid: true, guest: res.guest });
+        } else {
+          showToast((res && res.message) || 'Check-in failed.');
+        }
+      })
+      .withFailureHandler(function(err) {
+        btn.disabled = false;
+        btn.textContent = 'Confirm Check In';
+        showToast('Error: ' + err.message);
+      })
+      .checkInTicket(pendingCheckInCode);
+  });
+
+  $('scanAgainBtn').addEventListener('click', function() {
+    $('result').classList.remove('show');
+    pendingCheckInCode = null;
+    lastScannedCode = '';
+    lastScanTime = 0;
+    if ($('modeManual').classList.contains('active')) {
+      $('manualCode').value = '';
+      $('manualCode').focus();
+    }
+    // Camera tab does nothing here — user just opens popup again
+  });
+
+  /* ============================================================
+     HISTORY
+     ============================================================ */
+  $('clearHistoryBtn').addEventListener('click', function() {
+    $('historyList').innerHTML = '<div class="history-empty" id="historyEmpty">No scans yet</div>';
+  });
+
+  function addToHistory(code, res) {
+    const list = $('historyList');
+    const empty = $('historyEmpty');
+    if (empty) empty.style.display = 'none';
+
+    let type = 'invalid';
+    let name = '';
+    if (res && res.success && res.valid) {
+      type = res.alreadyCheckedIn ? 'duplicate' : 'valid';
+      name = (res.guest && res.guest.name) || '';
+    }
+
+    const icons = { valid: '✓', invalid: '✕', duplicate: '!' };
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const item = document.createElement('div');
+    item.className = 'history-item ' + type;
+    item.innerHTML =
+      '<div class="ic">' + icons[type] + '</div>' +
+      '<div class="code">' + escapeHtml(code) + '</div>' +
+      '<div class="name">' + escapeHtml(name) + '</div>' +
+      '<div class="time">' + time + '</div>';
+    list.insertBefore(item, list.firstChild);
+    while (list.children.length > 20) list.removeChild(list.lastChild);
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[c]);
+  }
+
+  /* ============================================================
+     UTIL
+     ============================================================ */
+  function formatTime(ts) {
+    try {
+      const d = new Date(ts);
+      if (isNaN(d.getTime())) return ts;
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (e) { return ts; }
+  }
+
+  let audioCtx = null;
+  function beep() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.frequency.value = 880; osc.type = 'sine';
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.12);
+    } catch (e) {}
+  }
+  function beepSuccess() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      [660, 880].forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.frequency.value = freq; osc.type = 'sine';
+        const t = audioCtx.currentTime + (i * 0.12);
+        gain.gain.setValueAtTime(0.08, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+        osc.start(t); osc.stop(t + 0.12);
+      });
+    } catch (e) {}
+  }
+
+  /* ============================================================
+     AUTO-VERIFY FROM URL ?code=XYZ
+     ============================================================ */
+  (function autoCheckFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (code && isAdminAuthed()) {
+      setTimeout(() => { verifyCode(code.toUpperCase()); }, 400);
+    }
+  })();
+
+  /* ============================================================
+     INIT
+     ============================================================ */
+  window.addEventListener('load', () => {
+    if (isAdminAuthed()) {
+      showAdminApp();
+      setupCameraUI();
+    } else {
+      showLoginGate();
+    }
+  });
+
+  window.addEventListener('beforeunload', () => {
+    stopInlineScanner();
+    closeCameraPopup();
+  });
+</script>
+</body>
+</html>
