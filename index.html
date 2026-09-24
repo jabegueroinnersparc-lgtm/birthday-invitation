@@ -68,77 +68,6 @@
       .bg-grid { background-size: 32px 32px; }
     }
 
-    /* TICKER */
-    .ticker-wrap {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
-      background: var(--black); color: var(--white);
-      overflow: hidden; height: 44px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      padding-top: env(safe-area-inset-top);
-      animation: tickerSlideDown 0.8s var(--ease-out);
-    }
-    .ticker-wrap.show { display: flex; align-items: center; }
-    @keyframes tickerSlideDown {
-      from { transform: translateY(-100%); opacity: 0; }
-      to   { transform: translateY(0); opacity: 1; }
-    }
-    .ticker-label {
-      flex-shrink: 0; display: flex; align-items: center; gap: 8px;
-      padding: 0 16px; font-size: 10px; font-weight: 700;
-      letter-spacing: 0.15em; text-transform: uppercase;
-      color: var(--silver); background: var(--black); height: 100%;
-      position: relative; z-index: 2;
-      border-right: 1px solid rgba(255,255,255,0.08);
-    }
-    .ticker-label .pulse-dot {
-      width: 6px; height: 6px; background: #22c55e;
-      border-radius: 50%; box-shadow: 0 0 0 3px rgba(34,197,94,0.25);
-      animation: livePulse 2s infinite; flex-shrink: 0;
-    }
-    @keyframes livePulse {
-      0%, 100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.25); }
-      50%      { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
-    }
-    .ticker-track {
-      flex: 1; overflow: hidden; position: relative; height: 100%;
-      mask-image: linear-gradient(90deg, transparent 0%, black 6%, black 94%, transparent 100%);
-      -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 6%, black 94%, transparent 100%);
-    }
-    .ticker-content {
-      display: inline-flex; align-items: center; gap: 32px;
-      white-space: nowrap; padding-left: 16px; height: 100%;
-      animation: tickerScroll 40s linear infinite;
-      will-change: transform;
-    }
-    @keyframes tickerScroll {
-      from { transform: translateX(0); }
-      to   { transform: translateX(-50%); }
-    }
-    .ticker-item {
-      display: inline-flex; align-items: center; gap: 8px;
-      font-size: 13px; font-weight: 500;
-      color: var(--white); flex-shrink: 0;
-    }
-    .ticker-item .name { font-weight: 700; color: var(--white); }
-    .ticker-item .verb { color: var(--silver); font-weight: 400; }
-    .ticker-item .spark { color: #fbbf24; font-size: 12px; }
-    .ticker-empty {
-      display: flex; align-items: center; padding: 0 16px;
-      font-size: 13px; color: var(--silver);
-      font-style: italic; height: 100%;
-    }
-    body.has-ticker { padding-top: 44px; }
-    @media (max-width: 640px) {
-      body.has-ticker { padding-top: calc(44px + env(safe-area-inset-top)); }
-      .ticker-wrap { height: 40px; }
-      .ticker-label { padding: 0 12px; font-size: 9px; }
-      .ticker-item { font-size: 12px; }
-      .ticker-content { gap: 24px; }
-    }
-
     .app {
       position: relative; z-index: 2;
       min-height: 100vh;
@@ -266,6 +195,10 @@
       width: 6px; height: 6px; background: #22c55e;
       border-radius: 50%; box-shadow: 0 0 0 3px rgba(34,197,94,0.2);
       animation: livePulse 2s infinite; flex-shrink: 0;
+    }
+    @keyframes livePulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
+      50%      { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
     }
     .countdown-units { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
     .countdown-unit {
@@ -1043,19 +976,6 @@
   <div class="orb orb-c"></div>
   <div class="toast" id="toast"></div>
 
-  <!-- TICKER -->
-  <div class="ticker-wrap" id="tickerWrap" aria-live="polite">
-    <div class="ticker-label">
-      <span class="pulse-dot"></span>
-      <span>Recent RSVPs</span>
-    </div>
-    <div class="ticker-track">
-      <div class="ticker-content" id="tickerContent">
-        <div class="ticker-empty">Loading recent guests…</div>
-      </div>
-    </div>
-  </div>
-
   <div class="app">
 
     <!-- VIEW 1: LOGIN -->
@@ -1065,12 +985,12 @@
           <div class="hero-top">
             <div class="brand-mark"><span class="dot-mark"></span><span>Simon Jabeguero</span></div>
             <h1 class="hero-title">A celebration<br><em>worth the wait.</em></h1>
-            <p class="hero-sub">Sign in to view your personal invitation and RSVP. It takes less than a minute.</p>
+            <p class="hero-sub">Sign in to view your personal invitation and confirm your attendance. It takes less than a minute.</p>
           </div>
           <div class="hero-bottom">
             <div class="hero-stat"><span class="n">01</span><span class="l">Sign In</span></div>
             <div class="hero-divider"></div>
-            <div class="hero-stat"><span class="n">02</span><span class="l">RSVP</span></div>
+            <div class="hero-stat"><span class="n">02</span><span class="l">Details</span></div>
             <div class="hero-divider"></div>
             <div class="hero-stat"><span class="n">03</span><span class="l">Ticket</span></div>
           </div>
@@ -1138,7 +1058,7 @@
         <div class="welcome-actions">
           <button type="button" class="action-btn primary" id="goRsvpBtn">
             <div class="action-icon">🎟️</div>
-            <div class="action-title">Fill Up RSVP</div>
+            <div class="action-title">Confirm Attendance</div>
             <div class="action-desc">Share your details and a selfie to get your entrance ticket.</div>
             <span class="action-arrow">→</span>
           </button>
@@ -1190,7 +1110,7 @@
       </div>
     </section>
 
-    <!-- VIEW 4: RSVP FORM -->
+    <!-- VIEW 4: FORM -->
     <section class="view" id="formView">
       <div class="form-wrap">
 
@@ -1230,14 +1150,14 @@
         <div class="form-main">
           <div class="form-head">
             <div class="form-head-left">
-              <h2>RSVP Details</h2>
+              <h2>Your Details</h2>
               <p>All fields are required.</p>
             </div>
           </div>
 
           <div class="closed-state" id="closedState" style="display:none;">
             <div class="ic">🔒</div>
-            <h3>RSVP is closed</h3>
+            <h3>Confirmations are closed</h3>
             <p>The deadline has passed. Please contact the host directly.</p>
           </div>
 
@@ -1286,7 +1206,7 @@
               </div>
 
               <button type="submit" class="btn btn-primary" id="submitBtn">
-                Send My RSVP
+                Confirm Attendance
                 <span class="btn-arrow">→</span>
               </button>
 
@@ -1335,7 +1255,6 @@
       });
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const text = await res.text();
-      // Guard: if the server returns HTML (error page), don't try to parse as JSON
       if (text.trim().startsWith('<')) {
         throw new Error('Server returned HTML instead of JSON — check deployment');
       }
@@ -1400,59 +1319,6 @@
       el.classList.add('show');
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
-    }
-
-    /* TICKER */
-    let tickerRefreshInterval = null;
-
-    async function loadRecentGuests() {
-      try {
-        const res = await api('recentGuests');
-        if (!res || !res.success) return;
-        renderTicker(res.guests || []);
-      } catch (e) { console.log('Ticker load failed:', e); }
-    }
-
-    function renderTicker(guests) {
-      const wrap = $('tickerWrap');
-      const content = $('tickerContent');
-      if (!wrap || !content) return;
-
-      if (!guests || guests.length === 0) {
-        wrap.classList.remove('show');
-        document.body.classList.remove('has-ticker');
-        return;
-      }
-
-      wrap.classList.add('show');
-      document.body.classList.add('has-ticker');
-
-      const itemsHTML = guests.map((name, i) => {
-        const verb = i === 0 ? 'just RSVP\'d' : 'is coming';
-        return `
-          <div class="ticker-item">
-            <span class="spark">✨</span>
-            <span class="name">${escapeHtml(name)}</span>
-            <span class="verb">${verb}</span>
-          </div>
-        `;
-      }).join('');
-
-      content.innerHTML = itemsHTML + itemsHTML;
-      const duration = Math.max(20, guests.length * 4);
-      content.style.animationDuration = duration + 's';
-    }
-
-    function escapeHtml(s) {
-      return String(s || '').replace(/[&<>"']/g, c => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-      })[c]);
-    }
-
-    function startTicker() {
-      loadRecentGuests();
-      if (tickerRefreshInterval) clearInterval(tickerRefreshInterval);
-      tickerRefreshInterval = setInterval(loadRecentGuests, 30000);
     }
 
     /* BOOTSTRAP */
@@ -1523,13 +1389,12 @@
       showToast('Welcome, ' + currentUser.name.split(' ')[0] + '!');
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      // Check if this email already RSVP'd
       try {
         const res = await api('checkExistingRSVP', { email: currentUser.email });
         if (res && res.success && res.exists) {
           $('goRsvpBtn').style.opacity = '0.5';
           $('goRsvpBtn').style.pointerEvents = 'none';
-          $('goRsvpBtn').querySelector('.action-title').textContent = 'Already RSVP\'d';
+          $('goRsvpBtn').querySelector('.action-title').textContent = 'Already Confirmed';
           $('goRsvpBtn').querySelector('.action-desc').textContent = 'You already have a ticket. Showing it now…';
 
           $('ticketQrImg').src = res.ticket.qrCodeUrl;
@@ -1588,7 +1453,7 @@
 
     $('welcomeSignoutBtn').addEventListener('click', logout);
 
-    /* ATTENDEES — with timeout + retry */
+    /* ATTENDEES */
     async function loadAttendees() {
       const list = $('attendeesList');
       list.innerHTML = `
@@ -1598,7 +1463,6 @@
         </div>
       `;
 
-      // Timeout safety — 15 seconds
       const timeoutId = setTimeout(() => {
         if (list.querySelector('.attendees-loading')) {
           showAttendeesError('Taking too long', 'The server didn\'t respond. Please check your connection and try again.');
@@ -1622,7 +1486,7 @@
           list.innerHTML = `
             <div class="attendees-empty">
               <span class="ic">🎈</span>
-              <h3>No RSVPs yet</h3>
+              <h3>No confirmations yet</h3>
               <p>Be the first to confirm your attendance!</p>
               <button type="button" onclick="document.getElementById('backFromAttendeesBtn').click()">Back</button>
             </div>
@@ -1668,6 +1532,12 @@
       }
     }
 
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[c]);
+    }
+
     /* LOGOUT */
     function logout() {
       try { localStorage.removeItem('birthdayUser'); sessionStorage.removeItem('birthdayUser'); } catch (e) {}
@@ -1687,7 +1557,7 @@
       $('pwEmail').value = '';
       $('goRsvpBtn').style.opacity = '';
       $('goRsvpBtn').style.pointerEvents = '';
-      $('goRsvpBtn').querySelector('.action-title').textContent = 'Fill Up RSVP';
+      $('goRsvpBtn').querySelector('.action-title').textContent = 'Confirm Attendance';
       $('goRsvpBtn').querySelector('.action-desc').textContent = 'Share your details and a selfie to get your entrance ticket.';
       showToast('Signed out.');
     }
@@ -1930,10 +1800,10 @@
       }
     });
 
-    /* RSVP SUBMIT */
+    /* SUBMIT */
     $('rsvpForm').addEventListener('submit', async function(e) {
       e.preventDefault();
-      if (appConfig.isPastDeadline) { showMessage('RSVP is closed.', 'error'); return; }
+      if (appConfig.isPastDeadline) { showMessage('Confirmations are closed.', 'error'); return; }
       if (!selfieData) { showMessage('Please take a selfie before submitting.', 'error'); return; }
 
       const btn = $('submitBtn');
@@ -1957,7 +1827,7 @@
         if (res && res.success && res.ticket) {
           showTicket(res.ticket);
         } else if (res && res.duplicate && res.ticket) {
-          showMessage('You already RSVP\'d. Showing your ticket…', 'success');
+          showMessage('You already confirmed. Showing your ticket…', 'success');
           setTimeout(() => showTicket(res.ticket), 800);
         } else if (res && res.success) {
           showMessage(res.message, 'success');
@@ -1968,7 +1838,7 @@
         showMessage('Error: ' + err.message, 'error');
       }
       btn.disabled = false;
-      btn.innerHTML = 'Send My RSVP <span class="btn-arrow">→</span>';
+      btn.innerHTML = 'Confirm Attendance <span class="btn-arrow">→</span>';
     });
 
     function showMessage(text, type) {
@@ -1988,7 +1858,7 @@
       document.querySelector('.progress-wrap').style.display = 'none';
       $('message').style.display = 'none';
       $('ticketScreen').classList.add('show');
-      showToast('RSVP confirmed! 🎉');
+      showToast('You\'re on the list! 🎉');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -2010,7 +1880,7 @@
       if (!silent) {
         $('formView').classList.remove('active');
         $('welcomeView').classList.add('active');
-        showToast('Ready for the next RSVP.');
+        showToast('Ready for the next guest.');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }
@@ -2034,7 +1904,6 @@
     startCountdown();
     initApp();
     updateProgress();
-    startTicker();
   </script>
 </body>
 </html>
