@@ -1,5 +1,5 @@
 /**
- * Birthday Invitation — Backend (with QR tickets + admin scanner)
+ * Birthday Invitation — Backend (with QR tickets + admin scanner + live ticker)
  * Supports both:
  *   - Apps Script HTML service (doGet)
  *   - Vercel frontend via fetch() (doPost)
@@ -40,27 +40,22 @@ function doGet(e) {
    ============================================================ */
 function doPost(e) {
   try {
-    // CORS-friendly: parse form-encoded parameters
     const params = (e && e.parameter) || {};
     const action = params.action;
 
     Logger.log('doPost called: action=' + action);
 
-    // --- Bootstrap (deadline info) ---
     if (action === 'bootstrap') {
       return jsonResponse(bootstrap());
     }
 
-    // --- Simple login (name + email) ---
     if (action === 'simpleLogin') {
       return jsonResponse(simpleLogin(params.name || '', params.email || ''));
     }
 
-    // --- RSVP submission ---
     if (action === 'submitForm') {
       let formData = {};
       try {
-        // Sent as JSON string in "data"
         formData = JSON.parse(params.data || '{}');
       } catch (err) {
         return jsonResponse({ success: false, message: 'Invalid form data.' });
@@ -68,19 +63,21 @@ function doPost(e) {
       return jsonResponse(submitForm(formData));
     }
 
-    // --- Admin login ---
     if (action === 'adminLogin') {
       return jsonResponse(adminLogin(params.password || ''));
     }
 
-    // --- Verify ticket (scanner) ---
     if (action === 'verifyTicket') {
       return jsonResponse(verifyTicket(params.code || ''));
     }
 
-    // --- Check in ticket (scanner) ---
     if (action === 'checkInTicket') {
       return jsonResponse(checkInTicket(params.code || ''));
+    }
+
+    // --- Recent guests (for the ticker) ---
+    if (action === 'recentGuests') {
+      return jsonResponse(getRecentGuests());
     }
 
     return jsonResponse({ success: false, message: 'Unknown action: ' + action });
@@ -232,6 +229,35 @@ function simpleLogin(name, email) {
     };
   } catch (e) {
     return { success: false, message: e.toString() };
+  }
+}
+
+/* ============================================================
+   RECENT GUESTS (for the live ticker)
+   ============================================================ */
+function getRecentGuests() {
+  try {
+    const sh = getResponsesSheet();
+    const lastRow = sh.getLastRow();
+    if (lastRow < 2) return { success: true, guests: [] };
+
+    const startRow = Math.max(2, lastRow - 19);
+    const numRows = lastRow - startRow + 1;
+    const data = sh.getRange(startRow, 1, numRows, 2).getValues();
+
+    const guests = [];
+    for (let i = data.length - 1; i >= 0; i--) {
+      const name = String(data[i][1] || '').trim();
+      if (name) {
+        const firstName = name.split(' ')[0];
+        guests.push(firstName);
+      }
+    }
+
+    return { success: true, guests: guests, total: lastRow - 1 };
+  } catch (e) {
+    Logger.log('getRecentGuests error: ' + e.toString());
+    return { success: false, message: e.toString(), guests: [] };
   }
 }
 
@@ -481,7 +507,7 @@ function setupSheets() {
     settings.appendRow(['Key', 'Value']);
     settings.appendRow(['RSVP_DEADLINE', '']);
     settings.appendRow(['PASSWORD', '']);
-    settings.appendRow(['ADMIN_PASSWORD', 'simon2026admin']);
+    settings.appendRow(['ADMIN_PASSWORD', 'sairacute.']);
     Logger.log('✓ Created "' + SHEET_SETTINGS + '"');
   }
 
