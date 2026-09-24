@@ -465,13 +465,15 @@
           </div>
         </div>
 
-        <!-- CTA -->
-        <!-- ⚠️ REPLACE THE HREF BELOW with your Apps Script URL -->
-        <a href="https://script.google.com/macros/s/AKfycbzzoNUCRIwXKbndf9QWsalqq5jn026zRc3DUfzCW6dihq8p4fol6GyX2MWp2FkGQz_0/exec"
-           class="cta-btn">
-          Open Invitation
+             <!-- CTA — triggers transition before redirect -->
+        <button type="button"
+                class="cta-btn"
+                id="openInvitationBtn"
+                data-url="https://script.google.com/macros/s/AKfycbzzoNUCRIwXKbndf9QWsalqq5jn026zRc3DUfzCW6dihq8p4fol6GyX2MWp2FkGQz_0/exec">
+          <span class="cta-label">Open Invitation</span>
           <span class="arrow">→</span>
-        </a>
+          <span class="cta-spinner" aria-hidden="true"></span>
+        </button>
 
         <p class="cta-note">
           Tap above to sign in and RSVP.
