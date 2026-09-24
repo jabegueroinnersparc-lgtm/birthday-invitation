@@ -1,14 +1,6 @@
 /**
  * Birthday Invitation — Backend
- * Handles:
- *   - Apps Script HTML service (doGet)
- *   - Vercel / GitHub Pages frontend via fetch() (doPost)
- *
- * doPost handles both:
- *   - e.parameter (URL query params)
- *   - e.postData.contents (raw POST body) — parsed manually
- *
- * Attendance values: 'going' | 'planning' | 'not_going'
+ * Handles Apps Script HTML service (doGet) AND Vercel/GitHub Pages frontend (doPost)
  */
 
 const SHEET_RESPONSES = 'Responses';
@@ -42,7 +34,7 @@ function doGet(e) {
 }
 
 /* ============================================================
-   PARAM PARSER
+   PARAM PARSER — reads from e.parameter OR e.postData.contents
    ============================================================ */
 function parseParams(e) {
   const params = {};
@@ -78,7 +70,7 @@ function parseParams(e) {
           params[k] = parsed[k];
         });
       }
-    } catch (err) { /* not JSON, ignore */ }
+    } catch (err) { /* not JSON */ }
   }
 
   return params;
