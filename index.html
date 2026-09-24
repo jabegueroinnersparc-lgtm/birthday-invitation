@@ -1205,7 +1205,7 @@
 
         <div class="login-form-side">
           <h2 class="login-heading">Welcome.</h2>
-          <p class="login-subtext">Enter your details to continue.</p>
+          <p class="login-subtext">Create an account or sign in to continue.</p>
 
           <div class="countdown-box">
             <div class="countdown-eyebrow">
@@ -1233,11 +1233,11 @@
             </div>
             <div class="field">
               <label class="field-label" for="pwPassword">Password</label>
-              <input type="password" id="pwPassword" required minlength="8" placeholder="Enter your password"
-                     autocomplete="current-password">
+              <input type="password" id="pwPassword" required minlength="8" placeholder="Create or enter your password"
+                     autocomplete="new-password">
             </div>
             <button type="submit" class="btn btn-primary" id="pwBtn">
-              Continue
+              Create account / Sign in
               <span class="btn-arrow">→</span>
             </button>
             <div class="message" id="pwMessage"></div>
@@ -1602,13 +1602,12 @@
 
       const btn = $('pwBtn');
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span>Signing in...';
+      btn.innerHTML = '<span class="spinner"></span>Creating account or signing in...';
 
       try {
         const res = await api('simpleLogin', { name: name, email: email, password: password });
-        // Fail closed: the client must never treat a successful name/email lookup
-        // as authentication. The backend must verify the password and return the
-        // explicit passwordVerified flag only after a successful comparison.
+        // The backend either creates a new account or verifies an existing one.
+        // Never treat a name/email lookup alone as authentication.
         if (res && res.success && res.passwordVerified === true) {
           currentUser = res.user;
           try { localStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
@@ -1623,7 +1622,7 @@
         showPwMessage('Error: ' + err.message, 'error');
       }
       btn.disabled = false;
-      btn.innerHTML = 'Continue <span class="btn-arrow">→</span>';
+      btn.innerHTML = 'Create account / Sign in <span class="btn-arrow">→</span>';
     });
 
     function showPwMessage(text, type) {
