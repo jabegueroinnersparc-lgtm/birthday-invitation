@@ -5,12 +5,15 @@
  *   - Vercel / GitHub Pages frontend via fetch() (doPost)
  *
  * Attendance values: 'going' | 'planning' | 'not_going'
+ *
+ * ⭐ UPDATED: Supports video greetings for guests who can't attend.
  */
 
 const SHEET_RESPONSES = 'Responses';
 const SHEET_WHITELIST = 'Whitelist';
 const SHEET_SETTINGS  = 'Settings';
 const FOLDER_NAME     = 'Birthday Selfies';
+const VIDEO_FOLDER_NAME = 'Birthday Video Greetings';  // ⭐ NEW
 const SHEET_PAYMENTS   = 'Payments';
 
 const PAYMENT_HEADERS = [
@@ -24,17 +27,35 @@ const WHITELIST_CACHE_KEY = 'birthday_whitelist_v1';
 const ATTENDEES_CACHE_KEY = 'birthday_attendees_v1';
 const SETTINGS_CACHE_KEY = 'birthday_settings_v1';
 
+// ⭐ CHANGED: Added "Video Greeting URL" column.
+// Order: ...Selfie URL, Email, Guests, Login Method, Ticket Code, Checked In, Attendance, Video Greeting URL
 const RESPONSES_HEADERS = [
   'Timestamp', 'Name', 'Mobile', 'Address', 'Greetings',
   'Selfie URL', 'Email', 'Guests', 'Login Method',
-  'Ticket Code', 'Checked In', 'Attendance'
+  'Ticket Code', 'Checked In', 'Attendance', 'Video Greeting URL'
 ];
+
+// Column index helper (1-based → 0-based for getValues arrays)
+const COL = {
+  TIMESTAMP:    0,
+  NAME:         1,
+  MOBILE:       2,
+  ADDRESS:      3,
+  GREETINGS:    4,
+  SELFIE_URL:   5,
+  EMAIL:        6,
+  GUESTS:       7,
+  LOGIN_METHOD: 8,
+  TICKET_CODE:  9,
+  CHECKED_IN:   10,
+  ATTENDANCE:   11,
+  VIDEO_URL:    12   // ⭐ NEW
+};
 
 /* ============================================================
    WEB APP ENTRY (GET)
    ============================================================ */
 function doGet(e) {
-  // API request via GET (fallback for small calls)
   if (e && e.parameter && e.parameter.action) {
     return handleApiRequest(e);
   }
@@ -56,10 +77,6 @@ function doGet(e) {
 
 /* ============================================================
    CORS PREFLIGHT HANDLER
-   ------------------------------------------------------------
-   Vercel/browser fetch() with "Content-Type: text/plain" avoids
-   preflight, but this handler is included as a safety net for
-   any client that still sends an OPTIONS request.
    ============================================================ */
 function doOptions(e) {
   return ContentService.createTextOutput('')
@@ -67,23 +84,20 @@ function doOptions(e) {
 }
 
 /* ============================================================
-   PARAM PARSER — handles GET query, urlencoded POST, and JSON
+   PARAM PARSER
    ============================================================ */
 function parseParams(e) {
   const params = {};
 
-  // 1. Query string params (GET or POST with ?action=...)
   if (e && e.parameter) {
     Object.keys(e.parameter).forEach(function(k) {
       params[k] = e.parameter[k];
     });
   }
 
-  // 2. URL-encoded POST body (application/x-www-form-urlencoded OR text/plain)
   if (e && e.postData && e.postData.contents) {
     const body = e.postData.contents;
-    if (body && body.indexOf('=') !== -1 && body.indexOf('&') !== -1 || body.indexOf('=') !== -1) {
-      // Try URL-encoded parsing
+    if (body && body.indexOf('=') !== -1) {
       const pairs = body.split('&');
       pairs.forEach(function(pair) {
         const idx = pair.indexOf('=');
@@ -97,7 +111,6 @@ function parseParams(e) {
       });
     }
 
-    // 3. JSON POST body fallback
     if (!params.action) {
       try {
         const parsed = JSON.parse(body);
@@ -127,17 +140,9 @@ function handleApiRequest(e) {
 
     Logger.log('handleApiRequest: action=' + action);
 
-    if (action === 'bootstrap') {
-      return jsonResponse(bootstrap());
-    }
-
-    if (action === 'simpleLogin') {
-      return jsonResponse(simpleLogin(params.name || '', params.mobile || ''));
-    }
-
-    if (action === 'loginByMobile') {
-      return jsonResponse(loginByMobile(params.mobile || ''));
-    }
+    if (action === 'bootstrap')       return jsonResponse(bootstrap());
+    if (action === 'simpleLogin')     return jsonResponse(simpleLogin(params.name || '', params.mobile || ''));
+    if (action === 'loginByMobile')   return jsonResponse(loginByMobile(params.mobile || ''));
 
     if (action === 'submitForm') {
       let formData = {};
@@ -149,17 +154,9 @@ function handleApiRequest(e) {
       return jsonResponse(submitForm(formData));
     }
 
-    if (action === 'adminLogin') {
-      return jsonResponse(adminLogin(params.password || ''));
-    }
-
-    if (action === 'verifyTicket') {
-      return jsonResponse(verifyTicket(params.code || ''));
-    }
-
-    if (action === 'checkInTicket') {
-      return jsonResponse(checkInTicket(params.code || ''));
-    }
+    if (action === 'adminLogin')      return jsonResponse(adminLogin(params.password || ''));
+    if (action === 'verifyTicket')    return jsonResponse(verifyTicket(params.code || ''));
+    if (action === 'checkInTicket')   return jsonResponse(checkInTicket(params.code || ''));
 
     if (action === 'checkExistingRSVP') {
       return jsonResponse(checkExistingRSVP(
@@ -168,9 +165,7 @@ function handleApiRequest(e) {
       ));
     }
 
-    if (action === 'getAllAttendees') {
-      return jsonResponse(getAllAttendees());
-    }
+    if (action === 'getAllAttendees') return jsonResponse(getAllAttendees());
 
     if (action === 'submitPayment') {
       let paymentData = {};
@@ -218,7 +213,8 @@ function getResponsesSheet() {
   if (sh.getLastRow() === 0) {
     sh.appendRow(RESPONSES_HEADERS);
   } else {
-    const headerRow = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+    const headerRow = sh.getRange(1, 1, 1, Math.max(sh.getLastColumn(), RESPONSES_HEADERS.length)).getValues()[0];
+    // ⭐ CHANGED: Always ensure the header row matches (handles new column addition)
     if (headerRow.length < RESPONSES_HEADERS.length) {
       sh.getRange(1, 1, 1, RESPONSES_HEADERS.length).setValues([RESPONSES_HEADERS]);
     }
@@ -275,6 +271,12 @@ function getOrCreateFolder() {
   return folders.hasNext() ? folders.next() : DriveApp.createFolder(FOLDER_NAME);
 }
 
+// ⭐ NEW: Separate folder for video greetings
+function getOrCreateVideoFolder() {
+  const folders = DriveApp.getFoldersByName(VIDEO_FOLDER_NAME);
+  return folders.hasNext() ? folders.next() : DriveApp.createFolder(VIDEO_FOLDER_NAME);
+}
+
 /** Normalize names so case and repeated spaces cannot bypass duplicate checks. */
 function normalizeName(value) {
   return String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
@@ -282,10 +284,6 @@ function normalizeName(value) {
 
 /**
  * Normalize mobile values for comparison.
- * Supports Philippine formats such as:
- *   09123456789
- *   9123456789       (leading zero lost by Google Sheets)
- *   639123456789     (international format)
  */
 function normalizeMobile(value) {
   let digits = String(value || '').replace(/\D/g, '').trim();
@@ -306,13 +304,13 @@ function findResponseByName(name) {
   const lastRow = sh.getLastRow();
   if (lastRow < 2) return null;
 
-  const data = sh.getRange(2, 1, lastRow - 1, 12).getValues();
+  const data = sh.getRange(2, 1, lastRow - 1, RESPONSES_HEADERS.length).getValues();
   for (let i = 0; i < data.length; i++) {
-    if (normalizeName(data[i][1]) === target) {
+    if (normalizeName(data[i][COL.NAME]) === target) {
       return {
         row: i + 2,
-        name: String(data[i][1] || '').trim(),
-        code: String(data[i][9] || '').trim()
+        name: String(data[i][COL.NAME] || '').trim(),
+        code: String(data[i][COL.TICKET_CODE] || '').trim()
       };
     }
   }
@@ -335,7 +333,7 @@ function generateTicketCode() {
     const lastRow = sh.getLastRow();
     if (lastRow < 2) return code;
 
-    const codes = sh.getRange(2, 10, lastRow - 1, 1).getValues().flat().map(String);
+    const codes = sh.getRange(2, COL.TICKET_CODE + 1, lastRow - 1, 1).getValues().flat().map(String);
     if (!codes.includes(code)) return code;
     attempts++;
   }
@@ -349,7 +347,7 @@ function getQrCodeUrl(data, size) {
 }
 
 /* ============================================================
-   GUEST LOGIN (name + mobile verification)
+   GUEST LOGIN
    ============================================================ */
 function bootstrap() {
   try {
@@ -368,10 +366,6 @@ function bootstrap() {
   }
 }
 
-/**
- * Finds a whitelist row by exact normalized name and mobile number.
- * Returns { email, name, mobile } or null.
- */
 function findWhitelistAccount(name, mobile) {
   const values = getWhitelistValues();
   if (!values.length) return null;
@@ -393,7 +387,6 @@ function findWhitelistAccount(name, mobile) {
   return null;
 }
 
-/** Find a Whitelist entry by name, regardless of its mobile value. */
 function findWhitelistName(name) {
   const values = getWhitelistValues();
   if (!values.length) return null;
@@ -412,7 +405,6 @@ function findWhitelistName(name) {
   return null;
 }
 
-/** Find a Whitelist entry by mobile number, regardless of its name. */
 function findWhitelistMobile(mobile) {
   const values = getWhitelistValues();
   if (!values.length) return null;
@@ -431,10 +423,6 @@ function findWhitelistMobile(mobile) {
   return null;
 }
 
-/**
- * First login creates a Whitelist account using name + mobile.
- * Later logins authenticate against the same name + mobile pair.
- */
 function simpleLogin(name, mobile) {
   try {
     name = String(name || '').replace(/\s+/g, ' ').trim();
@@ -469,7 +457,6 @@ function simpleLogin(name, mobile) {
 
       const existingName = findWhitelistName(name);
       if (existingName) {
-        // Allow old name-only accounts to claim their mobile number once.
         if (!existingName.mobile) {
           const whitelist = getSheet(SHEET_WHITELIST, false);
           whitelist.getRange(existingName.row, 3).setValue(mobile);
@@ -503,7 +490,6 @@ function simpleLogin(name, mobile) {
         };
       }
 
-      // First login: create the account automatically.
       const whitelist = getSheet(SHEET_WHITELIST, true);
       if (whitelist.getLastRow() === 0) {
         whitelist.appendRow(['Email', 'Name', 'Mobile']);
@@ -529,7 +515,6 @@ function simpleLogin(name, mobile) {
   }
 }
 
-/** Recover an account using the unique mobile number only. */
 function loginByMobile(mobile) {
   try {
     mobile = normalizeMobile(mobile);
@@ -562,7 +547,7 @@ function loginByMobile(mobile) {
 }
 
 /* ============================================================
-   EXISTING RSVP CHECK (by name)
+   EXISTING RSVP CHECK
    ============================================================ */
 function checkExistingRSVP(nameOrEmail, mobile) {
   try {
@@ -580,16 +565,15 @@ function checkExistingRSVP(nameOrEmail, mobile) {
     const lastRow = sh.getLastRow();
     if (lastRow < 2) return { success: true, exists: false };
 
-    const data = sh.getRange(2, 1, lastRow - 1, 12).getValues();
+    const data = sh.getRange(2, 1, lastRow - 1, RESPONSES_HEADERS.length).getValues();
 
     for (let i = 0; i < data.length; i++) {
-      const rowEmail = String(data[i][6] || '').trim().toLowerCase();
-      const rowName = normalizeName(data[i][1]);
+      const rowEmail = String(data[i][COL.EMAIL] || '').trim().toLowerCase();
+      const rowName = normalizeName(data[i][COL.NAME]);
 
-      // Match against either the name column or the email column (fallback for old rows).
       if ((rowName && rowName === target) || (rowEmail && rowEmail === target)) {
         const scriptUrl = ScriptApp.getService().getUrl() || '';
-        const ticketCode = String(data[i][9] || '').trim();
+        const ticketCode = String(data[i][COL.TICKET_CODE] || '').trim();
         const qrData = scriptUrl
           ? scriptUrl + '?page=scan&code=' + encodeURIComponent(ticketCode)
           : ticketCode;
@@ -600,10 +584,10 @@ function checkExistingRSVP(nameOrEmail, mobile) {
           ticket: {
             code: ticketCode,
             qrCodeUrl: getQrCodeUrl(qrData, 400),
-            name: String(data[i][1] || ''),
-            guests: parseInt(data[i][7] || 1, 10),
+            name: String(data[i][COL.NAME] || ''),
+            guests: parseInt(data[i][COL.GUESTS] || 1, 10),
             qrData: qrData,
-            attendance: String(data[i][11] || 'going').trim().toLowerCase()
+            attendance: String(data[i][COL.ATTENDANCE] || 'going').trim().toLowerCase()
           }
         };
       }
@@ -633,15 +617,15 @@ function getAllAttendees() {
       return { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
     }
 
-    const data = sh.getRange(2, 1, lastRow - 1, 12).getValues();
+    const data = sh.getRange(2, 1, lastRow - 1, RESPONSES_HEADERS.length).getValues();
 
     const attendees = [];
     let totalGuests = 0;
 
     for (let i = 0; i < data.length; i++) {
-      const name = String(data[i][1] || '').trim();
-      const guests = parseInt(data[i][7] || 1, 10);
-      const attendance = String(data[i][11] || 'going').trim().toLowerCase();
+      const name = String(data[i][COL.NAME] || '').trim();
+      const guests = parseInt(data[i][COL.GUESTS] || 1, 10);
+      const attendance = String(data[i][COL.ATTENDANCE] || 'going').trim().toLowerCase();
 
       if (name) {
         const nameParts = name.split(' ');
@@ -657,6 +641,7 @@ function getAllAttendees() {
           attendance: attendance
         });
 
+        // ⭐ Only count guests for actual attendees, not for 'not_going'
         if (attendance === 'going') {
           totalGuests += guests;
         }
@@ -680,7 +665,7 @@ function getAllAttendees() {
 }
 
 /* ============================================================
-   RSVP SUBMISSION
+   RSVP SUBMISSION  ⭐ UPDATED
    ============================================================ */
 function submitForm(formData) {
   const lock = LockService.getScriptLock();
@@ -702,14 +687,15 @@ function submitForm(formData) {
     const submittedName = String(formData.name || '').replace(/\s+/g, ' ').trim();
     if (!submittedName) return { success: false, message: 'Name is required.' };
     if (submittedName.length < 2) return { success: false, message: 'Please enter a valid name.' };
+
     const mobile = String(formData.mobile || '').trim();
     if (!mobile) return { success: false, message: 'Mobile is required.' };
     if (!/^\d{7,15}$/.test(mobile)) {
       return { success: false, message: 'Please enter a valid mobile number using numbers only.' };
     }
+
     if (!formData.address || !String(formData.address).trim()) return { success: false, message: 'Address is required.' };
     if (!formData.greetings || !String(formData.greetings).trim()) return { success: false, message: 'Greetings are required.' };
-    if (!formData.selfie || !formData.selfie.data) return { success: false, message: 'Selfie is required.' };
 
     const attendance = String(formData.attendance || 'going').trim().toLowerCase();
     const validAttendance = ['going', 'planning', 'not_going'];
@@ -717,7 +703,21 @@ function submitForm(formData) {
       return { success: false, message: 'Please choose an attendance option.' };
     }
 
-    // Do not use parseInt here: values such as "2abc" or "letters" must be rejected.
+    // ⭐ CHANGED: Require selfie for going/planning, require video for not_going.
+    const hasSelfie = !!(formData.selfie && formData.selfie.data);
+    const hasVideo  = !!(formData.videoGreeting && formData.videoGreeting.data);
+
+    if (attendance === 'not_going') {
+      if (!hasVideo) {
+        return { success: false, message: 'Please record a video greeting before submitting.' };
+      }
+    } else {
+      if (!hasSelfie) {
+        return { success: false, message: 'Selfie is required.' };
+      }
+    }
+
+    // Reject invalid guests (e.g. "2abc", letters, negatives).
     const guestsText = String(formData.guests == null ? '' : formData.guests).trim();
     if (!/^\d+$/.test(guestsText)) {
       return { success: false, message: 'Please enter a valid number of guests.' };
@@ -727,8 +727,6 @@ function submitForm(formData) {
       return { success: false, message: 'Please enter a whole number of guests from 1 to 20.' };
     }
 
-    // Keep the duplicate check and append inside one script lock. This prevents
-    // two simultaneous submissions with the same name from both being saved.
     lock.waitLock(30000);
     try {
       const authorizedGuest = findWhitelistAccount(submittedName, mobile);
@@ -749,39 +747,47 @@ function submitForm(formData) {
       }
 
       const sheet = getResponsesSheet();
-      const folder = getOrCreateFolder();
-      const parts = String(formData.selfie.data).split(',');
-      if (parts.length < 2) return { success: false, message: 'Invalid selfie data.' };
 
-      const meta = parts[0];
-      const base64Data = parts[1];
-      const contentTypeMatch = meta.match(/:(.*?);/);
-      const contentType = contentTypeMatch ? contentTypeMatch[1] : 'image/jpeg';
+      // ⭐ CHANGED: Upload selfie only when present; upload video when present.
+      let selfieUrl = '';
+      let videoUrl = '';
 
-      const bytes = Utilities.base64Decode(base64Data);
-      const blob = Utilities.newBlob(bytes, contentType, formData.selfie.name || 'selfie.jpg');
-      const file = folder.createFile(blob);
-      try {
-        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      } catch (e) { Logger.log('Sharing warning: ' + e.toString()); }
-      const selfieUrl = file.getUrl();
+      if (hasSelfie) {
+        const folder = getOrCreateFolder();
+        selfieUrl = uploadDataUrlToDrive(
+          formData.selfie.data,
+          formData.selfie.name || 'selfie.jpg',
+          folder
+        );
+      }
+
+      if (hasVideo) {
+        const videoFolder = getOrCreateVideoFolder();
+        videoUrl = uploadDataUrlToDrive(
+          formData.videoGreeting.data,
+          formData.videoGreeting.name || 'video_greeting.webm',
+          videoFolder
+        );
+      }
 
       const ticketCode = generateTicketCode();
       const identifier = String(formData.email || submittedName).trim();
 
+      // ⭐ CHANGED: Append row including new Video Greeting URL column
       sheet.appendRow([
-        new Date(),
-        submittedName,
-        mobile,
-        String(formData.address).trim(),
-        String(formData.greetings).trim(),
-        selfieUrl,
-        identifier,
-        guests,
-        formData.loginMethod || 'name',
-        ticketCode,
-        '',
-        attendance
+        new Date(),                                  // Timestamp
+        submittedName,                               // Name
+        mobile,                                      // Mobile
+        String(formData.address).trim(),             // Address
+        String(formData.greetings).trim(),           // Greetings
+        selfieUrl,                                   // Selfie URL
+        identifier,                                  // Email
+        guests,                                      // Guests
+        formData.loginMethod || 'name',              // Login Method
+        ticketCode,                                  // Ticket Code
+        '',                                          // Checked In
+        attendance,                                  // Attendance
+        videoUrl                                     // Video Greeting URL ⭐ NEW
       ]);
 
       const scriptUrl = ScriptApp.getService().getUrl() || '';
@@ -791,9 +797,13 @@ function submitForm(formData) {
       const qrCodeUrl = getQrCodeUrl(qrData, 400);
       clearBirthdayCaches();
 
+      const successMessage = attendance === 'not_going'
+        ? 'Thank you! We received your video greeting. 💌'
+        : 'Thank you! Your attendance is confirmed. 🎉';
+
       return {
         success: true,
-        message: 'Thank you! Your attendance is confirmed. 🎉',
+        message: successMessage,
         ticket: {
           code: ticketCode,
           qrCodeUrl: qrCodeUrl,
@@ -810,6 +820,30 @@ function submitForm(formData) {
     Logger.log('submitForm FATAL: ' + error.toString());
     return { success: false, message: 'Error: ' + error.toString() };
   }
+}
+
+/* ============================================================
+   ⭐ NEW: Upload a data URL (image or video) to a Drive folder.
+   Returns the public URL of the uploaded file.
+   ============================================================ */
+function uploadDataUrlToDrive(dataUrl, filename, folder) {
+  const parts = String(dataUrl).split(',');
+  if (parts.length < 2) throw new Error('Invalid media data (missing comma separator).');
+
+  const meta = parts[0];
+  const base64Data = parts[1];
+  const contentTypeMatch = meta.match(/:(.*?);/);
+  const contentType = contentTypeMatch ? contentTypeMatch[1] : 'application/octet-stream';
+
+  const bytes = Utilities.base64Decode(base64Data);
+  const blob = Utilities.newBlob(bytes, contentType, filename);
+  const file = folder.createFile(blob);
+  try {
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (e) {
+    Logger.log('Sharing warning: ' + e.toString());
+  }
+  return file.getUrl();
 }
 
 /* ============================================================
@@ -917,14 +951,14 @@ function verifyTicket(code) {
     const lastRow = sh.getLastRow();
     if (lastRow < 2) return { success: false, message: 'No registrations yet.' };
 
-    const data = sh.getRange(2, 1, lastRow - 1, 12).getValues();
+    const data = sh.getRange(2, 1, lastRow - 1, RESPONSES_HEADERS.length).getValues();
 
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
-      const rowCode = String(row[9] || '').trim().toUpperCase();
+      const rowCode = String(row[COL.TICKET_CODE] || '').trim().toUpperCase();
 
       if (rowCode === code) {
-        const checkedInRaw = row[10];
+        const checkedInRaw = row[COL.CHECKED_IN];
         const isCheckedIn = !!checkedInRaw;
 
         return {
@@ -934,13 +968,14 @@ function verifyTicket(code) {
           checkedInAt: isCheckedIn ? String(checkedInRaw) : '',
           rowIndex: i + 2,
           guest: {
-            name: String(row[1] || ''),
-            mobile: String(row[2] || ''),
-            email: String(row[6] || ''),
-            guests: parseInt(row[7] || 1, 10),
+            name: String(row[COL.NAME] || ''),
+            mobile: String(row[COL.MOBILE] || ''),
+            email: String(row[COL.EMAIL] || ''),
+            guests: parseInt(row[COL.GUESTS] || 1, 10),
             ticketCode: rowCode,
-            selfieUrl: String(row[5] || ''),
-            attendance: String(row[11] || 'going').trim().toLowerCase()
+            selfieUrl: String(row[COL.SELFIE_URL] || ''),
+            videoUrl: String(row[COL.VIDEO_URL] || ''),   // ⭐ NEW
+            attendance: String(row[COL.ATTENDANCE] || 'going').trim().toLowerCase()
           }
         };
       }
@@ -962,13 +997,13 @@ function checkInTicket(code) {
     const lastRow = sh.getLastRow();
     if (lastRow < 2) return { success: false, message: 'No registrations.' };
 
-    const data = sh.getRange(2, 1, lastRow - 1, 12).getValues();
+    const data = sh.getRange(2, 1, lastRow - 1, RESPONSES_HEADERS.length).getValues();
 
     for (let i = 0; i < data.length; i++) {
-      const rowCode = String(data[i][9] || '').trim().toUpperCase();
+      const rowCode = String(data[i][COL.TICKET_CODE] || '').trim().toUpperCase();
       if (rowCode === code) {
         const rowIndex = i + 2;
-        const checkedInCell = sh.getRange(rowIndex, 11);
+        const checkedInCell = sh.getRange(rowIndex, COL.CHECKED_IN + 1);
 
         if (checkedInCell.getValue()) {
           return {
@@ -976,10 +1011,10 @@ function checkInTicket(code) {
             alreadyCheckedIn: true,
             checkedInAt: String(checkedInCell.getValue()),
             guest: {
-              name: String(data[i][1] || ''),
-              mobile: String(data[i][2] || ''),
-              email: String(data[i][6] || ''),
-              guests: parseInt(data[i][7] || 1, 10),
+              name: String(data[i][COL.NAME] || ''),
+              mobile: String(data[i][COL.MOBILE] || ''),
+              email: String(data[i][COL.EMAIL] || ''),
+              guests: parseInt(data[i][COL.GUESTS] || 1, 10),
               ticketCode: rowCode
             }
           };
@@ -992,10 +1027,10 @@ function checkInTicket(code) {
           alreadyCheckedIn: false,
           checkedInAt: String(new Date()),
           guest: {
-            name: String(data[i][1] || ''),
-            mobile: String(data[i][2] || ''),
-            email: String(data[i][6] || ''),
-            guests: parseInt(data[i][7] || 1, 10),
+            name: String(data[i][COL.NAME] || ''),
+            mobile: String(data[i][COL.MOBILE] || ''),
+            email: String(data[i][COL.EMAIL] || ''),
+            guests: parseInt(data[i][COL.GUESTS] || 1, 10),
             ticketCode: rowCode
           }
         };
@@ -1044,17 +1079,41 @@ function setupSheets() {
   }
 
   const folder = getOrCreateFolder();
-  Logger.log('✓ Drive folder: ' + folder.getUrl());
+  Logger.log('✓ Selfie Drive folder: ' + folder.getUrl());
+
+  const videoFolder = getOrCreateVideoFolder();  // ⭐ NEW
+  Logger.log('✓ Video Greeting Drive folder: ' + videoFolder.getUrl());
 
   Logger.log('=== Setup complete ===');
   return 'Setup complete.';
 }
 
 /**
- * Safe migration for an existing Whitelist sheet.
- * It only updates the header row and leaves all guest rows unchanged.
- * Fill the new Mobile column before allowing guests to log in.
+ * ⭐ NEW: Safe migration for existing sheets.
+ * Adds the "Video Greeting URL" column to the Responses sheet without
+ * touching any existing data rows.
  */
+function migrateResponsesForVideo() {
+  const sh = getSheet(SHEET_RESPONSES, true);
+  const headerRow = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+
+  // If the new column is already present, do nothing.
+  if (headerRow.indexOf('Video Greeting URL') !== -1) {
+    Logger.log('Header already has "Video Greeting URL". Nothing to migrate.');
+    return 'Already up to date.';
+  }
+
+  const newColIndex = headerRow.length + 1;
+  sh.getRange(1, newColIndex).setValue('Video Greeting URL');
+  Logger.log('✓ Added "Video Greeting URL" header at column ' + newColIndex);
+
+  // Also ensure the video folder exists
+  const videoFolder = getOrCreateVideoFolder();
+  Logger.log('✓ Video Greeting Drive folder ready: ' + videoFolder.getUrl());
+
+  return 'Migration complete.';
+}
+
 function migrateWhitelistSheet() {
   const whitelist = getSheet(SHEET_WHITELIST, true);
   whitelist.getRange(1, 1, 1, 3).setValues([['Email', 'Name', 'Mobile']]);
@@ -1066,7 +1125,7 @@ function migrateWhitelistSheet() {
    RESET ALL DATA — Run once from the editor
    ------------------------------------------------------------
    Wipes all guest responses, whitelist entries, uploaded selfies,
-   and resets the Settings sheet to defaults.
+   video greetings, and resets the Settings sheet to defaults.
 
    WARNING: This is destructive and cannot be undone.
    ============================================================ */
@@ -1079,6 +1138,7 @@ function resetAllData() {
     '• All rows in the "Responses" sheet\n' +
     '• All rows in the "Whitelist" sheet\n' +
     '• All files in the "Birthday Selfies" Drive folder\n' +
+    '• All files in the "Birthday Video Greetings" Drive folder\n' +
     '• Reset the "Settings" sheet to defaults\n\n' +
     'This CANNOT be undone. Continue?',
     ui.ButtonSet.YES_NO
@@ -1094,6 +1154,7 @@ function resetAllData() {
     responsesDeleted: 0,
     whitelistDeleted: 0,
     selfiesDeleted: 0,
+    videosDeleted: 0,           // ⭐ NEW
     settingsReset: false
   };
 
@@ -1130,7 +1191,7 @@ function resetAllData() {
     Logger.log('Could not clear Whitelist: ' + e.toString());
   }
 
-  /* -------- 3. Delete all files in the selfie Drive folder -------- */
+  /* -------- 3. Delete all selfie files -------- */
   try {
     const folders = DriveApp.getFoldersByName(FOLDER_NAME);
     if (folders.hasNext()) {
@@ -1153,7 +1214,30 @@ function resetAllData() {
     Logger.log('Could not delete selfies: ' + e.toString());
   }
 
-  /* -------- 4. Reset the Settings sheet -------- */
+  /* -------- 4. ⭐ NEW: Delete all video greeting files -------- */
+  try {
+    const folders = DriveApp.getFoldersByName(VIDEO_FOLDER_NAME);
+    if (folders.hasNext()) {
+      const folder = folders.next();
+      const files = folder.getFiles();
+      while (files.hasNext()) {
+        const file = files.next();
+        try {
+          file.setTrashed(true);
+          summary.videosDeleted++;
+        } catch (e) {
+          Logger.log('Could not trash video ' + file.getName() + ': ' + e.toString());
+        }
+      }
+      Logger.log('✓ Deleted ' + summary.videosDeleted + ' video file(s).');
+    } else {
+      Logger.log('No "' + VIDEO_FOLDER_NAME + '" folder found — nothing to delete.');
+    }
+  } catch (e) {
+    Logger.log('Could not delete videos: ' + e.toString());
+  }
+
+  /* -------- 5. Reset the Settings sheet -------- */
   try {
     const settings = spreadsheet.getSheetByName(SHEET_SETTINGS);
     if (settings) {
@@ -1179,6 +1263,7 @@ function resetAllData() {
     'Responses deleted: ' + summary.responsesDeleted + '\n' +
     'Whitelist entries deleted: ' + summary.whitelistDeleted + '\n' +
     'Selfie files deleted: ' + summary.selfiesDeleted + '\n' +
+    'Video files deleted: ' + summary.videosDeleted + '\n' +   // ⭐ NEW
     'Settings reset: ' + (summary.settingsReset ? 'yes' : 'no'),
     ui.ButtonSet.OK
   );
