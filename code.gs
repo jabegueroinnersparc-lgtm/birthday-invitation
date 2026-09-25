@@ -95,7 +95,7 @@ function doPost(e) {
     }
 
     if (action === 'simpleLogin') {
-      return jsonResponse(simpleLogin(params.name || ''));
+      return jsonResponse(simpleLogin(params.name || '', params.mobile || ''));
     }
 
     if (action === 'submitForm') {
@@ -121,7 +121,10 @@ function doPost(e) {
     }
 
     if (action === 'checkExistingRSVP') {
-      return jsonResponse(checkExistingRSVP(params.name || params.email || ''));
+      return jsonResponse(checkExistingRSVP(
+        params.name || params.email || '',
+        params.mobile || ''
+      ));
     }
 
     if (action === 'getAllAttendees') {
@@ -195,6 +198,11 @@ function normalizeName(value) {
   return String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
+/** Normalize mobile values for exact digits-only comparison. */
+function normalizeMobile(value) {
+  return String(value || '').replace(/\D/g, '').trim();
+}
+
 /** Find an existing RSVP by normalized player name. */
 function findResponseByName(name) {
   const target = normalizeName(name);
@@ -247,7 +255,7 @@ function getQrCodeUrl(data, size) {
 }
 
 /* ============================================================
-   GUEST LOGIN (name only)
+   GUEST LOGIN (name + mobile verification)
    ============================================================ */
 function bootstrap() {
   try {
@@ -267,22 +275,26 @@ function bootstrap() {
 }
 
 /**
- * Finds a whitelist row by name.
- * Returns { email, name } or null.
+ * Finds a whitelist row by exact normalized name and mobile number.
+ * Returns { email, name, mobile } or null.
  */
-function findWhitelistAccount(name) {
+function findWhitelistAccount(name, mobile) {
   const whitelist = getSheet(SHEET_WHITELIST, false);
   if (!whitelist || whitelist.getLastRow() < 2) return null;
 
-  const values = whitelist.getRange(2, 1, whitelist.getLastRow() - 1, 2).getValues();
+  const values = whitelist.getRange(2, 1, whitelist.getLastRow() - 1, 3).getValues();
   const target = normalizeName(name);
+  const targetMobile = normalizeMobile(mobile);
+  if (!target || !targetMobile) return null;
 
   for (let i = 0; i < values.length; i++) {
     const rowName = normalizeName(values[i][1]);
-    if (rowName === target) {
+    const rowMobile = normalizeMobile(values[i][2]);
+    if (rowName === target && rowMobile === targetMobile) {
       return {
         email: String(values[i][0] || '').trim().toLowerCase(),
-        name: String(values[i][1] || '').trim()
+        name: String(values[i][1] || '').trim(),
+        mobile: rowMobile
       };
     }
   }
@@ -290,22 +302,24 @@ function findWhitelistAccount(name) {
 }
 
 /**
- * Simple login: name only.
- *   - If name exists in Whitelist, allow the login so the client can check
- *     for and show the user's previous ticket.
- *   - Otherwise create the whitelist row and return a new user.
+ * Simple login: exact name + mobile verification against Whitelist.
+ * The Whitelist must be populated by the organizer before guests can log in.
  */
-function simpleLogin(name) {
+function simpleLogin(name, mobile) {
   try {
-    name = String(name || '').trim();
+    name = String(name || '').replace(/\s+/g, ' ').trim();
+    mobile = normalizeMobile(mobile);
 
     if (!name) return { success: false, message: 'Please enter your name.' };
     if (name.length < 2) return { success: false, message: 'Please enter a valid name.' };
+    if (!/^\d{7,15}$/.test(mobile)) {
+      return { success: false, message: 'Please enter a valid mobile number using 7 to 15 digits.' };
+    }
 
     const lock = LockService.getScriptLock();
     lock.waitLock(10000);
     try {
-      const existing = findWhitelistAccount(name);
+      const existing = findWhitelistAccount(name, mobile);
       if (existing) {
         return {
           success: true,
@@ -314,26 +328,16 @@ function simpleLogin(name) {
           user: {
             name: existing.name,
             email: existing.email || existing.name,
+            mobile: existing.mobile,
             method: 'name'
           },
           message: 'Welcome back.'
         };
       }
 
-      const whitelist = getSheet(SHEET_WHITELIST, true);
-      if (whitelist.getLastRow() === 0) {
-        whitelist.appendRow(['Email', 'Name']);
-      }
-
-      // Store the name in both columns so existing lookups keep working.
-      whitelist.appendRow([name, name]);
-
-      Logger.log('Created guest account for ' + name + '.');
-
       return {
-        success: true,
-        created: true,
-        user: { name: name, email: name, method: 'name' }
+        success: false,
+        message: 'Name and mobile number do not match the guest list.'
       };
     } finally {
       lock.releaseLock();
@@ -347,10 +351,14 @@ function simpleLogin(name) {
 /* ============================================================
    EXISTING RSVP CHECK (by name)
    ============================================================ */
-function checkExistingRSVP(nameOrEmail) {
+function checkExistingRSVP(nameOrEmail, mobile) {
   try {
     const target = normalizeName(nameOrEmail);
     if (!target) return { success: false, message: 'No name provided.' };
+
+    if (!findWhitelistAccount(nameOrEmail, mobile)) {
+      return { success: false, message: 'Name and mobile number do not match the guest list.' };
+    }
 
     const sh = getResponsesSheet();
     const lastRow = sh.getLastRow();
@@ -499,6 +507,14 @@ function submitForm(formData) {
     // two simultaneous submissions with the same name from both being saved.
     lock.waitLock(30000);
     try {
+      const authorizedGuest = findWhitelistAccount(submittedName, mobile);
+      if (!authorizedGuest) {
+        return {
+          success: false,
+          message: 'Your name and mobile number are not on the guest list.'
+        };
+      }
+
       const duplicate = findResponseByName(submittedName);
       if (duplicate) {
         return {
@@ -741,10 +757,10 @@ function setupSheets() {
   let whitelist = spreadsheet.getSheetByName(SHEET_WHITELIST);
   if (!whitelist) {
     whitelist = spreadsheet.insertSheet(SHEET_WHITELIST);
-    whitelist.appendRow(['Email', 'Name']);
+    whitelist.appendRow(['Email', 'Name', 'Mobile']);
     Logger.log('✓ Created "' + SHEET_WHITELIST + '"');
   } else {
-    whitelist.getRange(1, 1, 1, 2).setValues([['Email', 'Name']]);
+    whitelist.getRange(1, 1, 1, 3).setValues([['Email', 'Name', 'Mobile']]);
     Logger.log('✓ Updated headers on "' + SHEET_WHITELIST + '"');
   }
 
@@ -753,6 +769,18 @@ function setupSheets() {
 
   Logger.log('=== Setup complete ===');
   return 'Setup complete.';
+}
+
+/**
+ * Safe migration for an existing Whitelist sheet.
+ * It only updates the header row and leaves all guest rows unchanged.
+ * Fill the new Mobile column before allowing guests to log in.
+ */
+function migrateWhitelistSheet() {
+  const whitelist = getSheet(SHEET_WHITELIST, true);
+  whitelist.getRange(1, 1, 1, 3).setValues([['Email', 'Name', 'Mobile']]);
+  Logger.log('Whitelist is ready. Add each guest mobile number in column C.');
+  return 'Whitelist updated. Add mobile numbers in column C.';
 }
 
 /* ============================================================
@@ -816,7 +844,7 @@ function resetAllData() {
         summary.whitelistDeleted = lastRow - 1;
         whitelist.deleteRows(2, lastRow - 1);
       }
-      whitelist.getRange(1, 1, 1, 2).setValues([['Email', 'Name']]);
+      whitelist.getRange(1, 1, 1, 3).setValues([['Email', 'Name', 'Mobile']]);
       Logger.log('✓ Cleared Whitelist sheet (' + summary.whitelistDeleted + ' rows).');
     }
   } catch (e) {
