@@ -11,6 +11,11 @@ const SHEET_RESPONSES = 'Responses';
 const SHEET_WHITELIST = 'Whitelist';
 const SHEET_SETTINGS  = 'Settings';
 const FOLDER_NAME     = 'Birthday Selfies';
+const SHEET_PAYMENTS   = 'Payments';
+
+const PAYMENT_HEADERS = [
+  'Timestamp', 'Name', 'Mobile', 'Amount', 'Transaction Reference', 'Notes', 'Status'
+];
 
 // Short-lived caches reduce repeated full-sheet reads while keeping new
 // signups and RSVPs visible quickly after they are written.
@@ -148,6 +153,16 @@ function handleApiRequest(e) {
 
     if (action === 'getAllAttendees') {
       return jsonResponse(getAllAttendees());
+    }
+
+    if (action === 'submitPayment') {
+      let paymentData = {};
+      try {
+        paymentData = JSON.parse(params.data || '{}');
+      } catch (err) {
+        return jsonResponse({ success: false, message: 'Invalid payment data.' });
+      }
+      return jsonResponse(submitPayment(paymentData));
     }
 
     return jsonResponse({ success: false, message: 'Unknown action: ' + action });
@@ -780,6 +795,60 @@ function submitForm(formData) {
   } catch (error) {
     Logger.log('submitForm FATAL: ' + error.toString());
     return { success: false, message: 'Error: ' + error.toString() };
+  }
+}
+
+/* ============================================================
+   PAYMENT CONFIRMATION
+   ============================================================ */
+function getPaymentsSheet() {
+  const sh = getSheet(SHEET_PAYMENTS, true);
+  if (!sh) throw new Error('Could not create "' + SHEET_PAYMENTS + '".');
+  if (sh.getLastRow() === 0) {
+    sh.getRange(1, 1, 1, PAYMENT_HEADERS.length).setValues([PAYMENT_HEADERS]);
+  } else if (sh.getLastColumn() < PAYMENT_HEADERS.length) {
+    sh.getRange(1, 1, 1, PAYMENT_HEADERS.length).setValues([PAYMENT_HEADERS]);
+  }
+  return sh;
+}
+
+function submitPayment(data) {
+  const lock = LockService.getScriptLock();
+  try {
+    const name = String(data.name || '').replace(/\s+/g, ' ').trim();
+    const mobile = normalizeMobile(data.mobile || '');
+    const amountText = String(data.amount == null ? '' : data.amount).replace(/,/g, '').trim();
+    const reference = String(data.reference || '').trim();
+    const notes = String(data.notes || '').trim().substring(0, 500);
+
+    if (name.length < 2) return { success: false, message: 'Please enter your name.' };
+    if (!/^\d{7,15}$/.test(mobile)) return { success: false, message: 'Please enter a valid mobile number.' };
+    if (!/^\d+(\.\d{1,2})?$/.test(amountText) || Number(amountText) <= 0) {
+      return { success: false, message: 'Please enter a valid payment amount.' };
+    }
+    if (reference.length < 4 || reference.length > 100) {
+      return { success: false, message: 'Please enter a valid transaction reference.' };
+    }
+
+    lock.waitLock(15000);
+    try {
+      const sh = getPaymentsSheet();
+      const lastRow = sh.getLastRow();
+      if (lastRow >= 2) {
+        const references = sh.getRange(2, 5, lastRow - 1, 1).getDisplayValues().flat();
+        if (references.some(function(value) { return String(value).trim().toLowerCase() === reference.toLowerCase(); })) {
+          return { success: false, duplicate: true, message: 'This transaction reference has already been submitted.' };
+        }
+      }
+
+      sh.appendRow([new Date(), name, mobile, Number(amountText).toFixed(2), reference, notes, 'Submitted']);
+      return { success: true, message: 'Payment reference submitted. Thank you!' };
+    } finally {
+      lock.releaseLock();
+    }
+  } catch (e) {
+    Logger.log('submitPayment error: ' + e.toString());
+    return { success: false, message: 'Unable to submit the payment reference.' };
   }
 }
 
