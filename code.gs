@@ -291,8 +291,9 @@ function findWhitelistAccount(name) {
 
 /**
  * Simple login: name only.
- *   - If name exists in Whitelist → { exists: true } (client shows error).
- *   - Otherwise create the row and return { success: true, user }.
+ *   - If name exists in Whitelist, allow the login so the client can check
+ *     for and show the user's previous ticket.
+ *   - Otherwise create the whitelist row and return a new user.
  */
 function simpleLogin(name) {
   try {
@@ -307,9 +308,15 @@ function simpleLogin(name) {
       const existing = findWhitelistAccount(name);
       if (existing) {
         return {
-          success: false,
+          success: true,
           exists: true,
-          message: 'This name is already logged in. Please try another name.'
+          created: false,
+          user: {
+            name: existing.name,
+            email: existing.email || existing.name,
+            method: 'name'
+          },
+          message: 'Welcome back.'
         };
       }
 
@@ -342,7 +349,7 @@ function simpleLogin(name) {
    ============================================================ */
 function checkExistingRSVP(nameOrEmail) {
   try {
-    const target = String(nameOrEmail || '').trim().toLowerCase();
+    const target = normalizeName(nameOrEmail);
     if (!target) return { success: false, message: 'No name provided.' };
 
     const sh = getResponsesSheet();
@@ -353,7 +360,7 @@ function checkExistingRSVP(nameOrEmail) {
 
     for (let i = 0; i < data.length; i++) {
       const rowEmail = String(data[i][6] || '').trim().toLowerCase();
-      const rowName = String(data[i][1] || '').trim().toLowerCase();
+      const rowName = normalizeName(data[i][1]);
 
       // Match against either the name column or the email column (fallback for old rows).
       if ((rowName && rowName === target) || (rowEmail && rowEmail === target)) {
@@ -463,7 +470,11 @@ function submitForm(formData) {
     const submittedName = String(formData.name || '').replace(/\s+/g, ' ').trim();
     if (!submittedName) return { success: false, message: 'Name is required.' };
     if (submittedName.length < 2) return { success: false, message: 'Please enter a valid name.' };
-    if (!formData.mobile || !String(formData.mobile).trim()) return { success: false, message: 'Mobile is required.' };
+    const mobile = String(formData.mobile || '').trim();
+    if (!mobile) return { success: false, message: 'Mobile is required.' };
+    if (!/^\d{7,15}$/.test(mobile)) {
+      return { success: false, message: 'Please enter a valid mobile number using numbers only.' };
+    }
     if (!formData.address || !String(formData.address).trim()) return { success: false, message: 'Address is required.' };
     if (!formData.greetings || !String(formData.greetings).trim()) return { success: false, message: 'Greetings are required.' };
     if (!formData.selfie || !formData.selfie.data) return { success: false, message: 'Selfie is required.' };
@@ -521,7 +532,7 @@ function submitForm(formData) {
       sheet.appendRow([
         new Date(),
         submittedName,
-        String(formData.mobile).trim(),
+        mobile,
         String(formData.address).trim(),
         String(formData.greetings).trim(),
         selfieUrl,
@@ -867,3 +878,4 @@ function resetAllData() {
 
   return 'Reset complete.';
 }
+
