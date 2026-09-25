@@ -2010,11 +2010,22 @@
     function playSuccessSound() { playAudio('success'); }
     function playTicketReadySound() { playAudio('ticket'); }
 
+    /* ============================================================
+       API CALL
+       ------------------------------------------------------------
+       When this HTML is served by Apps Script, google.script.run is
+       available and we use the native bridge (no CORS issues).
+
+       When served from Vercel/GitHub Pages, we send a POST request
+       with Content-Type: text/plain. This avoids the CORS preflight
+       (OPTIONS) that Apps Script cannot answer, and prevents the
+       HTTP 404 that occurred when query strings were stripped during
+       Apps Script's redirect.
+       ============================================================ */
     async function api(action, params) {
       params = params || {};
 
-      // When Index.html is served by Apps Script, call Code.gs directly.
-      // This avoids Vercel-to-Apps-Script redirects, CORS, and POST failures.
+      // Native Apps Script bridge (used when HTML is hosted inside Apps Script)
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         const serverArgs = {
           bootstrap: [],
@@ -2045,8 +2056,6 @@
               reject(new Error(error && error.message ? error.message : String(error)));
             });
 
-          // Call each Apps Script function explicitly. This is more reliable
-          // than dynamic .apply() calls through the google.script.run bridge.
           if (action === 'bootstrap') runner.bootstrap();
           else if (action === 'simpleLogin') runner.simpleLogin(serverArgs[0], serverArgs[1]);
           else if (action === 'loginByMobile') runner.loginByMobile(serverArgs[0]);
@@ -2061,33 +2070,33 @@
         });
       }
 
-      // Optional Vercel fallback for deployments that still serve this file externally.
+      // External hosting (Vercel/GitHub Pages) — POST with text/plain to avoid preflight
       const body = new URLSearchParams(Object.assign({ action: action }, params || {}));
-      // Google Apps Script deployments can redirect POST requests and return
-      // 405 in some hosting configurations. Use GET for small API calls;
-      // keep POST for submitForm because selfie data may be too large for a URL.
-      const isLargeSubmission = action === 'submitForm';
-      const requestUrl = isLargeSubmission
-        ? APPS_SCRIPT_URL
-        : APPS_SCRIPT_URL + '?' + body.toString();
-      const res = await fetch(requestUrl, isLargeSubmission ? {
+
+      const res = await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: body.toString(),
-        redirect: 'follow'
-      } : {
-        method: 'GET',
-        redirect: 'follow'
+        mode: 'cors',
+        redirect: 'follow',
+        headers: {
+          // text/plain avoids the CORS preflight that Apps Script rejects.
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: body.toString()
       });
+
       if (!res.ok) throw new Error('HTTP ' + res.status);
+
       const text = await res.text();
+
+      // Apps Script returns an HTML login page if the deployment isn't public.
       if (text.trim().startsWith('<')) {
-        throw new Error('Server returned HTML instead of JSON — check deployment');
+        throw new Error('Apps Script returned HTML — make sure the Web App is deployed with "Anyone" access and the URL ends in /exec');
       }
+
       try {
         return JSON.parse(text);
       } catch (e) {
-        throw new Error('Invalid JSON response');
+        throw new Error('Invalid JSON response from server');
       }
     }
 
