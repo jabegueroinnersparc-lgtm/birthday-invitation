@@ -12,6 +12,13 @@ const SHEET_WHITELIST = 'Whitelist';
 const SHEET_SETTINGS  = 'Settings';
 const FOLDER_NAME     = 'Birthday Selfies';
 
+// Short-lived caches reduce repeated full-sheet reads while keeping new
+// signups and RSVPs visible quickly after they are written.
+const CACHE_TTL_SECONDS = 30;
+const WHITELIST_CACHE_KEY = 'birthday_whitelist_v1';
+const ATTENDEES_CACHE_KEY = 'birthday_attendees_v1';
+const SETTINGS_CACHE_KEY = 'birthday_settings_v1';
+
 const RESPONSES_HEADERS = [
   'Timestamp', 'Name', 'Mobile', 'Address', 'Greetings',
   'Selfie URL', 'Email', 'Guests', 'Login Method',
@@ -188,6 +195,12 @@ function getResponsesSheet() {
 }
 
 function getSettings() {
+  const cache = CacheService.getScriptCache();
+  const cached = cache.get(SETTINGS_CACHE_KEY);
+  if (cached) {
+    try { return JSON.parse(cached); } catch (e) {}
+  }
+
   const sh = getSheet(SHEET_SETTINGS, true);
   if (!sh || sh.getLastRow() < 2) return {};
   const values = sh.getRange(1, 1, sh.getLastRow(), 2).getValues();
@@ -197,7 +210,32 @@ function getSettings() {
     const val = String(values[i][1] || '').trim();
     if (key) map[key] = val;
   }
+  try { cache.put(SETTINGS_CACHE_KEY, JSON.stringify(map), CACHE_TTL_SECONDS); } catch (e) {}
   return map;
+}
+
+function clearBirthdayCaches() {
+  try {
+    CacheService.getScriptCache().removeAll([
+      WHITELIST_CACHE_KEY,
+      ATTENDEES_CACHE_KEY,
+      SETTINGS_CACHE_KEY
+    ]);
+  } catch (e) {}
+}
+
+function getWhitelistValues() {
+  const cache = CacheService.getScriptCache();
+  const cached = cache.get(WHITELIST_CACHE_KEY);
+  if (cached) {
+    try { return JSON.parse(cached); } catch (e) {}
+  }
+
+  const whitelist = getSheet(SHEET_WHITELIST, false);
+  if (!whitelist || whitelist.getLastRow() < 2) return [];
+  const values = whitelist.getRange(2, 1, whitelist.getLastRow() - 1, 3).getValues();
+  try { cache.put(WHITELIST_CACHE_KEY, JSON.stringify(values), CACHE_TTL_SECONDS); } catch (e) {}
+  return values;
 }
 
 function getOrCreateFolder() {
@@ -303,10 +341,8 @@ function bootstrap() {
  * Returns { email, name, mobile } or null.
  */
 function findWhitelistAccount(name, mobile) {
-  const whitelist = getSheet(SHEET_WHITELIST, false);
-  if (!whitelist || whitelist.getLastRow() < 2) return null;
-
-  const values = whitelist.getRange(2, 1, whitelist.getLastRow() - 1, 3).getValues();
+  const values = getWhitelistValues();
+  if (!values.length) return null;
   const target = normalizeName(name);
   const targetMobile = normalizeMobile(mobile);
   if (!target || !targetMobile) return null;
@@ -327,10 +363,8 @@ function findWhitelistAccount(name, mobile) {
 
 /** Find a Whitelist entry by name, regardless of its mobile value. */
 function findWhitelistName(name) {
-  const whitelist = getSheet(SHEET_WHITELIST, false);
-  if (!whitelist || whitelist.getLastRow() < 2) return null;
-
-  const values = whitelist.getRange(2, 1, whitelist.getLastRow() - 1, 3).getValues();
+  const values = getWhitelistValues();
+  if (!values.length) return null;
   const target = normalizeName(name);
 
   for (let i = 0; i < values.length; i++) {
@@ -348,10 +382,8 @@ function findWhitelistName(name) {
 
 /** Find a Whitelist entry by mobile number, regardless of its name. */
 function findWhitelistMobile(mobile) {
-  const whitelist = getSheet(SHEET_WHITELIST, false);
-  if (!whitelist || whitelist.getLastRow() < 2) return null;
-
-  const values = whitelist.getRange(2, 1, whitelist.getLastRow() - 1, 3).getValues();
+  const values = getWhitelistValues();
+  if (!values.length) return null;
   const targetMobile = normalizeMobile(mobile);
 
   for (let i = 0; i < values.length; i++) {
@@ -411,6 +443,7 @@ function simpleLogin(name, mobile) {
           // Do not change the column format; typed Google Sheet columns reject
           // setNumberFormat(). The comparison logic handles lost leading zeros.
           whitelist.getRange(existingName.row, 3).setValue(mobile);
+          clearBirthdayCaches();
           const existingRsvp = checkExistingRSVP(name, mobile);
           return {
             success: true,
@@ -448,6 +481,7 @@ function simpleLogin(name, mobile) {
       // Write the value without changing the sheet's typed-column format.
       whitelist.getRange(whitelist.getLastRow() + 1, 1, 1, 3)
         .setValues([['', name, mobile]]);
+      clearBirthdayCaches();
 
       Logger.log('Created guest account for ' + name + '.');
 
@@ -558,6 +592,12 @@ function checkExistingRSVP(nameOrEmail, mobile) {
    ============================================================ */
 function getAllAttendees() {
   try {
+    const cache = CacheService.getScriptCache();
+    const cached = cache.get(ATTENDEES_CACHE_KEY);
+    if (cached) {
+      try { return JSON.parse(cached); } catch (e) {}
+    }
+
     const sh = getResponsesSheet();
     const lastRow = sh.getLastRow();
     if (lastRow < 2) {
@@ -596,12 +636,14 @@ function getAllAttendees() {
 
     attendees.reverse();
 
-    return {
+    const result = {
       success: true,
       attendees: attendees,
       totalGuests: totalGuests,
       totalParties: attendees.length
     };
+    try { cache.put(ATTENDEES_CACHE_KEY, JSON.stringify(result), CACHE_TTL_SECONDS); } catch (e) {}
+    return result;
   } catch (e) {
     Logger.log('getAllAttendees error: ' + e.toString());
     return { success: false, message: e.toString(), attendees: [] };
@@ -718,6 +760,7 @@ function submitForm(formData) {
         ? scriptUrl + '?page=scan&code=' + encodeURIComponent(ticketCode)
         : ticketCode;
       const qrCodeUrl = getQrCodeUrl(qrData, 400);
+      clearBirthdayCaches();
 
       return {
         success: true,
@@ -1059,4 +1102,5 @@ function resetAllData() {
 
   return 'Reset complete.';
 }
+
 
