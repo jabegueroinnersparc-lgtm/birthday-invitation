@@ -976,6 +976,7 @@
       display: flex; align-items: flex-start; justify-content: space-between;
       gap: 16px; margin-bottom: 24px;
       padding-bottom: 20px; border-bottom: 1px solid var(--pearl);
+      flex-wrap: wrap;
     }
     .form-head-left h2 {
       font-family: 'Playfair Display', serif;
@@ -983,6 +984,47 @@
       font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px;
     }
     .form-head-left p { font-size: 13px; color: var(--steel); }
+
+    /* ⭐ NEW: Form back button */
+    .form-back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--fog);
+      border: 1.5px solid var(--pearl);
+      color: var(--ink);
+      padding: 9px 14px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s var(--ease-out);
+      -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
+      flex-shrink: 0;
+      min-height: 40px;
+    }
+    .form-back-btn:hover {
+      background: var(--black);
+      color: var(--white);
+      border-color: var(--black);
+      transform: translateX(-2px);
+    }
+    .form-back-btn:active {
+      transform: scale(0.97);
+    }
+    @media (max-width: 640px) {
+      .form-back-btn {
+        padding: 8px 12px;
+        font-size: 11px;
+      }
+      .form-head {
+        flex-wrap: nowrap;
+        align-items: center;
+      }
+    }
 
     .progress-wrap {
       display: flex; align-items: center; gap: 14px;
@@ -1991,6 +2033,7 @@
 
         <div class="mobile-form-header">
           <div class="mfh-top">
+            <button class="mfh-logout" id="backBtnMobile">← Back</button>
             <div class="mfh-brand"><span class="dot-mark"></span><span>Simon Jabeguero</span></div>
             <button class="mfh-logout" id="logoutBtnMobile">Sign Out</button>
           </div>
@@ -2028,6 +2071,10 @@
               <h2>Your Details</h2>
               <p>All fields are required.</p>
             </div>
+            <!-- ⭐ NEW: Desktop back button -->
+            <button type="button" class="form-back-btn" id="backBtnDesktop" aria-label="Back to home">
+              ← Back to Home
+            </button>
           </div>
 
           <div class="closed-state" id="closedState" style="display:none;">
@@ -2186,13 +2233,7 @@
     /* CONFIG */
     const APPS_SCRIPT_URL = '/api/proxy';
 
-    /* ============================================================
-       ⭐ PER-ATTENDANCE MEDIA
-       ------------------------------------------------------------
-       Each choice has its own sound, GIF image, caption, and toast.
-       Direct image format: https://lh3.googleusercontent.com/d/FILE_ID
-       Direct audio format: https://raw.githubusercontent.com/USER/REPO/main/FILE.mp3
-       ============================================================ */
+    /* ⭐ PER-ATTENDANCE MEDIA */
     const ATTENDANCE_MEDIA = {
       going: {
         soundUrl: 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/shanghai%20salamat%20po.mp3',
@@ -2219,6 +2260,19 @@
 
     const DEFAULT_MEDIA = ATTENDANCE_MEDIA.going;
     let currentMedia = DEFAULT_MEDIA;
+
+    /* ⭐ Audio unlock for iOS — plays a silent sound on first tap to unlock autoplay */
+    let audioUnlocked = false;
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      try {
+        const silent = new Audio('data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA');
+        silent.volume = 0;
+        silent.play().then(() => { audioUnlocked = true; }).catch(() => {});
+      } catch (e) {}
+    }
+    document.addEventListener('touchstart', unlockAudio, { once: true, passive: true });
+    document.addEventListener('click', unlockAudio, { once: true });
 
     /* SUCCESS SOUND */
     const SUCCESS_SOUND_URL = 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/saira%20ingay%202%20(mp3cut.net).mp3';
@@ -2273,7 +2327,7 @@
     function playSuccessSound() { playAudio('success'); }
     function playTicketReadySound() { playAudio('ticket'); }
 
-    /* ⭐ Play the attendance-specific sound */
+    /* ⭐ Play the attendance-specific sound — with mobile-safe fallback */
     function playAttendanceSound(attendance) {
       const media = ATTENDANCE_MEDIA[attendance] || DEFAULT_MEDIA;
       try {
@@ -2281,9 +2335,23 @@
         audio.preload = 'auto';
         audio.playsInline = true;
         audio.setAttribute('playsinline', '');
+        audio.setAttribute('webkit-playsinline', '');
         audio.volume = 0.9;
+        audio.load();
         const p = audio.play();
-        if (p && typeof p.catch === 'function') p.catch(function() {});
+        if (p && typeof p.catch === 'function') {
+          p.catch(function(err) {
+            // Mobile autoplay blocked → retry after a micro-interaction
+            console.log('Attendance sound autoplay blocked, retrying:', err.message);
+            const retry = () => {
+              audio.play().catch(() => {});
+              document.removeEventListener('touchstart', retry);
+              document.removeEventListener('click', retry);
+            };
+            document.addEventListener('touchstart', retry, { once: true, passive: true });
+            document.addEventListener('click', retry, { once: true });
+          });
+        }
       } catch (e) { console.log('Attendance sound failed:', e); }
     }
 
@@ -2701,6 +2769,15 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
+    /* ⭐ Back to home from form */
+    function backToHomeFromForm() {
+      $('formView').classList.remove('active');
+      $('welcomeView').classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    $('backBtnDesktop').addEventListener('click', backToHomeFromForm);
+    $('backBtnMobile').addEventListener('click', backToHomeFromForm);
+
     function openTicket(ticket) {
       $('welcomeView').classList.remove('active');
       $('formView').classList.add('active');
@@ -2852,7 +2929,8 @@
 
     async function loadAttendees(force) {
       const list = $('attendeesList');
-      const fresh = attendeesCache && Date.now() - attendeesCacheTime < ATTENDEES_CACHE_MS;
+      const fresh = attendeesCache && Date.now() - attendeesCacheTime < ATTENDEE
+S_CACHE_MS;
       if (!force && fresh) { renderAttendees(attendeesCache); return; }
       if (!attendeesCache) list.innerHTML = `<div class="attendees-loading"><div class="loader-spinner"></div><div>Loading attendees…</div></div>`;
       if (attendeesRequest) return attendeesRequest;
@@ -3639,8 +3717,8 @@
       fireConfetti();
       fireSparkles();
 
-      // ⭐ Play the attendance-specific sound
-      playAttendanceSound(attendance);
+      // ⭐ Play the attendance-specific sound — delayed slightly so mobile can unlock
+      setTimeout(() => playAttendanceSound(attendance), 150);
 
       showToast(media.toast || "You're on the list! 🎉");
       window.scrollTo({ top: 0, behavior: 'smooth' });
