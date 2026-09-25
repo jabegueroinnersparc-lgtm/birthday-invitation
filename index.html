@@ -240,92 +240,59 @@
       .countdown-date { font-size: 11px; }
     }
 
-    /* AUTH TOGGLE (Sign Up / Log In) + SLIDING PANELS */
-    .auth-toggle {
-      position: relative;
+    /* ATTENDANCE SELECTOR */
+    .attendance-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4px;
-      background: var(--fog);
-      border: 1.5px solid var(--pearl);
-      border-radius: 14px;
-      padding: 4px;
-      margin-bottom: 18px;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 4px;
     }
-    .auth-toggle-thumb {
-      position: absolute;
-      top: 4px; left: 4px;
-      width: calc(50% - 4px);
-      height: calc(100% - 8px);
-      background: var(--black);
-      border-radius: 10px;
-      transition: transform 0.4s var(--ease-out);
-      z-index: 0;
-      pointer-events: none;
+    @media (min-width: 640px) {
+      .attendance-grid { grid-template-columns: repeat(3, 1fr); }
     }
-    .auth-toggle-btn {
-      position: relative;
-      z-index: 1;
-      border: none;
-      background: transparent;
-      padding: 12px 10px;
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      color: var(--steel);
-      cursor: pointer;
-      border-radius: 10px;
-      transition: color 0.3s var(--ease-out);
-      -webkit-tap-highlight-color: transparent;
-      min-height: 40px;
-    }
-    .auth-toggle-btn.active { color: var(--white); }
 
-    .auth-window {
+    .attendance-option {
       position: relative;
-      overflow: hidden;
-      transition: height 0.4s var(--ease-out);
-    }
-    .auth-track {
       display: flex;
+      flex-direction: column;
       align-items: flex-start;
-      width: 300%;
-      transition: transform 0.5s var(--ease-out);
-      will-change: transform;
-    }
-    .auth-panel {
-      flex: 0 0 33.3333%;
-      width: 33.3333%;
-      min-width: 0;
-      padding: 1px 1px 0;
-    }
-
-    .auth-switch-line {
-      text-align: center;
-      font-size: 12.5px;
-      color: var(--steel);
-      margin-top: 6px;
-    }
-    .auth-switch-dot { margin: 0 6px; color: var(--mist); }
-    .auth-inline-link {
-      background: none; border: none;
-      color: var(--black);
-      font-family: inherit;
-      font-size: 12.5px;
-      font-weight: 700;
-      text-decoration: underline;
+      gap: 6px;
+      padding: 16px 14px;
+      border: 1.5px solid var(--mist);
+      border-radius: 14px;
+      background: var(--white);
       cursor: pointer;
-      padding: 4px 2px;
+      transition: all 0.25s var(--ease-out);
+      text-align: left;
+      font-family: inherit;
       -webkit-tap-highlight-color: transparent;
     }
-    .auth-inline-link:hover { color: var(--steel); }
-
-    @media (max-width: 360px) {
-      .auth-toggle-btn { font-size: 12px; padding: 11px 6px; }
+    .attendance-option:hover {
+      border-color: var(--silver);
+      background: var(--fog);
     }
-    @media (prefers-reduced-motion: reduce) {
-      .auth-track, .auth-window, .auth-toggle-thumb { transition: none; }
+    .attendance-option .ao-icon { font-size: 22px; line-height: 1; }
+    .attendance-option .ao-title {
+      font-size: 14px; font-weight: 700;
+      color: var(--black); letter-spacing: -0.01em;
+    }
+    .attendance-option .ao-sub {
+      font-size: 11px; color: var(--steel); line-height: 1.4;
+    }
+    .attendance-option.selected {
+      border-color: var(--black);
+      background: var(--black);
+      box-shadow: 0 8px 24px -8px rgba(0,0,0,0.35);
+      transform: translateY(-1px);
+    }
+    .attendance-option.selected .ao-title { color: var(--white); }
+    .attendance-option.selected .ao-sub { color: var(--silver); }
+    .attendance-option.selected::after {
+      content: "✓";
+      position: absolute;
+      top: 10px; right: 12px;
+      color: var(--white);
+      font-size: 14px; font-weight: 700;
     }
 
     .field { margin-bottom: 18px; position: relative; }
@@ -472,6 +439,35 @@
     .message.success { background: #f0fdf4; color: #14532d; border: 1px solid #bbf7d0; display: block; }
     .message.error { background: #fef2f2; color: #7f1d1d; border: 1px solid #fecaca; display: block; }
 
+    .recovery-panel {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transform: translateY(-10px) scale(0.98);
+      transform-origin: top center;
+      transition: max-height 0.5s var(--ease-out), opacity 0.3s ease,
+                  transform 0.5s var(--ease-out), margin-top 0.5s var(--ease-out);
+      margin-top: 0 !important;
+    }
+    .recovery-panel.open {
+      max-height: 360px;
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      margin-top: 18px !important;
+    }
+    .recovery-panel .field,
+    .recovery-panel .btn,
+    .recovery-panel .message {
+      transform: translateY(-5px);
+      opacity: 0;
+      transition: transform 0.35s var(--ease-out) 0.08s, opacity 0.3s ease 0.08s;
+    }
+    .recovery-panel.open .field,
+    .recovery-panel.open .btn,
+    .recovery-panel.open .message {
+      transform: translateY(0);
+      opacity: 1;
+    }
     .recovery-heading {
       padding: 16px 16px 14px; margin-bottom: 16px;
       border-radius: 14px; background: linear-gradient(135deg, #fafafa, #f0f0f0);
@@ -486,9 +482,20 @@
       font-size: 22px; line-height: 1.15; margin-bottom: 4px;
     }
     .recovery-heading p { color: var(--steel); font-size: 12px; line-height: 1.5; }
+    @media (min-width: 641px) {
+      .recovery-panel { width: min(100%, 410px); margin-left: auto; margin-right: auto; }
+      .recovery-heading { padding: 18px 20px 16px; }
+    }
     @media (max-width: 640px) {
+      .recovery-panel { width: 100%; }
       .recovery-heading h3 { font-size: 20px; }
       .recovery-heading p { font-size: 13px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .recovery-panel,
+      .recovery-panel .field,
+      .recovery-panel .btn,
+      .recovery-panel .message { transition: none; }
     }
 
     /* WELCOME VIEW */
@@ -2117,6 +2124,8 @@
       .attendee-row { padding-left: 8px; padding-right: 8px; gap: 10px; }
       .attendee-badge { padding: 5px 8px; font-size: 10px; }
       .form-main { min-width: 0; }
+      .attendance-option { min-width: 0; padding: 14px 12px; }
+      .attendance-option .ao-title { font-size: 13px; }
       .ticket-card { width: min(100%, 340px); }
       .ticket-actions { width: 100%; max-width: 340px; }
       .ticket-actions .btn { min-width: 0; padding-left: 10px; padding-right: 10px; }
@@ -2395,17 +2404,17 @@
 
   <div class="app">
 
-    <!-- VIEW 1: LOGIN / SIGN UP -->
+    <!-- VIEW 1: LOGIN -->
     <section class="view active" id="loginView">
       <div class="login-wrap">
         <aside class="login-hero">
           <div class="hero-top">
             <div class="brand-mark"><span class="dot-mark"></span><span>Simon Jabeguero</span></div>
             <h1 class="hero-title">A celebration<br><em>worth the wait.</em></h1>
-            <p class="hero-sub">Sign up for your personal invitation, or log in to view it again. It takes less than a minute.</p>
+            <p class="hero-sub">Enter your name to view your personal invitation and confirm your attendance. It takes less than a minute.</p>
           </div>
           <div class="hero-bottom">
-            <div class="hero-stat"><span class="n">01</span><span class="l">Sign Up</span></div>
+            <div class="hero-stat"><span class="n">01</span><span class="l">Sign In</span></div>
             <div class="hero-divider"></div>
             <div class="hero-stat"><span class="n">02</span><span class="l">Details</span></div>
             <div class="hero-divider"></div>
@@ -2414,8 +2423,8 @@
         </aside>
 
         <div class="login-form-side">
-          <h2 class="login-heading" id="authHeading">Create your invite.</h2>
-          <p class="login-subtext" id="authSubtext">Enter your name and mobile number to get started.</p>
+          <h2 class="login-heading">Welcome.</h2>
+            <p class="login-subtext">Enter your name and mobile number to continue.</p>
 
           <div class="countdown-box">
             <div class="countdown-eyebrow">
@@ -2431,120 +2440,71 @@
             <div class="countdown-date" id="countdownDate"><strong>October 31, 2026</strong> · 1:00 PM</div>
           </div>
 
-          <div class="auth-toggle" id="authToggle" role="tablist" aria-label="Choose sign up or log in">
-            <span class="auth-toggle-thumb" id="authToggleThumb" aria-hidden="true"></span>
-            <button type="button" class="auth-toggle-btn active" id="toggleSignupBtn" data-switch="signup" role="tab" aria-selected="true">Sign Up</button>
-            <button type="button" class="auth-toggle-btn" id="toggleLoginBtn" data-switch="login" role="tab" aria-selected="false">Log In</button>
-          </div>
-
-          <div class="auth-window" id="authWindow">
-            <div class="auth-track" id="authTrack">
-
-              <!-- SIGN UP (slides left) -->
-              <div class="auth-panel" id="panelSignup" role="tabpanel" aria-labelledby="toggleSignupBtn">
-                <form id="signupForm" autocomplete="on">
-                  <div class="field">
-                    <label class="field-label" for="suName">Your Name</label>
-                    <input type="text" id="suName" required placeholder="Saira cute" autocomplete="name">
-                  </div>
-                  <div class="field">
-                    <label class="field-label" for="suMobile">Mobile Number</label>
-                    <div class="privacy-input-wrap">
-                      <input type="password" id="suMobile" required placeholder="•••••••••••"
-                             pattern="[0-9]{7,15}" inputmode="numeric" autocomplete="tel" maxlength="15"
-                             aria-describedby="suMobileError">
-                      <button type="button" class="privacy-toggle" id="privacyToggleSu" data-for="suMobile"
-                              aria-label="Show mobile number" aria-pressed="false">Show</button>
-                    </div>
-                    <span class="field-error" id="suMobileError" role="alert" aria-live="polite"></span>
-                  </div>
-                  <button type="submit" class="btn btn-primary" id="suBtn">
-                    Create Invitation
-                    <span class="btn-arrow">→</span>
-                  </button>
-                  <div class="message" id="suMessage"></div>
-                  <p class="auth-switch-line">Already on the list? <button type="button" class="auth-inline-link" data-switch="login">Log in instead</button></p>
-                </form>
-              </div>
-
-              <!-- FORGOT ACCOUNT (slides to middle) -->
-              <div class="auth-panel auth-panel-forgot" id="panelForgot" role="tabpanel">
-                <div class="recovery-heading">
-                  <span class="recovery-kicker">Account recovery</span>
-                  <h3>Find your invitation</h3>
-                  <p>Enter only the mobile number you used during sign-up.</p>
-                </div>
-                <div class="field">
-                  <label class="field-label" for="recoveryMobile">Mobile Number Used During Sign-up</label>
-                  <input type="text" id="recoveryMobile" placeholder="09123456789"
-                         pattern="[0-9]{7,15}" inputmode="numeric" autocomplete="tel" maxlength="15"
-                         aria-describedby="recoveryMessage">
-                </div>
-                <button type="button" class="btn btn-primary" id="recoveryBtn">Find My Account</button>
-                <div class="message" id="recoveryMessage"></div>
-                <p class="auth-switch-line"><button type="button" class="auth-inline-link" data-switch="login">← Back to log in</button></p>
-              </div>
-
-              <!-- LOG IN (slides right) -->
-              <div class="auth-panel" id="panelLogin" role="tabpanel" aria-labelledby="toggleLoginBtn">
-                <form id="loginForm" autocomplete="on">
-                  <div class="field">
-                    <label class="field-label" for="pwName">Your Name</label>
-                    <input type="text" id="pwName" required placeholder="Saira cute" autocomplete="name">
-                  </div>
-                  <div class="field">
-                    <label class="field-label" for="pwMobile">Mobile Number</label>
-                    <div class="privacy-input-wrap">
-                      <input type="password" id="pwMobile" required placeholder="•••••••••••"
-                             pattern="[0-9]{7,15}" inputmode="numeric" autocomplete="tel" maxlength="15"
-                             aria-describedby="pwMobileError">
-                      <button type="button" class="privacy-toggle" id="privacyTogglePw" data-for="pwMobile"
-                              aria-label="Show mobile number" aria-pressed="false">Show</button>
-                    </div>
-                    <span class="field-error" id="pwMobileError" role="alert" aria-live="polite"></span>
-                    <div class="privacy-mascot privacy-on" id="privacyMascot" aria-hidden="true">
-                      <div class="dog-model dog-model-merle">
-                        <span class="dog-ear-flap dog-ear-flap-left"></span><span class="dog-ear-flap dog-ear-flap-right"></span>
-                        <span class="dog-spot dog-spot-a"></span><span class="dog-spot dog-spot-b"></span>
-                        <span class="dog-brow dog-brow-left"></span><span class="dog-brow dog-brow-right"></span>
-                        <span class="dog-eye-model dog-eye-model-left"></span><span class="dog-eye-model dog-eye-model-right"></span>
-                        <span class="dog-tan-mask"></span><span class="dog-nose"></span>
-                      </div>
-                      <div class="dog-model dog-model-black">
-                        <span class="dog-ear-flap dog-ear-flap-left"></span><span class="dog-ear-flap dog-ear-flap-right"></span>
-                        <span class="dog-spot dog-spot-a"></span><span class="dog-spot dog-spot-b"></span>
-                        <span class="dog-brow dog-brow-left"></span><span class="dog-brow dog-brow-right"></span>
-                        <span class="dog-eye-model dog-eye-model-left"></span><span class="dog-eye-model dog-eye-model-right"></span>
-                        <span class="dog-tan-mask"></span><span class="dog-nose"></span>
-                      </div>
-                      <span class="privacy-paw merle-paw-left"></span>
-                      <span class="privacy-paw merle-paw-right"></span>
-                      <span class="privacy-paw black-paw-left"></span>
-                      <span class="privacy-paw black-paw-right"></span>
-                    </div>
-                  </div>
-                  <button type="submit" class="btn btn-primary" id="pwBtn">
-                    Continue
-                    <span class="btn-arrow">→</span>
-                  </button>
-                  <div class="message" id="pwMessage"></div>
-                  <p class="auth-switch-line">
-                    <button type="button" class="auth-inline-link" id="forgotAccountBtn" data-switch="forgot">Forgot account?</button>
-                    <span class="auth-switch-dot">·</span>
-                    <button type="button" class="auth-inline-link" data-switch="signup">New here? Sign up</button>
-                  </p>
-                </form>
-              </div>
-
+          <form id="loginForm" autocomplete="on">
+            <div class="field">
+              <label class="field-label" for="pwName">Your Name</label>
+              <input type="text" id="pwName" required placeholder="Saira cute" autocomplete="name">
             </div>
-          </div>
-
-          <div class="login-invite-row">
-            <button type="button" class="btn-copy-invite" id="copyInviteBtnLogin">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              <span>Copy Invite Link</span>
+            <div class="field">
+              <label class="field-label" for="pwMobile">Mobile Number</label>
+              <div class="privacy-input-wrap">
+                <input type="password" id="pwMobile" required placeholder="•••••••••••"
+                       pattern="[0-9]{7,15}" inputmode="numeric" autocomplete="tel" maxlength="15"
+                       aria-describedby="pwMobileError">
+                <button type="button" class="privacy-toggle" id="privacyToggle"
+                        aria-label="Show mobile number" aria-pressed="false">Show</button>
+              </div>
+              <span class="field-error" id="pwMobileError" role="alert" aria-live="polite"></span>
+              <div class="privacy-mascot privacy-on" id="privacyMascot" aria-hidden="true">
+                <div class="dog-model dog-model-merle">
+                  <span class="dog-ear-flap dog-ear-flap-left"></span><span class="dog-ear-flap dog-ear-flap-right"></span>
+                  <span class="dog-spot dog-spot-a"></span><span class="dog-spot dog-spot-b"></span>
+                  <span class="dog-brow dog-brow-left"></span><span class="dog-brow dog-brow-right"></span>
+                  <span class="dog-eye-model dog-eye-model-left"></span><span class="dog-eye-model dog-eye-model-right"></span>
+                  <span class="dog-tan-mask"></span><span class="dog-nose"></span>
+                </div>
+                <div class="dog-model dog-model-black">
+                  <span class="dog-ear-flap dog-ear-flap-left"></span><span class="dog-ear-flap dog-ear-flap-right"></span>
+                  <span class="dog-spot dog-spot-a"></span><span class="dog-spot dog-spot-b"></span>
+                  <span class="dog-brow dog-brow-left"></span><span class="dog-brow dog-brow-right"></span>
+                  <span class="dog-eye-model dog-eye-model-left"></span><span class="dog-eye-model dog-eye-model-right"></span>
+                  <span class="dog-tan-mask"></span><span class="dog-nose"></span>
+                </div>
+                <span class="privacy-paw merle-paw-left"></span>
+                <span class="privacy-paw merle-paw-right"></span>
+                <span class="privacy-paw black-paw-left"></span>
+                <span class="privacy-paw black-paw-right"></span>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary" id="pwBtn">
+              Continue
+              <span class="btn-arrow">→</span>
             </button>
-          </div>
+            <div class="message" id="pwMessage"></div>
+            <button type="button" class="btn btn-outline" id="forgotAccountBtn" style="margin-top:12px;"
+                    aria-expanded="false" aria-controls="recoveryBox">Forgot account?</button>
+            <div id="recoveryBox" class="recovery-panel" role="region" aria-labelledby="recoveryTitle" aria-hidden="true">
+              <div class="recovery-heading">
+                <span class="recovery-kicker">Account recovery</span>
+                <h3 id="recoveryTitle">Find your invitation</h3>
+                <p>Enter only the mobile number you used during sign-up.</p>
+              </div>
+              <div class="field">
+                <label class="field-label" for="recoveryMobile">Mobile Number Used During Sign-up</label>
+                <input type="text" id="recoveryMobile" placeholder="09123456789"
+                       pattern="[0-9]{7,15}" inputmode="numeric" autocomplete="tel" maxlength="15"
+                       aria-describedby="recoveryMessage">
+              </div>
+              <button type="button" class="btn btn-primary" id="recoveryBtn">Find My Account</button>
+              <div class="message" id="recoveryMessage"></div>
+            </div>
+            <div class="login-invite-row">
+              <button type="button" class="btn-copy-invite" id="copyInviteBtnLogin">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span>Copy Invite Link</span>
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </section>
@@ -3215,10 +3175,10 @@
     document.addEventListener('click', function(event) {
       if (!USE_LOCAL_UI_SOUNDS) return;
       const button = event.target.closest('button');
-      if (button) playClickSound(button.id === 'privacyTogglePw' || button.id === 'privacyToggleSu');
+      if (button) playClickSound(button.id === 'privacyToggle');
     }, true);
 
-    /* MOBILE NUMBER — digits only (RSVP form field) */
+    /* MOBILE NUMBER — digits only */
     $('mobile').addEventListener('input', function() {
       const digitsOnly = this.value.replace(/\D/g, '');
       if (this.value !== digitsOnly) this.value = digitsOnly;
@@ -3356,143 +3316,7 @@
       } catch (e) { console.log('Bootstrap failed', e); }
     }
 
-    /* AUTH PANEL SWITCHING (Sign Up slides left / Log In slides right / Forgot slides to middle) */
-    let currentAuthState = 'signup';
-
-    function setAuthState(state, opts) {
-      opts = opts || {};
-      const idxMap = { signup: 0, forgot: 1, login: 2 };
-      if (!(state in idxMap)) state = 'login';
-      currentAuthState = state;
-      const idx = idxMap[state];
-
-      const track = $('authTrack');
-      const win = $('authWindow');
-      if (track) track.style.transform = 'translateX(-' + (idx * 33.3333) + '%)';
-
-      const toggleSignup = $('toggleSignupBtn');
-      const toggleLogin = $('toggleLoginBtn');
-      const thumb = $('authToggleThumb');
-      const isSignup = state === 'signup';
-      const isLogin = state === 'login';
-      if (toggleSignup) {
-        toggleSignup.classList.toggle('active', isSignup);
-        toggleSignup.setAttribute('aria-selected', isSignup ? 'true' : 'false');
-      }
-      if (toggleLogin) {
-        toggleLogin.classList.toggle('active', isLogin);
-        toggleLogin.setAttribute('aria-selected', isLogin ? 'true' : 'false');
-      }
-      if (thumb && state !== 'forgot') {
-        thumb.style.transform = 'translateX(' + (isLogin ? '100%' : '0%') + ')';
-      }
-
-      const heading = $('authHeading');
-      const subtext = $('authSubtext');
-      if (heading && subtext) {
-        if (state === 'signup') {
-          heading.textContent = 'Create your invite.';
-          subtext.textContent = 'Enter your name and mobile number to get started.';
-        } else if (state === 'forgot') {
-          heading.textContent = 'Find your invite.';
-          subtext.textContent = "We'll look up your invitation using your mobile number.";
-        } else {
-          heading.textContent = 'Welcome back.';
-          subtext.textContent = 'Enter your name and mobile number to continue.';
-        }
-      }
-
-      requestAnimationFrame(function() {
-        const activePanel = state === 'signup' ? $('panelSignup') : state === 'forgot' ? $('panelForgot') : $('panelLogin');
-        if (activePanel && win) win.style.height = activePanel.scrollHeight + 'px';
-      });
-
-      if (!opts.silent) {
-        const focusTarget = state === 'signup' ? $('suName') : state === 'forgot' ? $('recoveryMobile') : $('pwName');
-        setTimeout(function() { if (focusTarget) focusTarget.focus({ preventScroll: true }); }, 380);
-      }
-    }
-
-    document.querySelectorAll('[data-switch]').forEach(function(btn) {
-      btn.addEventListener('click', function() { setAuthState(this.dataset.switch); });
-    });
-
-    window.addEventListener('resize', function() { setAuthState(currentAuthState, { silent: true }); });
-
-    /* SHOW/HIDE MOBILE NUMBER — shared by the sign up and log in fields */
-    document.querySelectorAll('.privacy-toggle').forEach(function(toggleBtn) {
-      toggleBtn.addEventListener('click', function() {
-        const targetId = this.dataset.for;
-        const input = $(targetId);
-        if (!input) return;
-        const isHidden = input.type === 'password';
-        input.type = isHidden ? 'text' : 'password';
-        this.textContent = isHidden ? 'Hide' : 'Show';
-        this.setAttribute('aria-label', isHidden ? 'Hide mobile number' : 'Show mobile number');
-        this.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
-        if (targetId === 'pwMobile') {
-          const mascot = $('privacyMascot');
-          if (mascot) mascot.classList.toggle('privacy-on', !isHidden);
-        }
-      });
-    });
-
-    function setFieldMessage(id, text, type) {
-      const el = $(id);
-      if (!el) return;
-      el.textContent = text;
-      el.className = 'message ' + (type || '');
-    }
-
-    /* SIGN UP */
-    $('suMobile').addEventListener('input', function() {
-      const digitsOnly = this.value.replace(/\D/g, '');
-      if (this.value !== digitsOnly) this.value = digitsOnly;
-      const error = $('suMobileError');
-      const invalid = digitsOnly.length > 0 && digitsOnly.length < 7;
-      error.textContent = invalid ? 'Please enter 7 to 15 digits.' : '';
-      error.classList.toggle('show', invalid);
-      this.setCustomValidity(invalid ? 'Please enter at least 7 digits.' : '');
-    });
-
-    $('signupForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const name = $('suName').value.trim();
-      const mobile = $('suMobile').value.trim();
-
-      if (!name) { setFieldMessage('suMessage', 'Please enter your name.', 'error'); return; }
-      if (name.length < 2) { setFieldMessage('suMessage', 'Please enter a valid name.', 'error'); return; }
-      if (!/^\d{7,15}$/.test(mobile)) {
-        setFieldMessage('suMessage', 'Please enter a valid mobile number using 7 to 15 digits.', 'error');
-        $('suMobile').focus();
-        return;
-      }
-
-      const btn = $('suBtn');
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span>Creating...';
-      primeAudio('success');
-
-      try {
-        const res = await api('simpleLogin', { name: name, mobile: mobile });
-        if (res && res.success) {
-          currentUser = res.user;
-          try { localStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
-          try { sessionStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
-          completeLogin(res.ticket || null);
-        } else if (res && res.exists) {
-          setFieldMessage('suMessage', 'This name is already registered. Try logging in instead.', 'error');
-        } else {
-          setFieldMessage('suMessage', (res && res.message) || 'Something went wrong. Please try again.', 'error');
-        }
-      } catch (err) {
-        setFieldMessage('suMessage', 'Error: ' + err.message, 'error');
-      }
-      btn.disabled = false;
-      btn.innerHTML = 'Create Invitation <span class="btn-arrow">→</span>';
-    });
-
-    /* LOG IN */
+    /* LOGIN */
     $('pwMobile').addEventListener('input', function() {
       const digitsOnly = this.value.replace(/\D/g, '');
       if (this.value !== digitsOnly) this.value = digitsOnly;
@@ -3504,15 +3328,26 @@
       this.setCustomValidity(invalid ? 'Please enter at least 7 digits.' : '');
     });
 
+    $('privacyToggle').addEventListener('click', function() {
+      const input = $('pwMobile');
+      const mascot = $('privacyMascot');
+      const isHidden = input.type === 'password';
+      input.type = isHidden ? 'text' : 'password';
+      this.textContent = isHidden ? 'Hide' : 'Show';
+      this.setAttribute('aria-label', isHidden ? 'Hide mobile number' : 'Show mobile number');
+      this.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+      mascot.classList.toggle('privacy-on', !isHidden);
+    });
+
     $('loginForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       const name = $('pwName').value.trim();
       const mobile = $('pwMobile').value.trim();
 
-      if (!name) { setFieldMessage('pwMessage', 'Please enter your name.', 'error'); return; }
-      if (name.length < 2) { setFieldMessage('pwMessage', 'Please enter a valid name.', 'error'); return; }
+      if (!name) { showPwMessage('Please enter your name.', 'error'); return; }
+      if (name.length < 2) { showPwMessage('Please enter a valid name.', 'error'); return; }
       if (!/^\d{7,15}$/.test(mobile)) {
-        setFieldMessage('pwMessage', 'Please enter a valid mobile number using 7 to 15 digits.', 'error');
+        showPwMessage('Please enter a valid mobile number using 7 to 15 digits.', 'error');
         $('pwMobile').focus();
         return;
       }
@@ -3530,26 +3365,40 @@
           try { sessionStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
           completeLogin(res.ticket || null);
         } else if (res && res.exists) {
-          setFieldMessage('pwMessage', 'This name is already logged in. Please try another name.', 'error');
+          showPwMessage('This name is already logged in. Please try another name.', 'error');
         } else {
-          setFieldMessage('pwMessage', (res && res.message) || 'Something went wrong. Please try again.', 'error');
+          showPwMessage((res && res.message) || 'Something went wrong. Please try again.', 'error');
         }
       } catch (err) {
-        setFieldMessage('pwMessage', 'Error: ' + err.message, 'error');
+        showPwMessage('Error: ' + err.message, 'error');
       }
       btn.disabled = false;
       btn.innerHTML = 'Continue <span class="btn-arrow">→</span>';
     });
 
-    /* FORGOT ACCOUNT */
+    $('forgotAccountBtn').addEventListener('click', function() {
+      const box = $('recoveryBox');
+      const isClosed = !box.classList.contains('open');
+      box.classList.toggle('open', isClosed);
+      this.textContent = isClosed ? 'Close account recovery' : 'Forgot account?';
+      this.setAttribute('aria-expanded', isClosed ? 'true' : 'false');
+      box.setAttribute('aria-hidden', isClosed ? 'false' : 'true');
+      if (isClosed) {
+        setTimeout(function() { box.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 80);
+        setTimeout(() => $('recoveryMobile').focus(), 320);
+      }
+    });
+
     $('recoveryMobile').addEventListener('input', function() {
       this.value = this.value.replace(/\D/g, '');
     });
 
     $('recoveryBtn').addEventListener('click', async function() {
       const mobile = $('recoveryMobile').value.trim();
+      const message = $('recoveryMessage');
       if (!/^\d{7,15}$/.test(mobile)) {
-        setFieldMessage('recoveryMessage', 'Please enter the 7 to 15 digit number used during sign-up.', 'error');
+        message.textContent = 'Please enter the 7 to 15 digit number used during sign-up.';
+        message.className = 'message error';
         return;
       }
 
@@ -3563,22 +3412,33 @@
           currentUser = res.user;
           try { localStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
           try { sessionStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
-          setFieldMessage('recoveryMessage', '', '');
+          $('recoveryBox').classList.remove('open');
+          $('recoveryBox').setAttribute('aria-hidden', 'true');
+          $('forgotAccountBtn').setAttribute('aria-expanded', 'false');
+          $('forgotAccountBtn').textContent = 'Forgot account?';
           completeLogin(res.ticket || null);
         } else {
-          setFieldMessage('recoveryMessage', (res && res.message) || 'No account was found for that mobile number.', 'error');
+          message.textContent = (res && res.message) || 'No account was found for that mobile number.';
+          message.className = 'message error';
         }
       } catch (err) {
-        setFieldMessage('recoveryMessage', 'Error: ' + err.message, 'error');
+        message.textContent = 'Error: ' + err.message;
+        message.className = 'message error';
       }
       btn.disabled = false;
       btn.innerHTML = 'Find My Account';
     });
 
+    function showPwMessage(text, type) {
+      const el = $('pwMessage');
+      el.textContent = text;
+      el.className = 'message ' + (type || '');
+    }
+
     async function completeLogin(loginTicket) {
       updateUserUI(currentUser);
       $('name').value = currentUser.name;
-      $('mobile').value = currentUser.mobile || $('pwMobile').value || $('suMobile').value;
+      $('mobile').value = currentUser.mobile || $('pwMobile').value;
 
       $('welcomeName').textContent = currentUser.name.split(' ')[0];
       $('welcomeEmail').textContent = currentUser.name;
@@ -3609,7 +3469,7 @@
         if (!ticket) {
           const res = await api('checkExistingRSVP', {
             name: currentUser.name,
-            mobile: currentUser.mobile || $('pwMobile').value || $('suMobile').value
+            mobile: currentUser.mobile || $('pwMobile').value
           });
           ticket = res && res.success && res.exists ? res.ticket : null;
         }
@@ -4048,26 +3908,13 @@
       $('welcomeView').classList.remove('active');
       $('attendeesView').classList.remove('active');
       $('loginView').classList.add('active');
-
       $('pwName').value = '';
       $('pwMobile').value = '';
       $('pwMobile').type = 'password';
-      $('suName').value = '';
-      $('suMobile').value = '';
-      $('suMobile').type = 'password';
-      $('recoveryMobile').value = '';
-      document.querySelectorAll('.privacy-toggle').forEach(function(btn) {
-        btn.textContent = 'Show';
-        btn.setAttribute('aria-label', 'Show mobile number');
-        btn.setAttribute('aria-pressed', 'false');
-      });
+      $('privacyToggle').textContent = 'Show';
+      $('privacyToggle').setAttribute('aria-label', 'Show mobile number');
+      $('privacyToggle').setAttribute('aria-pressed', 'false');
       $('privacyMascot').classList.add('privacy-on');
-      ['suMessage', 'pwMessage', 'recoveryMessage'].forEach(function(id) {
-        const el = $(id);
-        if (el) { el.textContent = ''; el.className = 'message'; }
-      });
-      setAuthState('signup', { silent: true });
-
       $('goRsvpBtn').style.opacity = '';
       $('goRsvpBtn').style.pointerEvents = '';
       $('goRsvpBtn').querySelector('.action-title').textContent = 'Confirm Attendance';
@@ -4886,7 +4733,6 @@
     updateProgress();
     preloadSuccessSound();
     toggleSelfieVideoFields();
-    setAuthState('signup', { silent: true });
   </script>
 </body>
 </html>
