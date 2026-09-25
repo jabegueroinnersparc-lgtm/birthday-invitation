@@ -985,7 +985,7 @@
     }
     .form-head-left p { font-size: 13px; color: var(--steel); }
 
-    /* ⭐ NEW: Form back button */
+    /* Form back button */
     .form-back-btn {
       display: inline-flex;
       align-items: center;
@@ -2071,7 +2071,7 @@
               <h2>Your Details</h2>
               <p>All fields are required.</p>
             </div>
-            <!-- ⭐ NEW: Desktop back button -->
+            <!-- Desktop back button -->
             <button type="button" class="form-back-btn" id="backBtnDesktop" aria-label="Back to home">
               ← Back to Home
             </button>
@@ -2233,6 +2233,30 @@
     /* CONFIG */
     const APPS_SCRIPT_URL = '/api/proxy';
 
+    /* ⭐ BUTTON CLICK SOUND */
+    let clickSoundAudio = null;
+    function playButtonClick() {
+      try {
+        if (!clickSoundAudio) {
+          // Short, subtle pop sound — generated inline so no extra file is needed
+          clickSoundAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT");
+          clickSoundAudio.volume = 0.25;
+          clickSoundAudio.preload = 'auto';
+          clickSoundAudio.playsInline = true;
+          clickSoundAudio.setAttribute('playsinline', '');
+        }
+        clickSoundAudio.currentTime = 0;
+        const p = clickSoundAudio.play();
+        if (p && typeof p.catch === 'function') p.catch(function() {});
+      } catch (e) { /* silent fail */ }
+    }
+
+    // Attach to every button click, including dynamically-created ones
+    document.addEventListener('click', function(event) {
+      const btn = event.target.closest('button');
+      if (btn && !btn.disabled) playButtonClick();
+    }, true);
+
     /* ⭐ PER-ATTENDANCE MEDIA */
     const ATTENDANCE_MEDIA = {
       going: {
@@ -2261,7 +2285,7 @@
     const DEFAULT_MEDIA = ATTENDANCE_MEDIA.going;
     let currentMedia = DEFAULT_MEDIA;
 
-    /* ⭐ Audio unlock for iOS — plays a silent sound on first tap to unlock autoplay */
+    /* Audio unlock for iOS */
     let audioUnlocked = false;
     function unlockAudio() {
       if (audioUnlocked) return;
@@ -2327,7 +2351,7 @@
     function playSuccessSound() { playAudio('success'); }
     function playTicketReadySound() { playAudio('ticket'); }
 
-    /* ⭐ Play the attendance-specific sound — with mobile-safe fallback */
+    /* Play the attendance-specific sound — with mobile-safe fallback */
     function playAttendanceSound(attendance) {
       const media = ATTENDANCE_MEDIA[attendance] || DEFAULT_MEDIA;
       try {
@@ -2341,7 +2365,6 @@
         const p = audio.play();
         if (p && typeof p.catch === 'function') {
           p.catch(function(err) {
-            // Mobile autoplay blocked → retry after a micro-interaction
             console.log('Attendance sound autoplay blocked, retrying:', err.message);
             const retry = () => {
               audio.play().catch(() => {});
@@ -2355,9 +2378,7 @@
       } catch (e) { console.log('Attendance sound failed:', e); }
     }
 
-    /* ============================================================
-       API CALL
-       ============================================================ */
+    /* API CALL */
     async function api(action, params) {
       params = params || {};
 
@@ -2769,7 +2790,7 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
-    /* ⭐ Back to home from form */
+    /* Back to home from form */
     function backToHomeFromForm() {
       $('formView').classList.remove('active');
       $('welcomeView').classList.add('active');
@@ -2929,8 +2950,7 @@
 
     async function loadAttendees(force) {
       const list = $('attendeesList');
-      const fresh = attendeesCache && Date.now() - attendeesCacheTime < ATTENDEE
-S_CACHE_MS;
+      const fresh = attendeesCache && Date.now() - attendeesCacheTime < ATTENDEES_CACHE_MS;
       if (!force && fresh) { renderAttendees(attendeesCache); return; }
       if (!attendeesCache) list.innerHTML = `<div class="attendees-loading"><div class="loader-spinner"></div><div>Loading attendees…</div></div>`;
       if (attendeesRequest) return attendeesRequest;
@@ -3676,7 +3696,7 @@ S_CACHE_MS;
       el.className = 'message ' + type;
     }
 
-    /* ⭐ SHOW SUCCESS SCREEN — attendance-aware */
+    /* SHOW SUCCESS SCREEN — attendance-aware */
     function showTicket(ticket) {
       currentTicket = ticket;
 
@@ -3697,7 +3717,6 @@ S_CACHE_MS;
 
       $('successScreen').classList.add('show');
 
-      // ⭐ Swap caption, subtitle, and GIF per attendance
       const captionEl = $('successCaption');
       if (captionEl) captionEl.setAttribute('aria-label', media.caption);
       animateCaption(media.caption);
@@ -3716,8 +3735,6 @@ S_CACHE_MS;
 
       fireConfetti();
       fireSparkles();
-
-      // ⭐ Play the attendance-specific sound — delayed slightly so mobile can unlock
       setTimeout(() => playAttendanceSound(attendance), 150);
 
       showToast(media.toast || "You're on the list! 🎉");
