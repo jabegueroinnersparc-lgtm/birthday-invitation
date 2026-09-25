@@ -6,7 +6,6 @@
   <meta name="theme-color" content="#0a0a0a">
   <title>Saira and Simon's birthdays</title>
 
-  <!-- Favicons (relative paths — files sit next to index.html) -->
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
@@ -438,7 +437,6 @@
     .message.success { background: #f0fdf4; color: #14532d; border: 1px solid #bbf7d0; display: block; }
     .message.error { background: #fef2f2; color: #7f1d1d; border: 1px solid #fecaca; display: block; }
 
-    /* Forgot-account panel: smooth slide, fade, and lift animation. */
     .recovery-panel {
       max-height: 0;
       opacity: 0;
@@ -996,9 +994,6 @@
     .progress-fill { height: 100%; width: 0%; background: var(--black); border-radius: 100px; transition: width 0.5s var(--ease-out); }
     .progress-pct { font-size: 11px; font-weight: 700; color: var(--ink); letter-spacing: 0.05em; min-width: 40px; text-align: right; font-variant-numeric: tabular-nums; }
 
-    /* ============================================================
-       GUEST COUNTER — modern, animated, responsive
-       ============================================================ */
     .guest-counter {
       display: inline-flex;
       align-items: stretch;
@@ -1024,7 +1019,6 @@
     }
     @media (max-width: 640px) { .guest-counter { max-width: 100%; } }
 
-    /* Soft inner sheen */
     .guest-counter::before {
       content: "";
       position: absolute;
@@ -1063,7 +1057,6 @@
       z-index: 1;
     }
 
-    /* Ripple circle for press feedback */
     .guest-btn::after {
       content: "";
       position: absolute;
@@ -1107,7 +1100,6 @@
       color: var(--silver);
     }
 
-    /* Pulse ring animation when a value changes */
     @keyframes guestBtnPulse {
       0%   { box-shadow: 0 0 0 0 rgba(10,10,10,0.35); }
       70%  { box-shadow: 0 0 0 12px rgba(10,10,10,0); }
@@ -1139,7 +1131,6 @@
     .guest-value:focus { color: var(--black); }
     .guest-value.invalid { color: var(--danger); }
 
-    /* Pop animation for the number */
     @keyframes guestValuePop {
       0%   { transform: scale(1); }
       40%  { transform: scale(1.18); }
@@ -1232,9 +1223,6 @@
     .field-row { display: grid; grid-template-columns: 1fr; gap: 0; }
     @media (min-width: 640px) { .field-row { grid-template-columns: 1fr 1fr; gap: 16px; } .field-row .field { margin-bottom: 20px; } }
 
-    /* ============================================================
-       SUCCESS SCREEN
-       ============================================================ */
     .success-screen {
       display: none;
       text-align: center;
@@ -1243,7 +1231,6 @@
     }
     .success-screen.show { display: block; }
 
-    /* Animated checkmark */
     .success-check-wrap {
       position: relative;
       width: 100px;
@@ -1341,7 +1328,6 @@
     }
     @keyframes fadeIn { to { opacity: 1; } }
 
-    /* Sparkles */
     .sparkle {
       position: absolute;
       width: 8px; height: 8px;
@@ -1356,7 +1342,6 @@
       100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0); }
     }
 
-    /* Confetti */
     .success-confetti {
       position: fixed;
       inset: 0;
@@ -1379,7 +1364,6 @@
       100% { opacity: 0; transform: translateY(105vh) rotate(720deg); }
     }
 
-    /* Ticket card (inside success screen) */
     .ticket-card {
       background: var(--fog); border: 1.5px solid var(--pearl);
       border-radius: 18px; padding: 24px 20px 20px;
@@ -1459,7 +1443,35 @@
     .closed-state h3 { font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px; }
     .closed-state p { color: var(--steel); font-size: 14px; }
 
-    /* Final cross-device polish */
+    /* ⭐ SUBMITTING OVERLAY */
+    .submitting-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 10000;
+      background: rgba(10,10,10,0.78);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+      color: #fff; font-family: 'Inter', sans-serif;
+      padding: 24px;
+      text-align: center;
+    }
+    .submitting-overlay.show { display: flex; }
+    .submitting-spinner {
+      width: 48px; height: 48px;
+      border: 4px solid rgba(255,255,255,0.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    .submitting-title {
+      font-size: 15px; font-weight: 600; letter-spacing: 0.02em;
+    }
+    .submitting-sub {
+      font-size: 12px; color: #a8a8a8;
+      max-width: 300px; line-height: 1.55;
+    }
+
     @media (max-width: 640px) {
       body { overflow-x: hidden; }
       .view { max-width: 100%; }
@@ -1581,9 +1593,6 @@
       .social-drawer.open { transform: translateY(0) scale(1); }
     }
 
-    /* ============================================================
-       QR MODAL — full-screen zoom-in
-       ============================================================ */
     .qr-modal {
       position: fixed;
       inset: 0;
@@ -1675,7 +1684,6 @@
       .qr-modal-close { width: 42px; height: 42px; }
     }
 
-    /* Video greeting section */
     .video-section {
       display: none;
       margin-bottom: 18px;
@@ -2125,7 +2133,6 @@
               <h2 class="success-caption" id="successCaption" aria-label="Shanghai secured"></h2>
               <p class="success-sub" id="successSub">You're officially on the list. See you there!</p>
 
-              <!-- ⭐ GIF now dynamic — src is set in JS per attendance -->
               <img
                 class="success-image"
                 id="successImage"
@@ -2158,9 +2165,7 @@
     </section>
   </div>
 
-  <!-- ============================================================
-       QR MODAL — full-screen zoom-in
-       ============================================================ -->
+  <!-- QR MODAL -->
   <div class="qr-modal" id="gcashQrModal" role="dialog" aria-modal="true" aria-labelledby="gcashQrModalTitle" aria-hidden="true">
     <div class="qr-modal-card" role="document">
       <button type="button" class="qr-modal-close" id="gcashQrModalClose" aria-label="Close QR code">×</button>
@@ -2170,16 +2175,18 @@
     </div>
   </div>
 
+  <!-- ⭐ SUBMITTING OVERLAY -->
+  <div class="submitting-overlay" id="submittingOverlay" aria-hidden="true">
+    <div class="submitting-spinner"></div>
+    <div class="submitting-title">Sending your RSVP…</div>
+    <div class="submitting-sub">Uploading your photo or video can take a few seconds. Please don't close this page.</div>
+  </div>
+
   <script>
     /* CONFIG */
     const APPS_SCRIPT_URL = '/api/proxy';
 
-    /* ============================================================
-       ⭐ PER-ATTENDANCE MEDIA CONFIG
-       ------------------------------------------------------------
-       Each attendance choice has its own success sound, GIF image,
-       and caption/subtitle shown on the success screen.
-       ============================================================ */
+    /* ⭐ PER-ATTENDANCE MEDIA */
     const ATTENDANCE_MEDIA = {
       going: {
         soundUrl: 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/shanghai%20salamat%20po.mp3',
@@ -2204,15 +2211,10 @@
       }
     };
 
-    // Default fallback (used before attendance is chosen)
     const DEFAULT_MEDIA = ATTENDANCE_MEDIA.going;
-
-    // Cache the current media so we can reuse on reset
     let currentMedia = DEFAULT_MEDIA;
 
-    /* ============================================================
-       SUCCESS SOUND
-       ============================================================ */
+    /* SUCCESS SOUND */
     const SUCCESS_SOUND_URL = 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/saira%20ingay%202%20(mp3cut.net).mp3';
     const TICKET_READY_SOUND_URL = 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/shanghai%20salamat%20po.mp3';
     const USE_LOCAL_UI_SOUNDS = false;
@@ -2265,7 +2267,6 @@
     function playSuccessSound() { playAudio('success'); }
     function playTicketReadySound() { playAudio('ticket'); }
 
-    /* ⭐ NEW: Play the attendance-specific success sound */
     function playAttendanceSound(attendance) {
       const media = ATTENDANCE_MEDIA[attendance] || DEFAULT_MEDIA;
       try {
@@ -2280,11 +2281,12 @@
     }
 
     /* ============================================================
-       API CALL
+       ⭐ API CALL — NOW SENDS JSON
        ============================================================ */
     async function api(action, params) {
       params = params || {};
 
+      // Apps Script htmlservice path (used when running inside GAS iframe)
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         const serverArgs = {
           bootstrap: [],
@@ -2304,7 +2306,7 @@
         return new Promise(function(resolve, reject) {
           const timeout = setTimeout(function() {
             reject(new Error('The server took too long to respond. Please try again.'));
-          }, action === 'submitForm' ? 60000 : 20000);
+          }, action === 'submitForm' ? 120000 : 20000);   // ⭐ 2 min for submit
           const runner = google.script.run
             .withSuccessHandler(function(result) {
               clearTimeout(timeout);
@@ -2329,28 +2331,51 @@
         });
       }
 
-      const body = new URLSearchParams(Object.assign({ action: action }, params || {}));
+      // ⭐ Vercel / external path — send JSON, with abort-based timeout
+      const payload = Object.assign({ action: action }, params || {});
+      const controller = new AbortController();
+      const timeoutMs = action === 'submitForm' ? 120000 : 30000;   // ⭐ 2 min for submit
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-      const res = await fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'cors',
-        redirect: 'follow',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: body.toString()
-      });
+      let res;
+      try {
+        res = await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'cors',
+          redirect: 'follow',
+          headers: { 'Content-Type': 'application/json;charset=utf-8' },   // ⭐ JSON
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+          throw new Error('Request timed out. Please check your connection and try again.');
+        }
+        throw err;
+      }
+      clearTimeout(timeoutId);
 
-      if (!res.ok) throw new Error('HTTP ' + res.status);
+      if (!res.ok) {
+        if (res.status === 413) {
+          throw new Error('Your photo or video is too large. Please record a shorter video.');
+        }
+        if (res.status === 502 || res.status === 504) {
+          throw new Error('The server took too long. Please try again with a shorter video.');
+        }
+        throw new Error('HTTP ' + res.status);
+      }
 
       const text = await res.text();
 
       if (text.trim().startsWith('<')) {
-        throw new Error('Apps Script returned HTML — make sure the Web App is deployed with "Anyone" access and the URL ends in /exec');
+        throw new Error('Server returned HTML instead of JSON. Please try again.');
       }
 
       try {
         return JSON.parse(text);
       } catch (e) {
-        throw new Error('Invalid JSON response from server');
+        throw new Error('Invalid response from server.');
       }
     }
 
@@ -2367,7 +2392,7 @@
 
     const $ = id => document.getElementById(id);
 
-    /* UI sound (optional, off by default) */
+    /* UI SOUNDS (optional) */
     let clickAudioContext = null;
     function playClickSound(isPrivacyToggle) {
       try {
@@ -3121,6 +3146,7 @@
       cameraWindow.document.close();
     }
 
+    // ⭐ COMPRESSED selfie capture
     function getCameraHTML() {
       return `<!DOCTYPE html>
 <html>
@@ -3186,7 +3212,11 @@
     let stream = null, countdownTimer = null;
 
     navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 960 } },
+      video: {
+        facingMode: 'user',
+        width:  { ideal: 640, max: 640 },
+        height: { ideal: 480, max: 480 }
+      },
       audio: false
     }).then(st => {
       stream = st;
@@ -3225,15 +3255,16 @@
       canvas.width = w; canvas.height = h;
       const ctx = canvas.getContext('2d');
       ctx.translate(w, 0); ctx.scale(-1, 1); ctx.drawImage(v, 0, 0, w, h);
-      const maxW = 720;
+      const maxW = 640;
       let outCanvas = canvas;
       if (w > maxW) {
         const scale = maxW / w;
         outCanvas = document.createElement('canvas');
-        outCanvas.width = maxW; outCanvas.height = h * scale;
+        outCanvas.width = maxW;
+        outCanvas.height = Math.round(h * scale);
         outCanvas.getContext('2d').drawImage(canvas, 0, 0, outCanvas.width, outCanvas.height);
       }
-      const dataUrl = outCanvas.toDataURL('image/jpeg', 0.85);
+      const dataUrl = outCanvas.toDataURL('image/jpeg', 0.7);
       if (window.opener && !window.opener.closed) {
         window.opener.postMessage({ type: 'SELFIE_CAPTURED', data: dataUrl }, '*');
       }
@@ -3287,7 +3318,7 @@
             </svg>
           </div>
           <div class="vid-title">Record a video greeting</div>
-          <div class="vid-sub">Since you can't make it, send a video message instead</div>
+          <div class="vid-sub">Since you can't make it, send a short video (max 20s)</div>
           <button type="button" class="btn-video" id="openVideoBtn">Record Video</button>
         </div>
       `;
@@ -3330,6 +3361,7 @@
       videoWindow.document.close();
     }
 
+    // ⭐ COMPRESSED video recording (480x360, 250kbps, 20s max)
     function getVideoHTML() {
       return `<!DOCTYPE html>
 <html>
@@ -3370,7 +3402,6 @@
     button:active:not(:disabled) { transform: scale(0.97); }
     button:disabled { opacity: 0.4; cursor: not-allowed; }
     button.secondary { background: transparent; border: 1px solid #2a2a2a; color: #a8a8a8; padding: 12px 22px; font-size: 12px; }
-    button.danger { background: #dc2626; color: #fff; }
     .row { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; }
     .preview-actions { display: flex; gap: 10px; }
   </style>
@@ -3409,12 +3440,17 @@
     let seconds = 0, isRecording = false;
 
     navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+      video: {
+        facingMode: 'user',
+        width:  { ideal: 480, max: 480 },
+        height: { ideal: 360, max: 360 },
+        frameRate: { ideal: 15, max: 20 }
+      },
       audio: true
     }).then(st => {
       stream = st;
       v.srcObject = st;
-      status.textContent = 'Ready. Tap Start Recording to begin.';
+      status.textContent = 'Ready. Tap Start Recording. Max 20 seconds.';
       recordBtn.disabled = false;
     }).catch(err => {
       status.classList.add('error');
@@ -3430,19 +3466,21 @@
       return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
     }
 
-    recordBtn.onclick = () => {
+    function startRecording() {
       if (isRecording) return;
       recordedChunks = [];
       seconds = 0;
       timerEl.textContent = '00:00';
       
       try {
-        const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
-          ? 'video/webm;codecs=vp9,opus'
-          : MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
+        const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
           ? 'video/webm;codecs=vp8,opus'
           : 'video/webm';
-        mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType, videoBitsPerSecond: 800000 });
+        mediaRecorder = new MediaRecorder(stream, {
+          mimeType: mimeType,
+          videoBitsPerSecond: 250000,
+          audioBitsPerSecond: 32000
+        });
       } catch (e) {
         try {
           mediaRecorder = new MediaRecorder(stream);
@@ -3495,20 +3533,22 @@
       timerInterval = setInterval(() => {
         seconds++;
         timerEl.textContent = formatTime(seconds);
-        if (seconds >= 60) {
-          if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+        if (seconds >= 20) {
+          if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+            recordBtn.textContent = 'Start Recording';
+          }
         }
       }, 1000);
-    };
+    }
 
-    const originalRecordClick = recordBtn.onclick;
     recordBtn.onclick = function() {
       if (isRecording && mediaRecorder && mediaRecorder.state === 'recording') {
         mediaRecorder.stop();
         recordBtn.textContent = 'Start Recording';
         return;
       }
-      originalRecordClick();
+      startRecording();
     };
 
     useBtn.onclick = () => {
@@ -3528,7 +3568,7 @@
         v.muted = true;
         v.play().catch(()=>{});
       }
-      status.textContent = 'Ready. Tap Start Recording to begin.';
+      status.textContent = 'Ready. Tap Start Recording. Max 20 seconds.';
       recordBtn.textContent = 'Start Recording';
       controlsRow.style.display = 'flex';
       previewRow.style.display = 'none';
@@ -3552,7 +3592,7 @@
 </html>`;
     }
 
-    /* SUBMIT */
+    /* SUBMIT — ⭐ with overlay + robust try/catch/finally */
     $('rsvpForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       if (appConfig.isPastDeadline) { showMessage('Confirmations are closed.', 'error'); return; }
@@ -3564,7 +3604,7 @@
         return;
       }
       guests = guestCount;
-      
+
       if (selectedAttendance === 'not_going') {
         if (!videoData) { showMessage('Please record a video greeting before submitting.', 'error'); return; }
       } else {
@@ -3575,6 +3615,8 @@
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>Sending...';
       $('message').style.display = 'none';
+      $('submittingOverlay').classList.add('show');   // ⭐ show overlay
+      $('submittingOverlay').setAttribute('aria-hidden', 'false');
       primeAudio('ticket');
 
       const formData = {
@@ -3606,9 +3648,12 @@
         }
       } catch (err) {
         showMessage('Error: ' + err.message, 'error');
+      } finally {
+        $('submittingOverlay').classList.remove('show');
+        $('submittingOverlay').setAttribute('aria-hidden', 'true');
+        btn.disabled = false;
+        btn.innerHTML = 'Confirm Attendance <span class="btn-arrow">→</span>';
       }
-      btn.disabled = false;
-      btn.innerHTML = 'Confirm Attendance <span class="btn-arrow">→</span>';
     });
 
     function showMessage(text, type) {
@@ -3617,11 +3662,10 @@
       el.className = 'message ' + type;
     }
 
-    /* ⭐ SHOW SUCCESS SCREEN — now attendance-aware */
+    /* SHOW SUCCESS SCREEN */
     function showTicket(ticket) {
       currentTicket = ticket;
 
-      // Pick the right media bundle based on attendance stored on the ticket.
       const attendance = (ticket && ticket.attendance) ? String(ticket.attendance).toLowerCase() : 'going';
       const media = ATTENDANCE_MEDIA[attendance] || DEFAULT_MEDIA;
       currentMedia = media;
@@ -3639,7 +3683,6 @@
 
       $('successScreen').classList.add('show');
 
-      // ⭐ Swap in the correct caption, subtitle, and GIF
       const captionEl = $('successCaption');
       if (captionEl) captionEl.setAttribute('aria-label', media.caption);
       animateCaption(media.caption);
@@ -3652,15 +3695,12 @@
         imgEl.style.animation = 'none';
         imgEl.src = media.imageUrl;
         imgEl.alt = media.caption;
-        // Retrigger the fade/scale animation
         void imgEl.offsetWidth;
         imgEl.style.animation = '';
       }
 
       fireConfetti();
       fireSparkles();
-
-      // ⭐ Play the attendance-specific sound
       playAttendanceSound(attendance);
 
       showToast(media.toast || "You're on the list! 🎉");
