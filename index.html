@@ -1548,10 +1548,20 @@
 
     async function api(action, params) {
       const body = new URLSearchParams(Object.assign({ action: action }, params || {}));
-      const res = await fetch(APPS_SCRIPT_URL, {
+      // Google Apps Script deployments can redirect POST requests and return
+      // 405 in some hosting configurations. Use GET for small API calls;
+      // keep POST for submitForm because selfie data may be too large for a URL.
+      const isLargeSubmission = action === 'submitForm';
+      const requestUrl = isLargeSubmission
+        ? APPS_SCRIPT_URL
+        : APPS_SCRIPT_URL + '?' + body.toString();
+      const res = await fetch(requestUrl, isLargeSubmission ? {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: body.toString(),
+        redirect: 'follow'
+      } : {
+        method: 'GET',
         redirect: 'follow'
       });
       if (!res.ok) throw new Error('HTTP ' + res.status);
