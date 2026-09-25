@@ -190,6 +190,33 @@ function getOrCreateFolder() {
   return folders.hasNext() ? folders.next() : DriveApp.createFolder(FOLDER_NAME);
 }
 
+/** Normalize names so case and repeated spaces cannot bypass duplicate checks. */
+function normalizeName(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+/** Find an existing RSVP by normalized player name. */
+function findResponseByName(name) {
+  const target = normalizeName(name);
+  if (!target) return null;
+
+  const sh = getResponsesSheet();
+  const lastRow = sh.getLastRow();
+  if (lastRow < 2) return null;
+
+  const data = sh.getRange(2, 1, lastRow - 1, 12).getValues();
+  for (let i = 0; i < data.length; i++) {
+    if (normalizeName(data[i][1]) === target) {
+      return {
+        row: i + 2,
+        name: String(data[i][1] || '').trim(),
+        code: String(data[i][9] || '').trim()
+      };
+    }
+  }
+  return null;
+}
+
 /* ============================================================
    TICKET HELPERS
    ============================================================ */
@@ -248,10 +275,10 @@ function findWhitelistAccount(name) {
   if (!whitelist || whitelist.getLastRow() < 2) return null;
 
   const values = whitelist.getRange(2, 1, whitelist.getLastRow() - 1, 2).getValues();
-  const target = String(name || '').trim().toLowerCase();
+  const target = normalizeName(name);
 
   for (let i = 0; i < values.length; i++) {
-    const rowName = String(values[i][1] || '').trim().toLowerCase();
+    const rowName = normalizeName(values[i][1]);
     if (rowName === target) {
       return {
         email: String(values[i][0] || '').trim().toLowerCase(),
@@ -417,6 +444,8 @@ function getAllAttendees() {
    RSVP SUBMISSION
    ============================================================ */
 function submitForm(formData) {
+  const lock = LockService.getScriptLock();
+
   try {
     Logger.log('=== submitForm called ===');
 
@@ -430,10 +459,13 @@ function submitForm(formData) {
     }
 
     if (!formData) return { success: false, message: 'No data received.' };
-    if (!formData.name || !formData.name.trim()) return { success: false, message: 'Name is required.' };
-    if (!formData.mobile || !formData.mobile.trim()) return { success: false, message: 'Mobile is required.' };
-    if (!formData.address || !formData.address.trim()) return { success: false, message: 'Address is required.' };
-    if (!formData.greetings || !formData.greetings.trim()) return { success: false, message: 'Greetings are required.' };
+
+    const submittedName = String(formData.name || '').replace(/\s+/g, ' ').trim();
+    if (!submittedName) return { success: false, message: 'Name is required.' };
+    if (submittedName.length < 2) return { success: false, message: 'Please enter a valid name.' };
+    if (!formData.mobile || !String(formData.mobile).trim()) return { success: false, message: 'Mobile is required.' };
+    if (!formData.address || !String(formData.address).trim()) return { success: false, message: 'Address is required.' };
+    if (!formData.greetings || !String(formData.greetings).trim()) return { success: false, message: 'Greetings are required.' };
     if (!formData.selfie || !formData.selfie.data) return { success: false, message: 'Selfie is required.' };
 
     const attendance = String(formData.attendance || 'going').trim().toLowerCase();
@@ -442,75 +474,86 @@ function submitForm(formData) {
       return { success: false, message: 'Please choose an attendance option.' };
     }
 
-    const identifier = (formData.email || formData.name || '').trim();
-    if (identifier) {
-      const dup = checkExistingRSVP(identifier);
-      if (dup && dup.success && dup.exists) {
-        return {
-          success: false,
-          message: 'You already confirmed.',
-          duplicate: true,
-          ticket: dup.ticket
-        };
-      }
+    // Do not use parseInt here: values such as "2abc" or "letters" must be rejected.
+    const guestsText = String(formData.guests == null ? '' : formData.guests).trim();
+    if (!/^\d+$/.test(guestsText)) {
+      return { success: false, message: 'Please enter a valid number of guests.' };
+    }
+    const guests = Number(guestsText);
+    if (!Number.isInteger(guests) || guests < 1 || guests > 20) {
+      return { success: false, message: 'Please enter a whole number of guests from 1 to 20.' };
     }
 
-    const guests = Math.max(1, Math.min(20, parseInt(formData.guests || 1, 10)));
-
-    const sheet = getResponsesSheet();
-
-    const folder = getOrCreateFolder();
-    const parts = formData.selfie.data.split(',');
-    if (parts.length < 2) return { success: false, message: 'Invalid selfie data.' };
-
-    const meta = parts[0];
-    const base64Data = parts[1];
-    const contentTypeMatch = meta.match(/:(.*?);/);
-    const contentType = contentTypeMatch ? contentTypeMatch[1] : 'image/jpeg';
-
-    const bytes = Utilities.base64Decode(base64Data);
-    const blob = Utilities.newBlob(bytes, contentType, formData.selfie.name || 'selfie.jpg');
-    const file = folder.createFile(blob);
+    // Keep the duplicate check and append inside one script lock. This prevents
+    // two simultaneous submissions with the same name from both being saved.
+    lock.waitLock(30000);
     try {
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    } catch (e) { Logger.log('Sharing warning: ' + e.toString()); }
-    const selfieUrl = file.getUrl();
-
-    const ticketCode = generateTicketCode();
-
-    sheet.appendRow([
-      new Date(),
-      formData.name.trim(),
-      formData.mobile.trim(),
-      formData.address.trim(),
-      formData.greetings.trim(),
-      selfieUrl,
-      identifier,                       // Email column now stores the name/identifier
-      guests,
-      formData.loginMethod || 'name',
-      ticketCode,
-      '',
-      attendance
-    ]);
-
-    const scriptUrl = ScriptApp.getService().getUrl() || '';
-    const qrData = scriptUrl
-      ? scriptUrl + '?page=scan&code=' + encodeURIComponent(ticketCode)
-      : ticketCode;
-    const qrCodeUrl = getQrCodeUrl(qrData, 400);
-
-    return {
-      success: true,
-      message: 'Thank you! Your attendance is confirmed. 🎉',
-      ticket: {
-        code: ticketCode,
-        qrCodeUrl: qrCodeUrl,
-        name: formData.name.trim(),
-        guests: guests,
-        qrData: qrData,
-        attendance: attendance
+      const duplicate = findResponseByName(submittedName);
+      if (duplicate) {
+        return {
+          success: false,
+          duplicate: true,
+          message: 'This name has already submitted an RSVP. Each player may submit only once.'
+        };
       }
-    };
+
+      const sheet = getResponsesSheet();
+      const folder = getOrCreateFolder();
+      const parts = String(formData.selfie.data).split(',');
+      if (parts.length < 2) return { success: false, message: 'Invalid selfie data.' };
+
+      const meta = parts[0];
+      const base64Data = parts[1];
+      const contentTypeMatch = meta.match(/:(.*?);/);
+      const contentType = contentTypeMatch ? contentTypeMatch[1] : 'image/jpeg';
+
+      const bytes = Utilities.base64Decode(base64Data);
+      const blob = Utilities.newBlob(bytes, contentType, formData.selfie.name || 'selfie.jpg');
+      const file = folder.createFile(blob);
+      try {
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      } catch (e) { Logger.log('Sharing warning: ' + e.toString()); }
+      const selfieUrl = file.getUrl();
+
+      const ticketCode = generateTicketCode();
+      const identifier = String(formData.email || submittedName).trim();
+
+      sheet.appendRow([
+        new Date(),
+        submittedName,
+        String(formData.mobile).trim(),
+        String(formData.address).trim(),
+        String(formData.greetings).trim(),
+        selfieUrl,
+        identifier,
+        guests,
+        formData.loginMethod || 'name',
+        ticketCode,
+        '',
+        attendance
+      ]);
+
+      const scriptUrl = ScriptApp.getService().getUrl() || '';
+      const qrData = scriptUrl
+        ? scriptUrl + '?page=scan&code=' + encodeURIComponent(ticketCode)
+        : ticketCode;
+      const qrCodeUrl = getQrCodeUrl(qrData, 400);
+
+      return {
+        success: true,
+        message: 'Thank you! Your attendance is confirmed. 🎉',
+        ticket: {
+          code: ticketCode,
+          qrCodeUrl: qrCodeUrl,
+          name: submittedName,
+          guests: guests,
+          qrData: qrData,
+          attendance: attendance
+        }
+      };
+    } finally {
+      lock.releaseLock();
+    }
   } catch (error) {
     Logger.log('submitForm FATAL: ' + error.toString());
     return { success: false, message: 'Error: ' + error.toString() };
