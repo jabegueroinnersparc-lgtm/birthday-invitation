@@ -1278,6 +1278,13 @@
             <span class="action-arrow">→</span>
           </button>
 
+          <button type="button" class="action-btn" id="viewTicketBtn" style="display:none;">
+            <div class="action-icon">▣</div>
+            <div class="action-title">Show Ticket</div>
+            <div class="action-desc">Open your saved ticket and QR code.</div>
+            <span class="action-arrow">→</span>
+          </button>
+
           <button type="button" class="action-btn" id="seeAttendeesBtn">
             <div class="action-icon">👥</div>
             <div class="action-title">See Who's Coming</div>
@@ -1547,6 +1554,53 @@
     }
 
     async function api(action, params) {
+      params = params || {};
+
+      // When Index.html is served by Apps Script, call Code.gs directly.
+      // This avoids Vercel-to-Apps-Script redirects, CORS, and POST failures.
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        const serverArgs = {
+          bootstrap: [],
+          simpleLogin: [params.name || '', params.mobile || ''],
+          submitForm: [JSON.parse(params.data || '{}')],
+          adminLogin: [params.password || ''],
+          verifyTicket: [params.code || ''],
+          checkInTicket: [params.code || ''],
+          checkExistingRSVP: [params.name || params.email || '', params.mobile || ''],
+          getAllAttendees: []
+        }[action];
+
+        if (!serverArgs) throw new Error('Unknown action: ' + action);
+
+        return new Promise(function(resolve, reject) {
+          const timeout = setTimeout(function() {
+            reject(new Error('The server took too long to respond. Please try again.'));
+          }, action === 'submitForm' ? 60000 : 20000);
+          const runner = google.script.run
+            .withSuccessHandler(function(result) {
+              clearTimeout(timeout);
+              resolve(result);
+            })
+            .withFailureHandler(function(error) {
+              clearTimeout(timeout);
+              reject(new Error(error && error.message ? error.message : String(error)));
+            });
+
+          // Call each Apps Script function explicitly. This is more reliable
+          // than dynamic .apply() calls through the google.script.run bridge.
+          if (action === 'bootstrap') runner.bootstrap();
+          else if (action === 'simpleLogin') runner.simpleLogin(serverArgs[0], serverArgs[1]);
+          else if (action === 'submitForm') runner.submitForm(serverArgs[0]);
+          else if (action === 'adminLogin') runner.adminLogin(serverArgs[0]);
+          else if (action === 'verifyTicket') runner.verifyTicket(serverArgs[0]);
+          else if (action === 'checkInTicket') runner.checkInTicket(serverArgs[0]);
+          else if (action === 'checkExistingRSVP') runner.checkExistingRSVP(serverArgs[0], serverArgs[1]);
+          else if (action === 'getAllAttendees') runner.getAllAttendees();
+          else reject(new Error('Unknown action: ' + action));
+        });
+      }
+
+      // Optional Vercel fallback for deployments that still serve this file externally.
       const body = new URLSearchParams(Object.assign({ action: action }, params || {}));
       // Google Apps Script deployments can redirect POST requests and return
       // 405 in some hosting configurations. Use GET for small API calls;
@@ -1691,7 +1745,7 @@
           currentUser = res.user;
           try { localStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
           try { sessionStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
-          completeLogin();
+          completeLogin(res.ticket || null);
         } else if (res && res.exists) {
           showPwMessage('This name is already logged in. Please try another name.', 'error');
         } else {
@@ -1710,7 +1764,7 @@
       el.className = 'message ' + (type || '');
     }
 
-    async function completeLogin() {
+    async function completeLogin(loginTicket) {
       updateUserUI(currentUser);
       $('name').value = currentUser.name;
       $('mobile').value = currentUser.mobile || $('pwMobile').value;
@@ -1734,23 +1788,15 @@
           name: currentUser.name,
           mobile: currentUser.mobile || $('pwMobile').value
         });
-        if (res && res.success && res.exists) {
-          $('goRsvpBtn').style.opacity = '0.5';
-          $('goRsvpBtn').style.pointerEvents = 'none';
-          $('goRsvpBtn').querySelector('.action-title').textContent = 'Already Confirmed';
-          $('goRsvpBtn').querySelector('.action-desc').textContent = 'You already have a ticket. Showing it now…';
+        const ticket = loginTicket || (res && res.success && res.exists ? res.ticket : null);
+        if (ticket) {
+          lockRsvpAction(ticket);
 
-          $('ticketQrImg').src = res.ticket.qrCodeUrl;
-          $('ticketCode').textContent = res.ticket.code;
-          $('ticketName').textContent = res.ticket.name;
-          $('ticketGuests').textContent = res.ticket.guests +
-            (res.ticket.guests === 1 ? ' person' : ' people');
-
-          setTimeout(() => {
-            $('welcomeView').classList.remove('active');
-            $('formView').classList.add('active');
-            showTicket(res.ticket);
-          }, 800);
+          $('ticketQrImg').src = ticket.qrCodeUrl;
+          $('ticketCode').textContent = ticket.code;
+          $('ticketName').textContent = ticket.name;
+          $('ticketGuests').textContent = ticket.guests +
+            (ticket.guests === 1 ? ' person' : ' people');
         }
       } catch (e) { console.log('Existing RSVP check failed:', e); }
     }
@@ -1765,6 +1811,15 @@
       $('userAvatarMobile').textContent = initial;
     }
 
+    function lockRsvpAction(ticket) {
+      $('goRsvpBtn').style.opacity = '0.5';
+      $('goRsvpBtn').style.pointerEvents = 'none';
+      $('goRsvpBtn').querySelector('.action-title').textContent = 'Already Confirmed';
+      $('goRsvpBtn').querySelector('.action-desc').textContent = 'You already have a ticket. Click Show Ticket to view it.';
+      $('viewTicketBtn').style.display = 'flex';
+      $('viewTicketBtn').onclick = function() { openTicket(ticket); };
+    }
+
     /* WELCOME BUTTONS */
     $('goRsvpBtn').addEventListener('click', function() {
       $('welcomeView').classList.remove('active');
@@ -1776,6 +1831,13 @@
       updateProgress();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
+
+    function openTicket(ticket) {
+      $('welcomeView').classList.remove('active');
+      $('formView').classList.add('active');
+      showTicket(ticket);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
     $('seeAttendeesBtn').addEventListener('click', function() {
       $('welcomeView').classList.remove('active');
@@ -1915,6 +1977,8 @@
       $('goRsvpBtn').style.pointerEvents = '';
       $('goRsvpBtn').querySelector('.action-title').textContent = 'Confirm Attendance';
       $('goRsvpBtn').querySelector('.action-desc').textContent = 'Share your details and a selfie to get your entrance ticket.';
+      $('viewTicketBtn').style.display = 'none';
+      $('viewTicketBtn').onclick = null;
       showToast('Signed out.');
     }
 
@@ -2274,6 +2338,7 @@
     /* SHOW SUCCESS SCREEN */
     function showTicket(ticket) {
       currentTicket = ticket;
+      lockRsvpAction(ticket);
       $('ticketQrImg').src = ticket.qrCodeUrl;
       $('ticketCode').textContent = ticket.code;
       $('ticketName').textContent = ticket.name;
