@@ -198,9 +198,21 @@ function normalizeName(value) {
   return String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
-/** Normalize mobile values for exact digits-only comparison. */
+/**
+ * Normalize mobile values for comparison.
+ * Supports Philippine formats such as:
+ *   09123456789
+ *   9123456789       (leading zero lost by Google Sheets)
+ *   639123456789     (international format)
+ */
 function normalizeMobile(value) {
-  return String(value || '').replace(/\D/g, '').trim();
+  let digits = String(value || '').replace(/\D/g, '').trim();
+  if (digits.indexOf('63') === 0 && digits.length === 12) {
+    digits = '0' + digits.substring(2);
+  } else if (digits.length === 10 && digits.indexOf('9') === 0) {
+    digits = '0' + digits;
+  }
+  return digits;
 }
 
 /** Find an existing RSVP by normalized player name. */
