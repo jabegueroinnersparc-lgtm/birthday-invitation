@@ -1950,7 +1950,9 @@
 
   <script>
     /* CONFIG */
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzoNUCRIwXKbndf9QWsalqq5jn026zRc3DUfzCW6dihq8p4fol6GyX2MWp2FkGQz_0/exec';
+    // Routed through /api/proxy (Vercel serverless function) to avoid CORS.
+    // The proxy forwards POSTs to the Apps Script /exec URL server-side.
+    const APPS_SCRIPT_URL = '/api/proxy';
 
     /* ============================================================
        SUCCESS SOUND
@@ -2021,19 +2023,18 @@
     /* ============================================================
        API CALL
        ------------------------------------------------------------
-       When this HTML is served by Apps Script, google.script.run is
-       available and we use the native bridge (no CORS issues).
+       All requests go through /api/proxy (same-origin), so there
+       are no CORS issues on Vercel or any other static host that
+       supports serverless functions. The proxy handles talking to
+       Google Apps Script.
 
-       When served from Vercel/GitHub Pages, we send a POST request
-       with Content-Type: text/plain. This avoids the CORS preflight
-       (OPTIONS) that Apps Script cannot answer, and prevents the
-       HTTP 404 that occurred when query strings were stripped during
-       Apps Script's redirect.
+       The google.script.run branch below is still kept in case the
+       HTML is ever opened inside the Apps Script editor itself.
        ============================================================ */
     async function api(action, params) {
       params = params || {};
 
-      // Native Apps Script bridge (used when HTML is hosted inside Apps Script)
+      // Native Apps Script bridge (only used if HTML is served by Apps Script)
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         const serverArgs = {
           bootstrap: [],
@@ -2078,7 +2079,7 @@
         });
       }
 
-      // External hosting (Vercel/GitHub Pages) — POST with text/plain to avoid preflight
+      // Same-origin POST to /api/proxy (Vercel serverless function).
       const body = new URLSearchParams(Object.assign({ action: action }, params || {}));
 
       const res = await fetch(APPS_SCRIPT_URL, {
@@ -2086,7 +2087,7 @@
         mode: 'cors',
         redirect: 'follow',
         headers: {
-          // text/plain avoids the CORS preflight that Apps Script rejects.
+          // text/plain is fine — the proxy re-encodes as form-urlencoded for Apps Script.
           'Content-Type': 'text/plain;charset=utf-8'
         },
         body: body.toString()
