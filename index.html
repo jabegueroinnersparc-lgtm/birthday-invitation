@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0a0a0a">
-  <title>Saira's Birthday</title>
+  <title>Saira and Simon's birthdays</title>
 
   <!-- Favicons (relative paths — files sit next to index.html) -->
   <link rel="icon" href="favicon.ico" sizes="any">
@@ -996,40 +996,174 @@
     .progress-fill { height: 100%; width: 0%; background: var(--black); border-radius: 100px; transition: width 0.5s var(--ease-out); }
     .progress-pct { font-size: 11px; font-weight: 700; color: var(--ink); letter-spacing: 0.05em; min-width: 40px; text-align: right; font-variant-numeric: tabular-nums; }
 
+    /* ============================================================
+       GUEST COUNTER — modern, animated, responsive
+       ============================================================ */
     .guest-counter {
-      display: flex; align-items: center;
-      border: 1.5px solid var(--mist); border-radius: 12px;
-      overflow: hidden; background: var(--white);
-      width: 100%; max-width: 240px;
+      display: inline-flex;
+      align-items: stretch;
+      background: var(--white);
+      border: 1.5px solid var(--pearl);
+      border-radius: 16px;
+      padding: 4px;
+      gap: 4px;
+      width: 100%;
+      max-width: 280px;
+      box-shadow:
+        0 1px 2px rgba(0,0,0,0.04),
+        0 8px 24px -12px rgba(0,0,0,0.12);
+      transition: box-shadow 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
+      position: relative;
+      overflow: hidden;
+    }
+    .guest-counter:focus-within {
+      border-color: var(--black);
+      box-shadow:
+        0 0 0 4px rgba(10,10,10,0.08),
+        0 10px 30px -12px rgba(0,0,0,0.18);
     }
     @media (max-width: 640px) { .guest-counter { max-width: 100%; } }
-    .guest-btn {
-      width: 52px; height: 52px; background: var(--white);
-      border: none; font-size: 22px; font-weight: 400;
-      color: var(--black); cursor: pointer;
-      transition: background 0.15s; font-family: inherit;
-      display: flex; align-items: center; justify-content: center;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation; flex-shrink: 0;
+
+    /* Soft inner sheen */
+    .guest-counter::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 20% 0%, rgba(255,255,255,0.6), transparent 60%);
+      pointer-events: none;
+      opacity: 0.6;
     }
-    @media (max-width: 640px) { .guest-btn { width: 56px; height: 56px; font-size: 24px; } }
-    .guest-btn:active:not(:disabled) { background: var(--pearl); }
-    .guest-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .guest-btn {
+      position: relative;
+      width: 54px;
+      min-width: 54px;
+      height: 54px;
+      border: none;
+      border-radius: 12px;
+      background: var(--fog);
+      color: var(--black);
+      font-family: inherit;
+      font-size: 24px;
+      font-weight: 500;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      overflow: hidden;
+      isolation: isolate;
+      transition:
+        background 0.25s var(--ease-out),
+        color 0.25s var(--ease-out),
+        transform 0.15s var(--ease-out),
+        box-shadow 0.25s var(--ease-out);
+      z-index: 1;
+    }
+
+    /* Ripple circle for press feedback */
+    .guest-btn::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      background: radial-gradient(circle at center, rgba(10,10,10,0.18), transparent 70%);
+      opacity: 0;
+      transform: scale(0.6);
+      transition: opacity 0.35s var(--ease-out), transform 0.35s var(--ease-out);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    @media (hover: hover) {
+      .guest-btn:hover:not(:disabled) {
+        background: var(--black);
+        color: var(--white);
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px -8px rgba(0,0,0,0.4);
+      }
+      .guest-btn:hover:not(:disabled)::after {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .guest-btn:active:not(:disabled) {
+      transform: scale(0.92);
+      transition: transform 0.1s var(--ease-out);
+    }
+
+    .guest-btn:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(10,10,10,0.18);
+    }
+
+    .guest-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      background: var(--pearl);
+      color: var(--silver);
+    }
+
+    /* Pulse ring animation when a value changes */
+    @keyframes guestBtnPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(10,10,10,0.35); }
+      70%  { box-shadow: 0 0 0 12px rgba(10,10,10,0); }
+      100% { box-shadow: 0 0 0 0 rgba(10,10,10,0); }
+    }
+    .guest-btn.pulse { animation: guestBtnPulse 0.55s var(--ease-out); }
+
     .guest-value {
-      flex: 1; width: 0; text-align: center; font-size: 20px; font-weight: 700;
-      font-variant-numeric: tabular-nums; padding: 0 8px;
-      border: none; border-left: 1.5px solid var(--mist); border-right: 1.5px solid var(--mist);
-      line-height: 52px; min-width: 60px; font-family: inherit; color: var(--black);
-      background: var(--white); outline: none; -moz-appearance: textfield;
+      flex: 1;
+      width: 0;
+      min-width: 64px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      font-family: inherit;
+      color: var(--black);
+      background: transparent;
+      border: none;
+      outline: none;
+      line-height: 54px;
+      padding: 0 6px;
+      -moz-appearance: textfield;
+      letter-spacing: -0.01em;
+      transition: color 0.2s var(--ease-out);
     }
     .guest-value::-webkit-outer-spin-button,
     .guest-value::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    .guest-value:focus { box-shadow: inset 0 0 0 2px rgba(10,10,10,0.12); }
-    .guest-value.invalid { color: var(--danger); background: #fff7f7; }
-    @media (max-width: 640px) { .guest-value { line-height: 56px; } }
+    .guest-value:focus { color: var(--black); }
+    .guest-value.invalid { color: var(--danger); }
+
+    /* Pop animation for the number */
+    @keyframes guestValuePop {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.18); }
+      100% { transform: scale(1); }
+    }
+    .guest-value.pop { animation: guestValuePop 0.4s var(--ease-out); }
+
     .guest-hint { font-size: 12px; color: var(--steel); margin-top: 8px; display: block; }
     .field-error { display: none; color: var(--danger); font-size: 12px; margin-top: 7px; font-weight: 500; }
     .field-error.show { display: block; }
+
+    @media (max-width: 640px) {
+      .guest-counter { border-radius: 14px; padding: 3px; gap: 3px; }
+      .guest-btn { width: 56px; min-width: 56px; height: 56px; border-radius: 11px; font-size: 26px; }
+      .guest-value { line-height: 56px; font-size: 22px; }
+    }
+    @media (max-width: 360px) {
+      .guest-btn { width: 50px; min-width: 50px; height: 50px; font-size: 22px; }
+      .guest-value { line-height: 50px; font-size: 20px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .guest-btn, .guest-btn::after, .guest-value { transition: none; }
+      .guest-btn.pulse, .guest-value.pop { animation: none; }
+    }
 
     .camera-box {
       background: var(--fog);
@@ -1863,11 +1997,10 @@
               <div class="field">
                 <label class="field-label">How many are coming? *</label>
                 <div class="guest-counter">
-                  <button type="button" class="guest-btn" id="guestMinus">−</button>
+                  <button type="button" class="guest-btn" id="guestMinus" aria-label="Decrease guests">−</button>
                   <input class="guest-value" id="guestValue" type="number" min="1" max="20" step="1" value="1"
                          inputmode="numeric" aria-label="Number of guests" required>
-
-                  <button type="button" class="guest-btn" id="guestPlus">+</button>
+                  <button type="button" class="guest-btn" id="guestPlus" aria-label="Increase guests">+</button>
                 </div>
                 <span class="guest-hint">Include yourself. Max 20.</span>
                 <span class="field-error" id="guestError" role="alert" aria-live="polite"></span>
@@ -1950,23 +2083,11 @@
 
   <script>
     /* CONFIG */
-    // Routed through /api/proxy (Vercel serverless function) to avoid CORS.
-    // The proxy forwards POSTs to the Apps Script /exec URL server-side.
     const APPS_SCRIPT_URL = '/api/proxy';
 
     /* ============================================================
        SUCCESS SOUND
-       ------------------------------------------------------------
-       Paste your own direct audio URL below. It must be a link
-       that ends in .mp3 / .wav / .ogg / .m4a (or a base64 data URL).
-
-       Examples:
-         const SUCCESS_SOUND_URL = 'https://files.catbox.moe/abc123.mp3';
-         const SUCCESS_SOUND_URL = 'data:audio/mpeg;base64,//uQxAAA...';
-
-       If left empty (''), no sound plays — the animation still runs.
        ============================================================ */
-    // Public GitHub raw MP3 URLs. The /blob/ URL is only a preview page.
     const SUCCESS_SOUND_URL = 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/saira%20ingay%202%20(mp3cut.net).mp3';
     const TICKET_READY_SOUND_URL = 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/shanghai%20salamat%20po.mp3';
     const USE_LOCAL_UI_SOUNDS = false;
@@ -1999,7 +2120,6 @@
         p.then(function() {
           audio.pause();
           audio.currentTime = 0;
-          // Keep it muted until a confirmed successful action calls playAudio().
         }).catch(function() {});
       }
     }
@@ -2022,19 +2142,10 @@
 
     /* ============================================================
        API CALL
-       ------------------------------------------------------------
-       All requests go through /api/proxy (same-origin), so there
-       are no CORS issues on Vercel or any other static host that
-       supports serverless functions. The proxy handles talking to
-       Google Apps Script.
-
-       The google.script.run branch below is still kept in case the
-       HTML is ever opened inside the Apps Script editor itself.
        ============================================================ */
     async function api(action, params) {
       params = params || {};
 
-      // Native Apps Script bridge (only used if HTML is served by Apps Script)
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         const serverArgs = {
           bootstrap: [],
@@ -2079,17 +2190,13 @@
         });
       }
 
-      // Same-origin POST to /api/proxy (Vercel serverless function).
       const body = new URLSearchParams(Object.assign({ action: action }, params || {}));
 
       const res = await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
         mode: 'cors',
         redirect: 'follow',
-        headers: {
-          // text/plain is fine — the proxy re-encodes as form-urlencoded for Apps Script.
-          'Content-Type': 'text/plain;charset=utf-8'
-        },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: body.toString()
       });
 
@@ -2097,7 +2204,6 @@
 
       const text = await res.text();
 
-      // Apps Script returns an HTML login page if the deployment isn't public.
       if (text.trim().startsWith('<')) {
         throw new Error('Apps Script returned HTML — make sure the Web App is deployed with "Anyone" access and the URL ends in /exec');
       }
@@ -2120,7 +2226,7 @@
 
     const $ = id => document.getElementById(id);
 
-    /* Cute two-tone bark generated locally; no external audio file is needed. */
+    /* UI sound (optional, off by default) */
     let clickAudioContext = null;
     function playClickSound(isPrivacyToggle) {
       try {
@@ -2141,7 +2247,7 @@
           oscillator.start(now + pair[1]);
           oscillator.stop(now + pair[1] + 0.095);
         });
-      } catch (e) { /* sound is optional */ }
+      } catch (e) {}
     }
     function playHappyBark() {
       try {
@@ -2162,7 +2268,7 @@
           oscillator.start(start);
           oscillator.stop(start + 0.14);
         });
-      } catch (e) { /* sound is optional */ }
+      } catch (e) {}
     }
     document.addEventListener('click', function(event) {
       if (!USE_LOCAL_UI_SOUNDS) return;
@@ -2170,7 +2276,7 @@
       if (button) playClickSound(button.id === 'privacyToggle');
     }, true);
 
-    /* MOBILE NUMBER: allow digits only, including when text is pasted. */
+    /* MOBILE NUMBER — digits only */
     $('mobile').addEventListener('input', function() {
       const digitsOnly = this.value.replace(/\D/g, '');
       if (this.value !== digitsOnly) this.value = digitsOnly;
@@ -2481,9 +2587,7 @@
       }
     });
 
-    /* ============================================================
-       QR MODAL — full-screen zoom-in
-       ============================================================ */
+    /* QR MODAL */
     let qrAudioContext = null;
     function playModernPop() {
       try {
@@ -2501,7 +2605,7 @@
         gain.connect(qrAudioContext.destination);
         oscillator.start(now);
         oscillator.stop(now + 0.1);
-      } catch (error) { /* sound is optional */ }
+      } catch (error) {}
     }
 
     (function initQrModal() {
@@ -2511,10 +2615,7 @@
       const viewBtn = document.getElementById('downloadGcashQrBtn');
       const sourceImg = document.getElementById('gcashQrImage');
 
-      if (!modal || !modalImage || !closeBtn || !viewBtn || !sourceImg) {
-        console.warn('QR modal: missing element(s)', { modal, modalImage, closeBtn, viewBtn, sourceImg });
-        return;
-      }
+      if (!modal || !modalImage || !closeBtn || !viewBtn || !sourceImg) return;
 
       function openModal() {
         playModernPop();
@@ -2639,9 +2740,7 @@
         </div>
       `;
       const btn = $('retryAttendeesBtn');
-      if (btn) {
-        btn.addEventListener('click', loadAttendees);
-      }
+      if (btn) btn.addEventListener('click', loadAttendees);
     }
 
     function escapeHtml(s) {
@@ -2723,14 +2822,33 @@
       $('guestPlus').disabled = value === 20;
     }
 
-    function updateGuests(delta) {
+    function pulseGuestBtn(btn) {
+      if (!btn) return;
+      btn.classList.remove('pulse');
+      void btn.offsetWidth;
+      btn.classList.add('pulse');
+      setTimeout(() => btn.classList.remove('pulse'), 600);
+    }
+
+    function popGuestValue() {
+      const input = $('guestValue');
+      input.classList.remove('pop');
+      void input.offsetWidth;
+      input.classList.add('pop');
+      setTimeout(() => input.classList.remove('pop'), 450);
+    }
+
+    function updateGuests(delta, sourceBtn) {
       const value = readGuestValue(true);
       if (value === null) return;
       const next = Math.max(1, Math.min(20, value + delta));
+      if (next === value) return;
       guests = next;
       $('guestValue').value = String(next);
       setGuestError('');
       syncGuestControls();
+      pulseGuestBtn(sourceBtn);
+      popGuestValue();
     }
 
     $('guestValue').addEventListener('input', function() {
@@ -2743,8 +2861,8 @@
       if (value !== null) guests = value;
       syncGuestControls();
     });
-    $('guestMinus').addEventListener('click', () => updateGuests(-1));
-    $('guestPlus').addEventListener('click', () => updateGuests(1));
+    $('guestMinus').addEventListener('click', function() { updateGuests(-1, this); });
+    $('guestPlus').addEventListener('click', function() { updateGuests(1, this); });
     syncGuestControls();
 
     /* ATTENDANCE SELECTOR */
@@ -3070,7 +3188,6 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    /* Letter by letter caption animation */
     function animateCaption(text) {
       const el = $('successCaption');
       el.innerHTML = '';
@@ -3088,7 +3205,6 @@
       });
     }
 
-    /* Sparkles around check */
     function fireSparkles() {
       const wrap = $('checkWrap');
       if (!wrap) return;
@@ -3108,7 +3224,6 @@
       }
     }
 
-    /* Confetti burst */
     function fireConfetti() {
       const overlay = $('successConfetti');
       if (!overlay) return;
