@@ -985,7 +985,6 @@
     }
     .form-head-left p { font-size: 13px; color: var(--steel); }
 
-    /* Form back button */
     .form-back-btn {
       display: inline-flex;
       align-items: center;
@@ -2071,7 +2070,6 @@
               <h2>Your Details</h2>
               <p>All fields are required.</p>
             </div>
-            <!-- Desktop back button -->
             <button type="button" class="form-back-btn" id="backBtnDesktop" aria-label="Back to home">
               ← Back to Home
             </button>
@@ -2147,13 +2145,11 @@
                 <textarea id="greetings" required placeholder="Write a heartfelt birthday message..."></textarea>
               </div>
 
-              <!-- SELFIE SECTION (for going/planning) -->
               <div class="field" id="selfieSection">
                 <label class="field-label">Selfie *</label>
                 <div class="camera-box" id="cameraBox"></div>
               </div>
 
-              <!-- VIDEO GREETING SECTION (for not_going) -->
               <div class="video-section" id="videoSection">
                 <label class="field-label">Video Greeting *</label>
                 <div class="video-record-box" id="videoBox"></div>
@@ -2167,7 +2163,6 @@
               <div class="message" id="message"></div>
             </form>
 
-            <!-- SUCCESS SCREEN -->
             <div class="success-screen" id="successScreen">
               <div class="success-check-wrap" id="checkWrap">
                 <div class="success-check-pulse"></div>
@@ -2212,7 +2207,6 @@
     </section>
   </div>
 
-  <!-- QR MODAL -->
   <div class="qr-modal" id="gcashQrModal" role="dialog" aria-modal="true" aria-labelledby="gcashQrModalTitle" aria-hidden="true">
     <div class="qr-modal-card" role="document">
       <button type="button" class="qr-modal-close" id="gcashQrModalClose" aria-label="Close QR code">×</button>
@@ -2222,7 +2216,6 @@
     </div>
   </div>
 
-  <!-- SUBMITTING OVERLAY -->
   <div class="submitting-overlay" id="submittingOverlay" aria-hidden="true">
     <div class="submitting-spinner"></div>
     <div class="submitting-title">Sending…</div>
@@ -2233,13 +2226,12 @@
     /* CONFIG */
     const APPS_SCRIPT_URL = '/api/proxy';
 
-    /* ⭐ BUTTON CLICK SOUND */
+    /* ⭐ BUTTON CLICK SOUND — non-blocking, does NOT interfere with button handlers */
     let clickSoundAudio = null;
     function playButtonClick() {
       try {
         if (!clickSoundAudio) {
-          // Short, subtle pop sound — generated inline so no extra file is needed
-          clickSoundAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT");
+          clickSoundAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
           clickSoundAudio.volume = 0.25;
           clickSoundAudio.preload = 'auto';
           clickSoundAudio.playsInline = true;
@@ -2251,11 +2243,14 @@
       } catch (e) { /* silent fail */ }
     }
 
-    // Attach to every button click, including dynamically-created ones
+    /* Use bubble phase (default, no capture) so we don't interfere with normal click handling */
     document.addEventListener('click', function(event) {
       const btn = event.target.closest('button');
-      if (btn && !btn.disabled) playButtonClick();
-    }, true);
+      if (btn && !btn.disabled) {
+        // Defer the sound so the button's own handler runs first
+        setTimeout(playButtonClick, 0);
+      }
+    });
 
     /* ⭐ PER-ATTENDANCE MEDIA */
     const ATTENDANCE_MEDIA = {
@@ -2351,7 +2346,6 @@
     function playSuccessSound() { playAudio('success'); }
     function playTicketReadySound() { playAudio('ticket'); }
 
-    /* Play the attendance-specific sound — with mobile-safe fallback */
     function playAttendanceSound(attendance) {
       const media = ATTENDANCE_MEDIA[attendance] || DEFAULT_MEDIA;
       try {
@@ -3696,7 +3690,6 @@
       el.className = 'message ' + type;
     }
 
-    /* SHOW SUCCESS SCREEN — attendance-aware */
     function showTicket(ticket) {
       currentTicket = ticket;
 
