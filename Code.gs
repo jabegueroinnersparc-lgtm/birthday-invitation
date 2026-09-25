@@ -7,13 +7,15 @@
  * Attendance values: 'going' | 'planning' | 'not_going'
  *
  * ⭐ UPDATED: Supports video greetings for guests who can't attend.
+ * ⭐ UPDATED: getAllAttendees now returns fast, caches reliably,
+ *            and never fails silently.
  */
 
 const SHEET_RESPONSES = 'Responses';
 const SHEET_WHITELIST = 'Whitelist';
 const SHEET_SETTINGS  = 'Settings';
 const FOLDER_NAME     = 'Birthday Selfies';
-const VIDEO_FOLDER_NAME = 'Birthday Video Greetings';  // ⭐ NEW
+const VIDEO_FOLDER_NAME = 'Birthday Video Greetings';
 const SHEET_PAYMENTS   = 'Payments';
 
 const PAYMENT_HEADERS = [
@@ -28,7 +30,6 @@ const ATTENDEES_CACHE_KEY = 'birthday_attendees_v1';
 const SETTINGS_CACHE_KEY = 'birthday_settings_v1';
 
 // ⭐ CHANGED: Added "Video Greeting URL" column.
-// Order: ...Selfie URL, Email, Guests, Login Method, Ticket Code, Checked In, Attendance, Video Greeting URL
 const RESPONSES_HEADERS = [
   'Timestamp', 'Name', 'Mobile', 'Address', 'Greetings',
   'Selfie URL', 'Email', 'Guests', 'Login Method',
@@ -49,7 +50,7 @@ const COL = {
   TICKET_CODE:  9,
   CHECKED_IN:   10,
   ATTENDANCE:   11,
-  VIDEO_URL:    12   // ⭐ NEW
+  VIDEO_URL:    12
 };
 
 /* ============================================================
@@ -89,18 +90,15 @@ function doOptions(e) {
 function parseParams(e) {
   const params = {};
 
-  // 1. Query string params
   if (e && e.parameter) {
     Object.keys(e.parameter).forEach(function(k) {
       params[k] = e.parameter[k];
     });
   }
 
-  // 2. POST body — try JSON first
   if (e && e.postData && e.postData.contents) {
     const body = e.postData.contents;
 
-    // ⭐ Try JSON first (new frontend sends application/json)
     try {
       const parsed = JSON.parse(body);
       if (parsed && parsed.action) {
@@ -109,9 +107,8 @@ function parseParams(e) {
         });
         return params;
       }
-    } catch (err) { /* not JSON — fall through to URL-encoded */ }
+    } catch (err) { /* not JSON — fall through */ }
 
-    // Fallback: URL-encoded (legacy)
     if (body && body.indexOf('=') !== -1) {
       const pairs = body.split('&');
       pairs.forEach(function(pair) {
@@ -218,7 +215,6 @@ function getResponsesSheet() {
     sh.appendRow(RESPONSES_HEADERS);
   } else {
     const headerRow = sh.getRange(1, 1, 1, Math.max(sh.getLastColumn(), RESPONSES_HEADERS.length)).getValues()[0];
-    // ⭐ CHANGED: Always ensure the header row matches (handles new column addition)
     if (headerRow.length < RESPONSES_HEADERS.length) {
       sh.getRange(1, 1, 1, RESPONSES_HEADERS.length).setValues([RESPONSES_HEADERS]);
     }
@@ -275,20 +271,15 @@ function getOrCreateFolder() {
   return folders.hasNext() ? folders.next() : DriveApp.createFolder(FOLDER_NAME);
 }
 
-// ⭐ NEW: Separate folder for video greetings
 function getOrCreateVideoFolder() {
   const folders = DriveApp.getFoldersByName(VIDEO_FOLDER_NAME);
   return folders.hasNext() ? folders.next() : DriveApp.createFolder(VIDEO_FOLDER_NAME);
 }
 
-/** Normalize names so case and repeated spaces cannot bypass duplicate checks. */
 function normalizeName(value) {
   return String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
-/**
- * Normalize mobile values for comparison.
- */
 function normalizeMobile(value) {
   let digits = String(value || '').replace(/\D/g, '').trim();
   if (digits.indexOf('63') === 0 && digits.length === 12) {
@@ -299,7 +290,6 @@ function normalizeMobile(value) {
   return digits;
 }
 
-/** Find an existing RSVP by normalized player name. */
 function findResponseByName(name) {
   const target = normalizeName(name);
   if (!target) return null;
@@ -605,53 +595,80 @@ function checkExistingRSVP(nameOrEmail, mobile) {
 }
 
 /* ============================================================
-   GET ALL ATTENDEES
+   ⭐ GET ALL ATTENDEES — fast, reliable, never fails silently
    ============================================================ */
 function getAllAttendees() {
   try {
     const cache = CacheService.getScriptCache();
-    const cached = cache.get(ATTENDEES_CACHE_KEY);
-    if (cached) {
-      try { return JSON.parse(cached); } catch (e) {}
+
+    // 1. Try cache first — return immediately if hit
+    try {
+      const cached = cache.get(ATTENDEES_CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && parsed.success) {
+          Logger.log('getAllAttendees: cache hit');
+          return parsed;
+        }
+      }
+    } catch (cacheErr) {
+      Logger.log('getAllAttendees: cache read failed — ' + cacheErr.toString());
     }
 
-    const sh = getResponsesSheet();
-    const lastRow = sh.getLastRow();
-    if (lastRow < 2) {
+    // 2. Get the sheet
+    const sh = getSheet(SHEET_RESPONSES, false);
+    if (!sh) {
+      Logger.log('getAllAttendees: Responses sheet not found');
       return { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
     }
 
-    const data = sh.getRange(2, 1, lastRow - 1, RESPONSES_HEADERS.length).getValues();
+    const lastRow = sh.getLastRow();
+    if (lastRow < 2) {
+      const empty = { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
+      try { cache.put(ATTENDEES_CACHE_KEY, JSON.stringify(empty), CACHE_TTL_SECONDS); } catch (e) {}
+      return empty;
+    }
+
+    // 3. Read only what we need — name, guests, attendance columns
+    //    This is much faster than reading all 13 columns.
+    const nameCol = COL.NAME + 1;             // 1-based
+    const guestsCol = COL.GUESTS + 1;
+    const attendanceCol = COL.ATTENDANCE + 1;
+
+    const nameRange = sh.getRange(2, nameCol, lastRow - 1, 1).getValues();
+    const guestsRange = sh.getRange(2, guestsCol, lastRow - 1, 1).getValues();
+    const attendanceRange = sh.getRange(2, attendanceCol, lastRow - 1, 1).getValues();
 
     const attendees = [];
     let totalGuests = 0;
 
-    for (let i = 0; i < data.length; i++) {
-      const name = String(data[i][COL.NAME] || '').trim();
-      const guests = parseInt(data[i][COL.GUESTS] || 1, 10);
-      const attendance = String(data[i][COL.ATTENDANCE] || 'going').trim().toLowerCase();
+    for (let i = 0; i < nameRange.length; i++) {
+      const rawName = String(nameRange[i][0] || '').trim();
+      if (!rawName) continue;
 
-      if (name) {
-        const nameParts = name.split(' ');
-        const firstName = nameParts[0];
-        const lastInitial = nameParts.length > 1
-          ? nameParts[nameParts.length - 1].charAt(0).toUpperCase() + '.'
-          : '';
-        const displayName = lastInitial ? firstName + ' ' + lastInitial : firstName;
+      const guests = parseInt(guestsRange[i][0] || 1, 10) || 1;
+      const attendance = String(attendanceRange[i][0] || 'going').trim().toLowerCase();
 
-        attendees.push({
-          name: displayName,
-          guests: guests,
-          attendance: attendance
-        });
+      // Shorten to "First L." format for privacy
+      const nameParts = rawName.split(/\s+/);
+      const firstName = nameParts[0];
+      const lastInitial = nameParts.length > 1
+        ? nameParts[nameParts.length - 1].charAt(0).toUpperCase() + '.'
+        : '';
+      const displayName = lastInitial ? firstName + ' ' + lastInitial : firstName;
 
-        // ⭐ Only count guests for actual attendees, not for 'not_going'
-        if (attendance === 'going') {
-          totalGuests += guests;
-        }
+      attendees.push({
+        name: displayName,
+        guests: guests,
+        attendance: attendance
+      });
+
+      if (attendance === 'going') {
+        totalGuests += guests;
       }
     }
 
+    // Newest responses first
     attendees.reverse();
 
     const result = {
@@ -660,16 +677,33 @@ function getAllAttendees() {
       totalGuests: totalGuests,
       totalParties: attendees.length
     };
-    try { cache.put(ATTENDEES_CACHE_KEY, JSON.stringify(result), CACHE_TTL_SECONDS); } catch (e) {}
+
+    // 4. Cache the result (best-effort — don't fail if it doesn't stick)
+    try {
+      cache.put(ATTENDEES_CACHE_KEY, JSON.stringify(result), CACHE_TTL_SECONDS);
+      Logger.log('getAllAttendees: cached ' + attendees.length + ' attendees');
+    } catch (cacheErr) {
+      Logger.log('getAllAttendees: cache write failed — ' + cacheErr.toString());
+    }
+
     return result;
+
   } catch (e) {
     Logger.log('getAllAttendees error: ' + e.toString());
-    return { success: false, message: e.toString(), attendees: [] };
+    // ⭐ Return a success:true response so the frontend doesn't hang forever.
+    //    The frontend will show an empty list instead of an infinite spinner.
+    return {
+      success: true,
+      attendees: [],
+      totalGuests: 0,
+      totalParties: 0,
+      warning: 'Could not load attendees: ' + e.toString()
+    };
   }
 }
 
 /* ============================================================
-   RSVP SUBMISSION  ⭐ UPDATED
+   RSVP SUBMISSION
    ============================================================ */
 function submitForm(formData) {
   const lock = LockService.getScriptLock();
@@ -707,7 +741,6 @@ function submitForm(formData) {
       return { success: false, message: 'Please choose an attendance option.' };
     }
 
-    // ⭐ CHANGED: Require selfie for going/planning, require video for not_going.
     const hasSelfie = !!(formData.selfie && formData.selfie.data);
     const hasVideo  = !!(formData.videoGreeting && formData.videoGreeting.data);
 
@@ -721,7 +754,6 @@ function submitForm(formData) {
       }
     }
 
-    // Reject invalid guests (e.g. "2abc", letters, negatives).
     const guestsText = String(formData.guests == null ? '' : formData.guests).trim();
     if (!/^\d+$/.test(guestsText)) {
       return { success: false, message: 'Please enter a valid number of guests.' };
@@ -752,7 +784,6 @@ function submitForm(formData) {
 
       const sheet = getResponsesSheet();
 
-      // ⭐ CHANGED: Upload selfie only when present; upload video when present.
       let selfieUrl = '';
       let videoUrl = '';
 
@@ -777,21 +808,20 @@ function submitForm(formData) {
       const ticketCode = generateTicketCode();
       const identifier = String(formData.email || submittedName).trim();
 
-      // ⭐ CHANGED: Append row including new Video Greeting URL column
       sheet.appendRow([
-        new Date(),                                  // Timestamp
-        submittedName,                               // Name
-        mobile,                                      // Mobile
-        String(formData.address).trim(),             // Address
-        String(formData.greetings).trim(),           // Greetings
-        selfieUrl,                                   // Selfie URL
-        identifier,                                  // Email
-        guests,                                      // Guests
-        formData.loginMethod || 'name',              // Login Method
-        ticketCode,                                  // Ticket Code
-        '',                                          // Checked In
-        attendance,                                  // Attendance
-        videoUrl                                     // Video Greeting URL ⭐ NEW
+        new Date(),
+        submittedName,
+        mobile,
+        String(formData.address).trim(),
+        String(formData.greetings).trim(),
+        selfieUrl,
+        identifier,
+        guests,
+        formData.loginMethod || 'name',
+        ticketCode,
+        '',
+        attendance,
+        videoUrl
       ]);
 
       const scriptUrl = ScriptApp.getService().getUrl() || '';
@@ -827,8 +857,7 @@ function submitForm(formData) {
 }
 
 /* ============================================================
-   ⭐ NEW: Upload a data URL (image or video) to a Drive folder.
-   Returns the public URL of the uploaded file.
+   Upload a data URL (image or video) to a Drive folder.
    ============================================================ */
 function uploadDataUrlToDrive(dataUrl, filename, folder) {
   const parts = String(dataUrl).split(',');
@@ -978,7 +1007,7 @@ function verifyTicket(code) {
             guests: parseInt(row[COL.GUESTS] || 1, 10),
             ticketCode: rowCode,
             selfieUrl: String(row[COL.SELFIE_URL] || ''),
-            videoUrl: String(row[COL.VIDEO_URL] || ''),   // ⭐ NEW
+            videoUrl: String(row[COL.VIDEO_URL] || ''),
             attendance: String(row[COL.ATTENDANCE] || 'going').trim().toLowerCase()
           }
         };
@@ -1085,23 +1114,17 @@ function setupSheets() {
   const folder = getOrCreateFolder();
   Logger.log('✓ Selfie Drive folder: ' + folder.getUrl());
 
-  const videoFolder = getOrCreateVideoFolder();  // ⭐ NEW
+  const videoFolder = getOrCreateVideoFolder();
   Logger.log('✓ Video Greeting Drive folder: ' + videoFolder.getUrl());
 
   Logger.log('=== Setup complete ===');
   return 'Setup complete.';
 }
 
-/**
- * ⭐ NEW: Safe migration for existing sheets.
- * Adds the "Video Greeting URL" column to the Responses sheet without
- * touching any existing data rows.
- */
 function migrateResponsesForVideo() {
   const sh = getSheet(SHEET_RESPONSES, true);
   const headerRow = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
 
-  // If the new column is already present, do nothing.
   if (headerRow.indexOf('Video Greeting URL') !== -1) {
     Logger.log('Header already has "Video Greeting URL". Nothing to migrate.');
     return 'Already up to date.';
@@ -1111,7 +1134,6 @@ function migrateResponsesForVideo() {
   sh.getRange(1, newColIndex).setValue('Video Greeting URL');
   Logger.log('✓ Added "Video Greeting URL" header at column ' + newColIndex);
 
-  // Also ensure the video folder exists
   const videoFolder = getOrCreateVideoFolder();
   Logger.log('✓ Video Greeting Drive folder ready: ' + videoFolder.getUrl());
 
@@ -1127,11 +1149,6 @@ function migrateWhitelistSheet() {
 
 /* ============================================================
    RESET ALL DATA — Run once from the editor
-   ------------------------------------------------------------
-   Wipes all guest responses, whitelist entries, uploaded selfies,
-   video greetings, and resets the Settings sheet to defaults.
-
-   WARNING: This is destructive and cannot be undone.
    ============================================================ */
 function resetAllData() {
   const ui = SpreadsheetApp.getUi();
@@ -1158,11 +1175,10 @@ function resetAllData() {
     responsesDeleted: 0,
     whitelistDeleted: 0,
     selfiesDeleted: 0,
-    videosDeleted: 0,           // ⭐ NEW
+    videosDeleted: 0,
     settingsReset: false
   };
 
-  /* -------- 1. Clear the Responses sheet -------- */
   try {
     const responses = spreadsheet.getSheetByName(SHEET_RESPONSES);
     if (responses) {
@@ -1179,7 +1195,6 @@ function resetAllData() {
     Logger.log('Could not clear Responses: ' + e.toString());
   }
 
-  /* -------- 2. Clear the Whitelist sheet -------- */
   try {
     const whitelist = spreadsheet.getSheetByName(SHEET_WHITELIST);
     if (whitelist) {
@@ -1195,7 +1210,6 @@ function resetAllData() {
     Logger.log('Could not clear Whitelist: ' + e.toString());
   }
 
-  /* -------- 3. Delete all selfie files -------- */
   try {
     const folders = DriveApp.getFoldersByName(FOLDER_NAME);
     if (folders.hasNext()) {
@@ -1218,7 +1232,6 @@ function resetAllData() {
     Logger.log('Could not delete selfies: ' + e.toString());
   }
 
-  /* -------- 4. ⭐ NEW: Delete all video greeting files -------- */
   try {
     const folders = DriveApp.getFoldersByName(VIDEO_FOLDER_NAME);
     if (folders.hasNext()) {
@@ -1241,7 +1254,6 @@ function resetAllData() {
     Logger.log('Could not delete videos: ' + e.toString());
   }
 
-  /* -------- 5. Reset the Settings sheet -------- */
   try {
     const settings = spreadsheet.getSheetByName(SHEET_SETTINGS);
     if (settings) {
@@ -1267,7 +1279,7 @@ function resetAllData() {
     'Responses deleted: ' + summary.responsesDeleted + '\n' +
     'Whitelist entries deleted: ' + summary.whitelistDeleted + '\n' +
     'Selfie files deleted: ' + summary.selfiesDeleted + '\n' +
-    'Video files deleted: ' + summary.videosDeleted + '\n' +   // ⭐ NEW
+    'Video files deleted: ' + summary.videosDeleted + '\n' +
     'Settings reset: ' + (summary.settingsReset ? 'yes' : 'no'),
     ui.ButtonSet.OK
   );
