@@ -25,6 +25,8 @@
       --success: #16a34a; --danger: #dc2626;
       --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
       --shadow-xl: 0 40px 80px -20px rgba(0,0,0,0.25), 0 16px 40px -12px rgba(0,0,0,0.12);
+      --sidebar-width: 380px;
+      --accent-glow: 0 0 0 3px rgba(34, 197, 94, 0.3);
     }
 
     html { height: 100%; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%; }
@@ -1513,6 +1515,385 @@
       max-width: 300px; line-height: 1.55;
     }
 
+    /* ⭐ MODERN SIDEBAR – WIDER & MORE SPACIOUS ⭐ */
+    .social-sidebar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100%;
+      width: 400px ;
+      z-index: 2000;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(24px) saturate(200%);
+      -webkit-backdrop-filter: blur(24px) saturate(200%);
+      border-left: 1px solid rgba(0, 0, 0, 0.06);
+      box-shadow: -20px 0 60px -15px rgba(0, 0, 0, 0.25);
+      transform: translateX(100%);
+      transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .social-sidebar.open {
+      transform: translateX(0);
+    }
+
+    .social-sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 1999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.45s ease;
+    }
+
+    .social-sidebar-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .social-sidebar-inner {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .social-sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 32px 28px 24px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      flex-shrink: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.6), transparent);
+    }
+
+    .social-sidebar-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--black);
+    }
+
+    .social-sidebar-close {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1.5px solid var(--pearl);
+      background: var(--white);
+      color: var(--black);
+      font-size: 22px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s var(--ease-out);
+      -webkit-tap-highlight-color: transparent;
+      flex-shrink: 0;
+    }
+
+    .social-sidebar-close:hover {
+      background: var(--black);
+      color: var(--white);
+      border-color: var(--black);
+      transform: rotate(90deg);
+    }
+
+    .social-sidebar-links {
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .social-sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 18px;
+      border-radius: 16px;
+      text-decoration: none;
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 600;
+      transition: all 0.3s var(--ease-out);
+      -webkit-tap-highlight-color: transparent;
+      border: 1px solid transparent;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .social-sidebar-link::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--fog);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: -1;
+      border-radius: 16px;
+    }
+
+    .social-sidebar-link:hover {
+      border-color: var(--pearl);
+      transform: translateX(6px);
+      box-shadow: 0 4px 16px -6px rgba(0,0,0,0.1);
+    }
+
+    .social-sidebar-link:hover::before {
+      opacity: 1;
+    }
+
+    .social-sidebar-link .sidebar-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: var(--black);
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      flex-shrink: 0;
+      transition: transform 0.35s var(--ease-out), border-radius 0.35s var(--ease-out);
+    }
+
+    .social-sidebar-link:hover .sidebar-icon {
+      transform: scale(1.1) rotate(-6deg);
+      border-radius: 12px;
+    }
+
+    .social-sidebar-link .sidebar-arrow {
+      margin-left: auto;
+      color: var(--silver);
+      font-size: 18px;
+      transition: transform 0.35s var(--ease-out), color 0.3s ease;
+    }
+
+    .social-sidebar-link:hover .sidebar-arrow {
+      transform: translateX(6px);
+      color: var(--black);
+    }
+
+    .social-sidebar-divider {
+      height: 1px;
+      background: rgba(0, 0, 0, 0.06);
+      margin: 8px 28px;
+      flex-shrink: 0;
+    }
+
+    .social-sidebar-gift {
+      padding: 24px 28px 32px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .social-sidebar-gift h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--black);
+    }
+
+    .social-sidebar-gift p {
+      font-size: 13px;
+      color: var(--steel);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .social-sidebar-qr {
+      background: var(--white);
+      border: 1.5px solid var(--pearl);
+      border-radius: 20px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 20px -8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.35s var(--ease-out), box-shadow 0.35s var(--ease-out);
+    }
+
+    .social-sidebar-qr:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.2);
+    }
+
+    .social-sidebar-qr img {
+      display: block;
+      width: 100%;
+      max-width: 260px;
+      height: auto;
+      margin: 0 auto 16px;
+      border-radius: 10px;
+      background: #0b0b0b;
+    }
+
+    .social-sidebar-qr .btn {
+      min-height: 48px;
+      font-size: 14px;
+    }
+
+    .social-sidebar-hint {
+      font-size: 12px;
+      color: var(--steel);
+      line-height: 1.5;
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    /* ⭐ SIDEBAR TRIGGER — BIGGER, WIDER, MORE NOTICEABLE, HIDDEN ON LOGIN ⭐ */
+    .social-sidebar-trigger {
+      position: fixed;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 1000;
+      border: 0;
+      border-radius: 20px 0 0 20px;
+      background: var(--black);
+      color: var(--white);
+      padding: 32px 22px;
+      writing-mode: vertical-rl;
+      font: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: -8px 0 40px rgba(0, 0, 0, 0.35);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      -webkit-tap-highlight-color: transparent;
+      display: none; /* Hidden by default */
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      overflow: hidden;
+      isolation: isolate;
+      animation: triggerPulse 2.5s ease-in-out infinite;
+    }
+
+    .social-sidebar-trigger.visible {
+      display: flex; /* Shown after login */
+    }
+
+    @keyframes triggerPulse {
+      0%, 100% { box-shadow: -8px 0 40px rgba(0, 0, 0, 0.35), 0 0 0 0 rgba(34, 197, 94, 0.5); }
+      50%      { box-shadow: -8px 0 40px rgba(0, 0, 0, 0.35), 0 0 0 16px rgba(34, 197, 94, 0); }
+    }
+
+    .social-sidebar-trigger::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.18), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .social-sidebar-trigger:hover {
+      padding-right: 30px;
+      border-radius: 24px 0 0 24px;
+      transform: translateY(-50%) scale(1.02);
+      animation: none;
+    }
+
+    .social-sidebar-trigger:hover::after {
+      opacity: 1;
+    }
+
+    .social-sidebar-trigger .trigger-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.35);
+      animation: livePulse 2s infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes livePulse {
+      0%, 100% { box-shadow: 0 0 0 5px rgba(34,197,94,0.35); }
+      50%      { box-shadow: 0 0 0 12px rgba(34,197,94,0); }
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 640px) {
+      :root { --sidebar-width: 380px; }
+
+      .social-sidebar-trigger {
+        top: auto;
+        right: 16px;
+        bottom: calc(20px + env(safe-area-inset-bottom));
+        transform: none;
+        writing-mode: horizontal-tb;
+        border-radius: 100px;
+        padding: 18px 28px;
+        font-size: 14px;
+        gap: 12px;
+        box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.45);
+        animation: triggerPulseMobile 2.5s ease-in-out infinite;
+      }
+
+      @keyframes triggerPulseMobile {
+        0%, 100% { box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.45), 0 0 0 0 rgba(34, 197, 94, 0.5); }
+        50%      { box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.45), 0 0 0 18px rgba(34, 197, 94, 0); }
+      }
+
+      .social-sidebar-trigger:hover {
+        padding-right: 28px;
+        border-radius: 100px;
+        transform: none;
+      }
+
+      .social-sidebar {
+        width: 100%;
+        max-width: 400px;
+      }
+
+      .social-sidebar-header {
+        padding: 24px 22px 18px;
+      }
+
+      .social-sidebar-header h2 {
+        font-size: 22px;
+      }
+
+      .social-sidebar-links {
+        padding: 20px 22px;
+      }
+
+      .social-sidebar-gift {
+        padding: 20px 22px 28px;
+      }
+
+      .social-sidebar-qr img {
+        max-width: 220px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .social-sidebar {
+        max-width: 100%;
+      }
+
+      .social-sidebar-trigger {
+        right: 10px;
+        bottom: calc(14px + env(safe-area-inset-bottom));
+        padding: 14px 20px;
+        font-size: 13px;
+      }
+    }
+
     @media (max-width: 640px) {
       body { overflow-x: hidden; }
       .view { max-width: 100%; }
@@ -1565,73 +1946,6 @@
     }
     @media (prefers-reduced-motion: reduce) {
       .dog-ear-flap { animation-duration: 2.8s; }
-    }
-    .social-tab {
-      position: fixed; right: 0; top: 50%; z-index: 20;
-      transform: translateY(-50%); border: 0; border-radius: 12px 0 0 12px;
-      background: var(--black); color: var(--white); padding: 14px 9px;
-      writing-mode: vertical-rl; font: inherit; font-size: 11px; font-weight: 700;
-      letter-spacing: .12em; text-transform: uppercase; cursor: pointer;
-      box-shadow: 0 10px 25px rgba(0,0,0,.18); transition: padding .25s var(--ease-out);
-    }
-    .social-tab:hover { padding-right: 13px; }
-    .social-drawer {
-      position: fixed; top: 50%; right: 20px; z-index: 19; width: min(360px, calc(100vw - 32px));
-      max-height: min(690px, calc(100dvh - 32px)); overflow-y: auto;
-      padding: 24px; border: 1px solid var(--pearl); border-radius: 20px;
-      background: rgba(255,255,255,.97); box-shadow: var(--shadow-xl);
-      opacity: 0; pointer-events: none; transform: translate(18px, -50%) scale(.96);
-      transition: opacity .3s ease, transform .35s var(--ease-out);
-    }
-    .social-drawer.open { opacity: 1; pointer-events: auto; transform: translate(0, -50%) scale(1); }
-    .social-drawer-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
-    .social-drawer-kicker { color: var(--steel); font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
-    .social-drawer h2 { margin-top: 4px; font-family: 'Playfair Display', serif; font-size: 26px; line-height: 1.05; }
-    .social-close { width: 34px; height: 34px; border: 1px solid var(--mist); border-radius: 50%; background: var(--white); cursor: pointer; font-size: 18px; }
-    .social-links { display: grid; gap: 9px; }
-    .social-link { display: flex; align-items: center; gap: 12px; padding: 12px 13px; border: 1px solid var(--pearl); border-radius: 12px; color: var(--ink); text-decoration: none; font-size: 13px; font-weight: 700; transition: transform .2s ease, background .2s ease; }
-    .social-link:hover { transform: translateX(3px); background: var(--fog); }
-    .social-icon { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; background: var(--black); color: var(--white); font-size: 13px; }
-    .gcash-card { margin-top: 18px; padding-top: 18px; border-top: 1px dashed var(--mist); }
-    .gcash-card h3 { font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 4px; }
-    .gcash-card p { color: var(--steel); font-size: 12px; line-height: 1.5; margin-bottom: 12px; }
-    .gcash-placeholder { display: grid; place-items: center; min-height: 150px; padding: 18px; border: 1px dashed var(--silver); border-radius: 14px; background: var(--fog); color: var(--steel); text-align: center; font-size: 12px; }
-    .gcash-placeholder strong { display: block; color: var(--ink); font-size: 14px; margin-bottom: 4px; }
-    .gcash-payment-ui { display: grid; gap: 12px; }
-    .gcash-qr-wrap { display: grid; justify-items: center; gap: 10px; padding: 12px; border: 1px solid var(--pearl); border-radius: 16px; background: var(--white); }
-    .gcash-qr { display: block; width: min(100%, 320px); height: auto; max-height: min(62dvh, 560px); object-fit: contain; border-radius: 10px; background: #0b0b0b; }
-    .gcash-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .gcash-actions .btn { min-height: 42px; padding: 10px 12px; font-size: 12px; text-align: center; text-decoration: none; }
-    .gcash-hint { font-size: 11px; color: var(--steel); line-height: 1.45; }
-    @media (max-width: 640px) {
-      .gcash-card { margin-top: 14px; padding-top: 14px; }
-      .gcash-qr { width: min(100%, 270px); }
-      .gcash-actions { grid-template-columns: 1fr; }
-      .gcash-actions .btn { width: 100%; }
-    }
-    @media (max-width: 640px) {
-      .social-tab { z-index: 1001; }
-      .social-drawer {
-        left: 8px;
-        right: 8px;
-        bottom: calc(64px + env(safe-area-inset-bottom));
-        width: auto;
-        max-height: calc(100dvh - 80px);
-        padding: 18px;
-        border-radius: 18px;
-        -webkit-overflow-scrolling: touch;
-      }
-      .social-drawer.open { transform: translateY(0) scale(1); }
-      .gcash-qr-wrap { padding: 10px; }
-      .gcash-qr { width: min(100%, 300px); max-height: 52dvh; }
-      .gcash-actions { grid-template-columns: 1fr; width: 100%; }
-      .gcash-actions .btn { width: 100%; min-height: 46px; }
-    }
-    @media (max-width: 640px) {
-      .social-tab { top: auto; right: 14px; bottom: calc(18px + env(safe-area-inset-bottom)); transform: none; writing-mode: horizontal-tb; border-radius: 100px; padding: 12px 16px; }
-      .social-tab:hover { padding-right: 16px; }
-      .social-drawer { top: auto; right: 12px; bottom: calc(70px + env(safe-area-inset-bottom)); max-height: calc(100dvh - 92px); transform: translateY(18px) scale(.96); }
-      .social-drawer.open { transform: translateY(0) scale(1); }
     }
 
     .qr-modal {
@@ -1965,32 +2279,6 @@
           <button type="button" class="btn-signout" id="welcomeSignoutBtn">Sign Out</button>
         </div>
       </div>
-      <button type="button" class="social-tab" id="socialTabBtn" aria-expanded="false" aria-controls="socialDrawer">Socials &amp; Gifts</button>
-      <aside class="social-drawer" id="socialDrawer" aria-hidden="true">
-        <div class="social-drawer-head">
-          <div><span class="social-drawer-kicker">Stay connected</span><h2>Find me online</h2></div>
-          <button type="button" class="social-close" id="socialCloseBtn" aria-label="Close social links">×</button>
-        </div>
-        <nav class="social-links" aria-label="Social media links">
-          <a class="social-link" href="https://www.facebook.com/profile.php?id=100008068869833" target="_blank" rel="noopener noreferrer"><span class="social-icon">f</span><span>Facebook</span><span aria-hidden="true">↗</span></a>
-          <a class="social-link" href="https://www.instagram.com/sayyymn/" target="_blank" rel="noopener noreferrer"><span class="social-icon">◎</span><span>Instagram</span><span aria-hidden="true">↗</span></a>
-          <a class="social-link" href="https://www.tiktok.com/@simojabeguero" target="_blank" rel="noopener noreferrer"><span class="social-icon">♪</span><span>TikTok</span><span aria-hidden="true">↗</span></a>
-        </nav>
-        <section class="gcash-card" aria-labelledby="gcashTitle">
-          <h3 id="gcashTitle">Send a birthday gift</h3>
-          <p>Scan this QR with GCash or your banking app. Verify the recipient name before confirming.</p>
-          <div class="gcash-payment-ui">
-            <div class="gcash-qr-wrap">
-              <img class="gcash-qr" id="gcashQrImage" src="https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/sairasivyqr.png" alt="GCash and InstaPay QR code" loading="lazy">
-              <div class="gcash-actions">
-                <a class="btn btn-primary" href="https://gcash.com/" target="_blank" rel="noopener">Open GCash</a>
-                <button type="button" class="btn btn-outline" id="downloadGcashQrBtn">View QR</button>
-              </div>
-              <p class="gcash-hint">In GCash, choose <strong>Scan QR</strong> or <strong>Scan from Gallery</strong>, then check the recipient details.</p>
-            </div>
-          </div>
-        </section>
-      </aside>
     </section>
 
     <!-- VIEW 3: ATTENDEES -->
@@ -2207,6 +2495,53 @@
     </section>
   </div>
 
+  <!-- MODERN SIDEBAR TRIGGER (Hidden on login, shown after) -->
+  <button type="button" class="social-sidebar-trigger" id="socialSidebarTrigger" aria-expanded="false" aria-controls="socialSidebar">
+    <span class="trigger-dot"></span>
+    Socials & Gifts
+  </button>
+
+  <!-- MODERN SIDEBAR -->
+  <div class="social-sidebar-overlay" id="socialSidebarOverlay"></div>
+  <aside class="social-sidebar" id="socialSidebar" aria-hidden="true" role="dialog" aria-label="Social links and gifts">
+    <div class="social-sidebar-inner">
+      <div class="social-sidebar-header">
+        <h2>Stay Connected</h2>
+        <button type="button" class="social-sidebar-close" id="socialSidebarClose" aria-label="Close sidebar">×</button>
+      </div>
+
+      <nav class="social-sidebar-links" aria-label="Social media links">
+        <a class="social-sidebar-link" href="https://www.facebook.com/profile.php?id=100008068869833" target="_blank" rel="noopener noreferrer">
+          <span class="sidebar-icon">f</span>
+          <span>Facebook</span>
+          <span class="sidebar-arrow">↗</span>
+        </a>
+        <a class="social-sidebar-link" href="https://www.instagram.com/sayyymn/" target="_blank" rel="noopener noreferrer">
+          <span class="sidebar-icon">◎</span>
+          <span>Instagram</span>
+          <span class="sidebar-arrow">↗</span>
+        </a>
+        <a class="social-sidebar-link" href="https://www.tiktok.com/@simojabeguero" target="_blank" rel="noopener noreferrer">
+          <span class="sidebar-icon">♪</span>
+          <span>TikTok</span>
+          <span class="sidebar-arrow">↗</span>
+        </a>
+      </nav>
+
+      <div class="social-sidebar-divider"></div>
+
+      <section class="social-sidebar-gift" aria-labelledby="sidebarGiftTitle">
+        <h3 id="sidebarGiftTitle">Send a birthday gift</h3>
+        <p>Scan this QR with GCash or your banking app. Verify the recipient name before confirming.</p>
+        <div class="social-sidebar-qr">
+          <img id="gcashQrImage" src="https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/sairasivyqr.png" alt="GCash and InstaPay QR code" loading="lazy">
+          <button type="button" class="btn btn-primary" id="downloadGcashQrBtn">View QR</button>
+        </div>
+        <p class="social-sidebar-hint">In GCash, choose <strong>Scan QR</strong> or <strong>Scan from Gallery</strong>, then check the recipient details.</p>
+      </section>
+    </div>
+  </aside>
+
   <div class="qr-modal" id="gcashQrModal" role="dialog" aria-modal="true" aria-labelledby="gcashQrModalTitle" aria-hidden="true">
     <div class="qr-modal-card" role="document">
       <button type="button" class="qr-modal-close" id="gcashQrModalClose" aria-label="Close QR code">×</button>
@@ -2226,7 +2561,7 @@
     /* CONFIG */
     const APPS_SCRIPT_URL = '/api/proxy';
 
-    /* ⭐ BUTTON CLICK SOUND — non-blocking, does NOT interfere with button handlers */
+    /* BUTTON CLICK SOUND */
     let clickSoundAudio = null;
     function playButtonClick() {
       try {
@@ -2240,19 +2575,17 @@
         clickSoundAudio.currentTime = 0;
         const p = clickSoundAudio.play();
         if (p && typeof p.catch === 'function') p.catch(function() {});
-      } catch (e) { /* silent fail */ }
+      } catch (e) { }
     }
 
-    /* Use bubble phase (default, no capture) so we don't interfere with normal click handling */
     document.addEventListener('click', function(event) {
       const btn = event.target.closest('button');
       if (btn && !btn.disabled) {
-        // Defer the sound so the button's own handler runs first
         setTimeout(playButtonClick, 0);
       }
     });
 
-    /* ⭐ PER-ATTENDANCE MEDIA */
+    /* PER-ATTENDANCE MEDIA */
     const ATTENDANCE_MEDIA = {
       going: {
         soundUrl: 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/shanghai%20salamat%20po.mp3',
@@ -2280,7 +2613,6 @@
     const DEFAULT_MEDIA = ATTENDANCE_MEDIA.going;
     let currentMedia = DEFAULT_MEDIA;
 
-    /* Audio unlock for iOS */
     let audioUnlocked = false;
     function unlockAudio() {
       if (audioUnlocked) return;
@@ -2293,7 +2625,6 @@
     document.addEventListener('touchstart', unlockAudio, { once: true, passive: true });
     document.addEventListener('click', unlockAudio, { once: true });
 
-    /* SUCCESS SOUND */
     const SUCCESS_SOUND_URL = 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/saira%20ingay%202%20(mp3cut.net).mp3';
     const TICKET_READY_SOUND_URL = 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/shanghai%20salamat%20po.mp3';
     const USE_LOCAL_UI_SOUNDS = false;
@@ -2734,6 +3065,9 @@
       setTimeout(() => mascot.classList.remove('login-success'), 1600);
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
+      // ⭐ SHOW THE SIDEBAR TRIGGER AFTER LOGIN ⭐
+      $('socialSidebarTrigger').classList.add('visible');
+
       try {
         let ticket = loginTicket || null;
         if (!ticket) {
@@ -2784,7 +3118,6 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
-    /* Back to home from form */
     function backToHomeFromForm() {
       $('formView').classList.remove('active');
       $('welcomeView').classList.add('active');
@@ -2815,25 +3148,25 @@
 
     $('welcomeSignoutBtn').addEventListener('click', logout);
 
-    function setSocialDrawer(open) {
-      const drawer = $('socialDrawer');
-      const button = $('socialTabBtn');
-      drawer.classList.toggle('open', open);
-      drawer.setAttribute('aria-hidden', open ? 'false' : 'true');
-      button.setAttribute('aria-expanded', open ? 'true' : 'false');
+    /* MODERN SIDEBAR */
+    function setSocialSidebar(open) {
+      const sidebar = $('socialSidebar');
+      const overlay = $('socialSidebarOverlay');
+      const trigger = $('socialSidebarTrigger');
+      sidebar.classList.toggle('open', open);
+      overlay.classList.toggle('open', open);
+      sidebar.setAttribute('aria-hidden', open ? 'false' : 'true');
+      trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      document.body.style.overflow = open ? 'hidden' : '';
     }
-    $('socialTabBtn').addEventListener('click', function() {
-      setSocialDrawer(!$('socialDrawer').classList.contains('open'));
+
+    $('socialSidebarTrigger').addEventListener('click', function() {
+      setSocialSidebar(!$('socialSidebar').classList.contains('open'));
     });
-    $('socialCloseBtn').addEventListener('click', function() { setSocialDrawer(false); });
+    $('socialSidebarClose').addEventListener('click', function() { setSocialSidebar(false); });
+    $('socialSidebarOverlay').addEventListener('click', function() { setSocialSidebar(false); });
     document.addEventListener('keydown', function(event) {
-      if (event.key === 'Escape') setSocialDrawer(false);
-    });
-    document.addEventListener('click', function(event) {
-      const drawer = $('socialDrawer');
-      if (drawer.classList.contains('open') && !drawer.contains(event.target) && event.target !== $('socialTabBtn')) {
-        setSocialDrawer(false);
-      }
+      if (event.key === 'Escape') setSocialSidebar(false);
     });
 
     /* QR MODAL */
@@ -2944,7 +3277,7 @@
 
     async function loadAttendees(force) {
       const list = $('attendeesList');
-      const fresh = attendeesCache && Date.now() - attendeesCacheTime < ATTENDEES_CACHE_MS;
+      const fresh = attendeesCache && Date.now() - attendeesCacheTime < ATTENDDES_CACHE_MS;
       if (!force && fresh) { renderAttendees(attendeesCache); return; }
       if (!attendeesCache) list.innerHTML = `<div class="attendees-loading"><div class="loader-spinner"></div><div>Loading attendees…</div></div>`;
       if (attendeesRequest) return attendeesRequest;
@@ -3035,7 +3368,9 @@
       $('goRsvpBtn').querySelector('.action-desc').textContent = 'Share your details and a selfie to get your entrance ticket.';
       $('viewTicketBtn').style.display = 'none';
       $('viewTicketBtn').onclick = null;
-      setSocialDrawer(false);
+      setSocialSidebar(false);
+      // ⭐ HIDE THE SIDEBAR TRIGGER ON LOGOUT ⭐
+      $('socialSidebarTrigger').classList.remove('visible');
       showToast('Signed out.');
     }
 
