@@ -313,9 +313,51 @@ function findWhitelistAccount(name, mobile) {
   return null;
 }
 
+/** Find a Whitelist entry by name, regardless of its mobile value. */
+function findWhitelistName(name) {
+  const whitelist = getSheet(SHEET_WHITELIST, false);
+  if (!whitelist || whitelist.getLastRow() < 2) return null;
+
+  const values = whitelist.getRange(2, 1, whitelist.getLastRow() - 1, 3).getValues();
+  const target = normalizeName(name);
+
+  for (let i = 0; i < values.length; i++) {
+    if (normalizeName(values[i][1]) === target) {
+      return {
+        row: i + 2,
+        email: String(values[i][0] || '').trim().toLowerCase(),
+        name: String(values[i][1] || '').trim(),
+        mobile: normalizeMobile(values[i][2])
+      };
+    }
+  }
+  return null;
+}
+
+/** Find a Whitelist entry by mobile number, regardless of its name. */
+function findWhitelistMobile(mobile) {
+  const whitelist = getSheet(SHEET_WHITELIST, false);
+  if (!whitelist || whitelist.getLastRow() < 2) return null;
+
+  const values = whitelist.getRange(2, 1, whitelist.getLastRow() - 1, 3).getValues();
+  const targetMobile = normalizeMobile(mobile);
+
+  for (let i = 0; i < values.length; i++) {
+    if (normalizeMobile(values[i][2]) === targetMobile) {
+      return {
+        row: i + 2,
+        email: String(values[i][0] || '').trim().toLowerCase(),
+        name: String(values[i][1] || '').trim(),
+        mobile: targetMobile
+      };
+    }
+  }
+  return null;
+}
+
 /**
- * Simple login: exact name + mobile verification against Whitelist.
- * The Whitelist must be populated by the organizer before guests can log in.
+ * First login creates a Whitelist account using name + mobile.
+ * Later logins authenticate against the same name + mobile pair.
  */
 function simpleLogin(name, mobile) {
   try {
@@ -347,9 +389,54 @@ function simpleLogin(name, mobile) {
         };
       }
 
+      const existingName = findWhitelistName(name);
+      if (existingName) {
+        // Allow old name-only accounts to claim their mobile number once.
+        if (!existingName.mobile) {
+          const whitelist = getSheet(SHEET_WHITELIST, false);
+          whitelist.getRange(existingName.row, 3).setNumberFormat('@').setValue(mobile);
+          return {
+            success: true,
+            created: false,
+            user: {
+              name: existingName.name,
+              email: existingName.email || existingName.name,
+              mobile: mobile,
+              method: 'name_mobile'
+            },
+            message: 'Account updated. Welcome back.'
+          };
+        }
+
+        return {
+          success: false,
+          message: 'Your name or mobile number does not match your existing account. Please enter the same name and mobile number you used during sign-up.'
+        };
+      }
+
+      const existingMobile = findWhitelistMobile(mobile);
+      if (existingMobile && normalizeName(existingMobile.name) !== normalizeName(name)) {
+        return {
+          success: false,
+          message: 'Your name or mobile number does not match your existing account. Please enter the same name and mobile number you used during sign-up.'
+        };
+      }
+
+      // First login: create the account automatically.
+      const whitelist = getSheet(SHEET_WHITELIST, true);
+      if (whitelist.getLastRow() === 0) {
+        whitelist.appendRow(['Email', 'Name', 'Mobile']);
+      }
+      const newRow = whitelist.getRange(whitelist.getLastRow() + 1, 1, 1, 3);
+      newRow.setNumberFormat('@').setValues([['', name, mobile]]);
+
+      Logger.log('Created guest account for ' + name + '.');
+
       return {
-        success: false,
-        message: 'Name and mobile number do not match the guest list.'
+        success: true,
+        created: true,
+        user: { name: name, email: name, mobile: mobile, method: 'name_mobile' },
+        message: 'Account created. Welcome.'
       };
     } finally {
       lock.releaseLock();
@@ -369,7 +456,10 @@ function checkExistingRSVP(nameOrEmail, mobile) {
     if (!target) return { success: false, message: 'No name provided.' };
 
     if (!findWhitelistAccount(nameOrEmail, mobile)) {
-      return { success: false, message: 'Name and mobile number do not match the guest list.' };
+      return {
+        success: false,
+        message: 'Your name or mobile number does not match your existing account. Please enter the same name and mobile number you used during sign-up.'
+      };
     }
 
     const sh = getResponsesSheet();
@@ -523,7 +613,7 @@ function submitForm(formData) {
       if (!authorizedGuest) {
         return {
           success: false,
-          message: 'Your name and mobile number are not on the guest list.'
+          message: 'Your name or mobile number does not match your existing account. Please enter the same name and mobile number you used during sign-up.'
         };
       }
 
