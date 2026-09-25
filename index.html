@@ -1438,6 +1438,21 @@
       .social-drawer { top: auto; right: 12px; bottom: calc(70px + env(safe-area-inset-bottom)); max-height: calc(100dvh - 92px); transform: translateY(18px) scale(.96); }
       .social-drawer.open { transform: translateY(0) scale(1); }
     }
+
+    .qr-modal { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; padding: 18px; background: rgba(0,0,0,.78); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .22s ease, visibility .22s ease; }
+    .qr-modal.open { opacity: 1; visibility: visible; pointer-events: auto; }
+    .qr-modal-card { position: relative; width: min(92vw, 620px); max-height: 94dvh; overflow: auto; padding: 18px; border: 1px solid rgba(255,255,255,.22); border-radius: 22px; background: #111; box-shadow: 0 24px 80px rgba(0,0,0,.45); transform: translateY(12px) scale(.97); transition: transform .25s cubic-bezier(.2,.8,.2,1); }
+    .qr-modal.open .qr-modal-card { transform: translateY(0) scale(1); }
+    .qr-modal-title { margin: 0 42px 12px 4px; color: #fff; font-size: clamp(17px, 3vw, 24px); text-align: center; }
+    .qr-modal-image { display: block; width: 100%; max-height: 78dvh; object-fit: contain; border-radius: 12px; background: #0b0b0b; }
+    .qr-modal-close { position: absolute; top: 10px; right: 10px; width: 38px; height: 38px; border: 1px solid rgba(255,255,255,.35); border-radius: 50%; background: rgba(255,255,255,.12); color: #fff; font-size: 24px; line-height: 1; cursor: pointer; }
+    .qr-modal-help { margin: 10px 4px 0; color: rgba(255,255,255,.72); font-size: 12px; line-height: 1.45; text-align: center; }
+    @media (max-width: 640px) {
+      .qr-modal { padding: 10px; }
+      .qr-modal-card { width: 100%; max-height: calc(100dvh - 20px); padding: 12px; border-radius: 18px; }
+      .qr-modal-image { max-height: calc(100dvh - 110px); }
+      .qr-modal-close { width: 42px; height: 42px; }
+    }
   </style>
 </head>
 <body>
@@ -1832,6 +1847,16 @@
         </div>
       </div>
     </section>
+  </div>
+
+
+  <div class="qr-modal" id="gcashQrModal" role="dialog" aria-modal="true" aria-labelledby="gcashQrModalTitle" aria-hidden="true">
+    <div class="qr-modal-card" role="document">
+      <button type="button" class="qr-modal-close" id="gcashQrModalClose" aria-label="Close QR code">×</button>
+      <h2 class="qr-modal-title" id="gcashQrModalTitle">GCash QR Code</h2>
+      <img class="qr-modal-image" id="gcashQrModalImage" src="" alt="GCash QR Code">
+      <p class="qr-modal-help">Scan this code with GCash, or press and hold the image to save it on mobile.</p>
+    </div>
   </div>
 
   <script>
@@ -2357,19 +2382,54 @@
       }
     });
 
-    function openGcashQr() {
+    let qrAudioContext = null;
+    function playModernPop() {
+      try {
+        qrAudioContext = qrAudioContext || new (window.AudioContext || window.webkitAudioContext)();
+        const now = qrAudioContext.currentTime;
+        const oscillator = qrAudioContext.createOscillator();
+        const gain = qrAudioContext.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(620, now);
+        oscillator.frequency.exponentialRampToValueAtTime(980, now + 0.07);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(0.055, now + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.095);
+        oscillator.connect(gain);
+        gain.connect(qrAudioContext.destination);
+        oscillator.start(now);
+        oscillator.stop(now + 0.1);
+      } catch (error) { /* sound is optional */ }
+    }
+
+    function setGcashQrModal(open) {
+      const modal = $('gcashQrModal');
       const image = $('gcashQrImage');
-      if (!image || !image.src) return;
-      const opened = window.open('', '_blank');
-      if (opened) {
-        opened.document.write('<!doctype html><title>GCash QR Code</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:0;background:#0b0b0b;display:grid;place-items:center;min-height:100vh}img{display:block;max-width:100%;height:auto}</style><img src="' + image.src + '" alt="GCash QR Code">');
-        opened.document.close();
+      const modalImage = $('gcashQrModalImage');
+      if (open) {
+        modalImage.src = image.src;
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        $('gcashQrModalClose').focus();
       } else {
-        window.location.href = image.src;
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
       }
     }
 
-    $('downloadGcashQrBtn').addEventListener('click', openGcashQr);
+    $('downloadGcashQrBtn').addEventListener('click', function() {
+      playModernPop();
+      setGcashQrModal(true);
+    });
+    $('gcashQrModalClose').addEventListener('click', function() { setGcashQrModal(false); });
+    $('gcashQrModal').addEventListener('click', function(event) {
+      if (event.target === this) setGcashQrModal(false);
+    });
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape' && $('gcashQrModal').classList.contains('open')) setGcashQrModal(false);
+    });
 
     /* ATTENDEES */
     let attendeesCache = null;
