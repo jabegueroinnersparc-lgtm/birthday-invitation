@@ -1404,8 +1404,10 @@
                 </div>
                 <div class="field">
                   <label class="field-label" for="mobile">Mobile Number *</label>
-                  <input type="tel" id="mobile" required placeholder="09123456789"
-                         pattern="[0-9+\-\s()]{7,20}" inputmode="tel" autocomplete="tel">
+                  <input type="text" id="mobile" required placeholder="09123456789"
+                         pattern="[0-9]{7,15}" inputmode="numeric" autocomplete="tel"
+                         maxlength="15" aria-describedby="mobileError">
+                  <span class="field-error" id="mobileError" role="alert" aria-live="polite"></span>
                 </div>
               </div>
 
@@ -1567,6 +1569,18 @@
     let appConfig = { deadline: '', isPastDeadline: false };
 
     const $ = id => document.getElementById(id);
+
+    /* MOBILE NUMBER: allow digits only, including when text is pasted. */
+    $('mobile').addEventListener('input', function() {
+      const digitsOnly = this.value.replace(/\D/g, '');
+      if (this.value !== digitsOnly) this.value = digitsOnly;
+
+      const error = $('mobileError');
+      const invalid = digitsOnly.length > 0 && digitsOnly.length < 7;
+      error.textContent = invalid ? 'Please enter a valid mobile number using numbers only.' : '';
+      error.classList.toggle('show', invalid);
+      this.setCustomValidity(invalid ? 'Please enter at least 7 digits.' : '');
+    });
 
     /* COUNTDOWN */
     const EVENT_DATE = new Date('2026-10-31T18:00:00');
