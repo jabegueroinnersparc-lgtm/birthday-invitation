@@ -460,6 +460,29 @@
       transform: translateY(0);
       opacity: 1;
     }
+    .recovery-heading {
+      padding: 16px 16px 14px; margin-bottom: 16px;
+      border-radius: 14px; background: linear-gradient(135deg, #fafafa, #f0f0f0);
+      border: 1px solid var(--pearl);
+    }
+    .recovery-kicker {
+      display: block; margin-bottom: 4px; color: var(--steel);
+      font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    }
+    .recovery-heading h3 {
+      color: var(--black); font-family: 'Playfair Display', serif;
+      font-size: 22px; line-height: 1.15; margin-bottom: 4px;
+    }
+    .recovery-heading p { color: var(--steel); font-size: 12px; line-height: 1.5; }
+    @media (min-width: 641px) {
+      .recovery-panel { width: min(100%, 410px); margin-left: auto; margin-right: auto; }
+      .recovery-heading { padding: 18px 20px 16px; }
+    }
+    @media (max-width: 640px) {
+      .recovery-panel { width: 100%; }
+      .recovery-heading h3 { font-size: 20px; }
+      .recovery-heading p { font-size: 13px; }
+    }
     @media (prefers-reduced-motion: reduce) {
       .recovery-panel,
       .recovery-panel .field,
@@ -1439,8 +1462,14 @@
               <span class="btn-arrow">→</span>
             </button>
             <div class="message" id="pwMessage"></div>
-            <button type="button" class="btn btn-outline" id="forgotAccountBtn" style="margin-top:12px;">Forgot account?</button>
-            <div id="recoveryBox" class="recovery-panel">
+            <button type="button" class="btn btn-outline" id="forgotAccountBtn" style="margin-top:12px;"
+                    aria-expanded="false" aria-controls="recoveryBox">Forgot account?</button>
+            <div id="recoveryBox" class="recovery-panel" role="region" aria-labelledby="recoveryTitle" aria-hidden="true">
+              <div class="recovery-heading">
+                <span class="recovery-kicker">Account recovery</span>
+                <h3 id="recoveryTitle">Find your invitation</h3>
+                <p>Enter only the mobile number you used during sign-up.</p>
+              </div>
               <div class="field">
                 <label class="field-label" for="recoveryMobile">Mobile Number Used During Sign-up</label>
                 <input type="text" id="recoveryMobile" placeholder="09123456789"
@@ -2046,7 +2075,14 @@
       const isClosed = !box.classList.contains('open');
       box.classList.toggle('open', isClosed);
       this.textContent = isClosed ? 'Close account recovery' : 'Forgot account?';
-      if (isClosed) setTimeout(() => $('recoveryMobile').focus(), 180);
+      this.setAttribute('aria-expanded', isClosed ? 'true' : 'false');
+      box.setAttribute('aria-hidden', isClosed ? 'false' : 'true');
+      if (isClosed) {
+        setTimeout(function() {
+          box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 80);
+        setTimeout(() => $('recoveryMobile').focus(), 320);
+      }
     });
 
     $('recoveryMobile').addEventListener('input', function() {
@@ -2072,6 +2108,8 @@
           try { localStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
           try { sessionStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
           $('recoveryBox').classList.remove('open');
+          $('recoveryBox').setAttribute('aria-hidden', 'true');
+          $('forgotAccountBtn').setAttribute('aria-expanded', 'false');
           $('forgotAccountBtn').textContent = 'Forgot account?';
           completeLogin(res.ticket || null);
         } else {
