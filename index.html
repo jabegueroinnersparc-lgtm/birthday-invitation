@@ -1811,81 +1811,9 @@
 
        If left empty (''), no sound plays — the animation still runs.
        ============================================================ */
-    // Google Drive direct-download URLs. The /file/d/.../view URL is only a preview page.
-    const SUCCESS_SOUND_URL =
-  'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/saira%20ingay%202%20(mp3cut.net ).mp3';
-
-const TICKET_READY_SOUND_URL =
-  'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/shanghai%20salamat%20po.mp3';
-
-let successAudio = null;
-let ticketReadyAudio = null;
-
-function getAudio(which ) {
-  const isSuccess = which === 'success';
-  const url = isSuccess ? SUCCESS_SOUND_URL : TICKET_READY_SOUND_URL;
-  const volume = isSuccess ? 0.8 : 0.9;
-  const audio = isSuccess ? successAudio : ticketReadyAudio;
-
-  if (audio) return audio;
-
-  const created = new Audio(url);
-  created.preload = 'auto';
-  created.volume = volume;
-
-  if (isSuccess) {
-    successAudio = created;
-  } else {
-    ticketReadyAudio = created;
-  }
-
-  return created;
-}
-
-function primeAudio(which) {
-  const audio = getAudio(which);
-
-  audio.muted = true;
-  audio.load();
-
-  const promise = audio.play();
-
-  if (promise && typeof promise.then === 'function') {
-    promise
-      .then(() => {
-        audio.pause();
-        audio.currentTime = 0;
-        audio.muted = false;
-      })
-      .catch(() => {
-        audio.muted = false;
-      });
-  } else {
-    audio.muted = false;
-  }
-}
-
-function playAudio(which) {
-  const audio = getAudio(which);
-
-  audio.pause();
-  audio.currentTime = 0;
-  audio.muted = false;
-
-  const promise = audio.play();
-  if (promise && typeof promise.catch === 'function') {
-    promise.catch(() => {});
-  }
-}
-
-function playSuccessSound() {
-  playAudio('success');
-}
-
-function playTicketReadySound() {
-  playAudio('ticket');
-}
-
+    // Public GitHub raw MP3 URLs. The /blob/ URL is only a preview page.
+    const SUCCESS_SOUND_URL = 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/saira%20ingay%202%20(mp3cut.net).mp3';
+    const TICKET_READY_SOUND_URL = 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/shanghai%20salamat%20po.mp3';
 
     let successAudio = null;
     let ticketReadyAudio = null;
