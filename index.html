@@ -1674,6 +1674,87 @@
       .qr-modal-image { max-height: calc(100dvh - 110px); }
       .qr-modal-close { width: 42px; height: 42px; }
     }
+
+    /* Video greeting section */
+    .video-section {
+      display: none;
+      margin-bottom: 18px;
+    }
+    .video-section.show {
+      display: block;
+    }
+    .video-record-box {
+      background: var(--fog);
+      border: 1.5px dashed var(--mist);
+      border-radius: 16px; padding: 28px 20px;
+      text-align: center;
+      transition: all 0.3s var(--ease-out);
+    }
+    .video-record-box.filled {
+      border-style: solid; border-color: var(--black);
+      background: var(--white);
+    }
+    .video-placeholder {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+    .video-placeholder .vid-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: var(--white); border: 1.5px solid var(--mist);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+    .video-placeholder .vid-icon svg { width: 24px; height: 24px; stroke: var(--black); }
+    .video-placeholder .vid-title { font-size: 14px; font-weight: 600; color: var(--black); }
+    .video-placeholder .vid-sub { font-size: 12px; color: var(--steel); margin-bottom: 12px; }
+    .btn-video {
+      background: var(--black); color: var(--white);
+      border: none; padding: 12px 24px;
+      border-radius: 10px; font-size: 13px;
+      font-weight: 600; cursor: pointer;
+      transition: all 0.25s var(--ease-out);
+      font-family: inherit;
+      display: inline-flex; align-items: center; gap: 8px;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 44px; touch-action: manipulation;
+    }
+    .btn-video:active { transform: scale(0.97); }
+    .video-preview {
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+    }
+    .video-frame {
+      background: var(--white); padding: 10px;
+      border-radius: 12px; border: 1.5px solid var(--pearl);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      position: relative; max-width: 100%;
+    }
+    .video-frame video {
+      width: 200px; height: 150px; object-fit: cover;
+      display: block; border-radius: 6px;
+      background: #000;
+    }
+    @media (max-width: 480px) {
+      .video-frame video { width: 160px; height: 120px; }
+    }
+    .video-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 600;
+      color: var(--success); letter-spacing: 0.02em;
+    }
+    .video-badge::before {
+      content: ""; width: 6px; height: 6px;
+      background: var(--success); border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(22,163,74,0.15);
+    }
+    .btn-retake-video {
+      background: var(--white); color: var(--black);
+      border: 1.5px solid var(--mist);
+      padding: 10px 20px; border-radius: 10px;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+      font-family: inherit; letter-spacing: 0.02em;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 40px; touch-action: manipulation;
+    }
   </style>
 </head>
 <body>
@@ -2011,9 +2092,16 @@
                 <textarea id="greetings" required placeholder="Write a heartfelt birthday message..."></textarea>
               </div>
 
-              <div class="field">
+              <!-- SELFIE SECTION (for going/planning) -->
+              <div class="field" id="selfieSection">
                 <label class="field-label">Selfie *</label>
                 <div class="camera-box" id="cameraBox"></div>
+              </div>
+
+              <!-- VIDEO GREETING SECTION (for not_going) -->
+              <div class="video-section" id="videoSection">
+                <label class="field-label">Video Greeting *</label>
+                <div class="video-record-box" id="videoBox"></div>
               </div>
 
               <button type="submit" class="btn btn-primary" id="submitBtn">
@@ -2217,7 +2305,9 @@
 
     /* STATE */
     let selfieData = null;
+    let videoData = null;
     let cameraWindow = null;
+    let videoWindow = null;
     let currentUser = null;
     let guests = 1;
     let currentTicket = null;
@@ -2752,7 +2842,7 @@
     /* LOGOUT */
     function logout() {
       try { localStorage.removeItem('birthdayUser'); sessionStorage.removeItem('birthdayUser'); } catch (e) {}
-      currentUser = null; selfieData = null; guests = 1; currentTicket = null;
+      currentUser = null; selfieData = null; videoData = null; guests = 1; currentTicket = null;
       selectedAttendance = 'going';
       const attGridReset = $('attendanceGrid');
       if (attGridReset) {
@@ -2765,6 +2855,8 @@
       $('guestPlus').disabled = false;
       $('rsvpForm').reset();
       renderEmptyCamera();
+      renderEmptyVideo();
+      toggleSelfieVideoFields();
       resetAfterTicket(true);
       updateProgress();
       $('formView').classList.remove('active');
@@ -2876,10 +2968,25 @@
           });
           btn.classList.add('selected');
           selectedAttendance = btn.dataset.value || 'going';
+          toggleSelfieVideoFields();
           updateProgress();
         });
       });
     })();
+
+    /* TOGGLE SELFIE / VIDEO BASED ON ATTENDANCE */
+    function toggleSelfieVideoFields() {
+      const selfieSection = $('selfieSection');
+      const videoSection = $('videoSection');
+      if (selectedAttendance === 'not_going') {
+        selfieSection.style.display = 'none';
+        videoSection.classList.add('show');
+      } else {
+        selfieSection.style.display = '';
+        videoSection.classList.remove('show');
+      }
+      updateProgress();
+    }
 
     /* PROGRESS */
     function updateProgress() {
@@ -2892,7 +2999,11 @@
       if (mobile) filled++;
       if (address) filled++;
       if (greetings) filled++;
-      if (selfieData) filled++;
+      if (selectedAttendance === 'not_going') {
+        if (videoData) filled++;
+      } else {
+        if (selfieData) filled++;
+      }
       filled++;
       const pct = Math.round((filled / 6) * 100);
       $('progressFill').style.width = pct + '%';
@@ -2903,7 +3014,7 @@
       $(id).addEventListener('input', updateProgress);
     });
 
-    /* CAMERA */
+    /* CAMERA (SELFIE) */
     function renderEmptyCamera() {
       const box = $('cameraBox');
       box.classList.remove('filled');
@@ -3102,7 +3213,293 @@
         renderCapturedCamera(event.data.data);
         updateProgress();
       }
+      if (event.data && event.data.type === 'VIDEO_CAPTURED') {
+        videoData = {
+          data: event.data.data,
+          name: 'video_greeting_' + Date.now() + '.webm'
+        };
+        renderCapturedVideo(event.data.data);
+        updateProgress();
+      }
     });
+
+    /* VIDEO GREETING */
+    function renderEmptyVideo() {
+      const box = $('videoBox');
+      box.classList.remove('filled');
+      box.innerHTML = `
+        <div class="video-placeholder">
+          <div class="vid-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="23 7 16 12 23 17 23 7"/>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+            </svg>
+          </div>
+          <div class="vid-title">Record a video greeting</div>
+          <div class="vid-sub">Since you can't make it, send a video message instead</div>
+          <button type="button" class="btn-video" id="openVideoBtn">Record Video</button>
+        </div>
+      `;
+      $('openVideoBtn').addEventListener('click', openVideoPopup);
+    }
+
+    function renderCapturedVideo(dataUrl) {
+      const box = $('videoBox');
+      box.classList.add('filled');
+      box.innerHTML = `
+        <div class="video-preview">
+          <div class="video-frame"><video src="${dataUrl}" controls playsinline></video></div>
+          <div class="video-badge">Video greeting recorded</div>
+          <button type="button" class="btn-retake-video" id="retakeVideoBtn">Re-record</button>
+        </div>
+      `;
+      $('retakeVideoBtn').addEventListener('click', function() {
+        videoData = null;
+        renderEmptyVideo();
+        updateProgress();
+      });
+    }
+
+    function openVideoPopup() {
+      const isMobile = window.innerWidth < 640;
+      let width, height;
+      if (isMobile) {
+        width = Math.min(window.innerWidth - 24, 460);
+        height = Math.min(window.innerHeight - 24, 780);
+      } else {
+        width = 480; height = 720;
+      }
+      const left = Math.max(0, (screen.width - width) / 2);
+      const top = Math.max(0, (screen.height - height) / 2);
+      videoWindow = window.open('', 'VideoGreeting',
+        `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no`);
+      if (!videoWindow) { alert('Popup blocked. Please allow popups and try again.'); return; }
+      videoWindow.document.open();
+      videoWindow.document.write(getVideoHTML());
+      videoWindow.document.close();
+    }
+
+    function getVideoHTML() {
+      return `<!DOCTYPE html>
+<html>
+<head>
+  <title>Record Video Greeting</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0a">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; -webkit-text-size-adjust: 100%; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0a0a; color: #fff;
+      display: flex; flex-direction: column; height: 100vh; height: 100dvh;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+    .topbar { padding: 14px 16px; text-align: center; background: #0a0a0a;
+      border-bottom: 1px solid #1c1c1c; font-weight: 600; font-size: 13px;
+      letter-spacing: 0.15em; text-transform: uppercase; color: #a8a8a8; flex-shrink: 0; }
+    .video-container { flex: 1; position: relative; background: #000; overflow: hidden; min-height: 0; }
+    video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    video.preview { transform: none; }
+    .recording-indicator { position: absolute; top: 16px; left: 16px; display: none; align-items: center; gap: 8px;
+      background: rgba(220,38,38,0.9); padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 600; }
+    .recording-indicator.show { display: flex; }
+    .recording-indicator .dot { width: 8px; height: 8px; background: #fff; border-radius: 50%; animation: recPulse 1s infinite; }
+    @keyframes recPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .timer { position: absolute; top: 16px; right: 16px; background: rgba(0,0,0,0.7); padding: 6px 14px;
+      border-radius: 100px; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; display: none; }
+    .timer.show { display: block; }
+    .bottom { padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+      background: #0a0a0a; border-top: 1px solid #1c1c1c;
+      display: flex; flex-direction: column; align-items: center; gap: 12px; flex-shrink: 0; }
+    .status { font-size: 12px; color: #6b6b6b; text-align: center; min-height: 16px; padding: 0 8px; }
+    .status.error { color: #dc2626; }
+    button { padding: 14px 32px; border: none; border-radius: 10px; background: #fff;
+      color: #0a0a0a; font-weight: 600; font-size: 14px; cursor: pointer;
+      transition: all 0.2s; font-family: inherit; min-height: 44px;
+      -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+    button:active:not(:disabled) { transform: scale(0.97); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.secondary { background: transparent; border: 1px solid #2a2a2a; color: #a8a8a8; padding: 12px 22px; font-size: 12px; }
+    button.danger { background: #dc2626; color: #fff; }
+    .row { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; }
+    .preview-actions { display: flex; gap: 10px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">Video Greeting</div>
+  <div class="video-container">
+    <video id="v" autoplay playsinline muted webkit-playsinline></video>
+    <div class="recording-indicator" id="recIndicator"><span class="dot"></span>Recording</div>
+    <div class="timer" id="timer">00:00</div>
+  </div>
+  <div class="bottom">
+    <div class="status" id="status">Starting camera...</div>
+    <div class="row" id="controlsRow">
+      <button id="recordBtn" disabled>Start Recording</button>
+      <button id="close" class="secondary">Cancel</button>
+    </div>
+    <div class="row preview-actions" id="previewRow" style="display:none;">
+      <button id="useBtn">Use This Video</button>
+      <button id="retakeBtn" class="secondary">Re-record</button>
+    </div>
+  </div>
+  <script>
+    const v = document.getElementById('v');
+    const status = document.getElementById('status');
+    const recordBtn = document.getElementById('recordBtn');
+    const closeBtn = document.getElementById('close');
+    const recIndicator = document.getElementById('recIndicator');
+    const timerEl = document.getElementById('timer');
+    const controlsRow = document.getElementById('controlsRow');
+    const previewRow = document.getElementById('previewRow');
+    const useBtn = document.getElementById('useBtn');
+    const retakeBtn = document.getElementById('retakeBtn');
+    
+    let stream = null, mediaRecorder = null, recordedChunks = [], timerInterval = null;
+    let seconds = 0, isRecording = false;
+
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+      audio: true
+    }).then(st => {
+      stream = st;
+      v.srcObject = st;
+      status.textContent = 'Ready. Tap Start Recording to begin.';
+      recordBtn.disabled = false;
+    }).catch(err => {
+      status.classList.add('error');
+      let msg = 'Cannot access camera/mic: ' + err.name;
+      if (err.name === 'NotAllowedError') msg = 'Permission denied. Please allow camera and microphone access.';
+      if (err.name === 'NotFoundError') msg = 'No camera or microphone detected.';
+      status.textContent = msg;
+    });
+
+    function formatTime(s) {
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+    }
+
+    recordBtn.onclick = () => {
+      if (isRecording) return;
+      recordedChunks = [];
+      seconds = 0;
+      timerEl.textContent = '00:00';
+      
+      try {
+        const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+          ? 'video/webm;codecs=vp9,opus'
+          : MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
+          ? 'video/webm;codecs=vp8,opus'
+          : 'video/webm';
+        mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType, videoBitsPerSecond: 800000 });
+      } catch (e) {
+        try {
+          mediaRecorder = new MediaRecorder(stream);
+        } catch (e2) {
+          status.classList.add('error');
+          status.textContent = 'Recording not supported on this browser.';
+          return;
+        }
+      }
+      
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+      };
+      
+      mediaRecorder.onstop = () => {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        isRecording = false;
+        recIndicator.classList.remove('show');
+        timerEl.classList.remove('show');
+        
+        if (recordedChunks.length === 0) {
+          status.textContent = 'No recording data. Try again.';
+          return;
+        }
+        
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          v.srcObject = null;
+          v.src = reader.result;
+          v.controls = true;
+          v.muted = false;
+          v.loop = false;
+          v.play().catch(()=>{});
+          status.textContent = 'Preview your video. Tap "Use This Video" to confirm.';
+          controlsRow.style.display = 'none';
+          previewRow.style.display = 'flex';
+        };
+        reader.readAsDataURL(blob);
+      };
+      
+      mediaRecorder.start(200);
+      isRecording = true;
+      recIndicator.classList.add('show');
+      timerEl.classList.add('show');
+      status.textContent = 'Recording... Tap Stop when done.';
+      recordBtn.textContent = 'Stop Recording';
+      
+      timerInterval = setInterval(() => {
+        seconds++;
+        timerEl.textContent = formatTime(seconds);
+        if (seconds >= 60) {
+          if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+        }
+      }, 1000);
+    };
+
+    const originalRecordClick = recordBtn.onclick;
+    recordBtn.onclick = function() {
+      if (isRecording && mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        recordBtn.textContent = 'Start Recording';
+        return;
+      }
+      originalRecordClick();
+    };
+
+    useBtn.onclick = () => {
+      if (!v.src) return;
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({ type: 'VIDEO_CAPTURED', data: v.src }, '*');
+      }
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      window.close();
+    };
+
+    retakeBtn.onclick = () => {
+      v.src = '';
+      v.controls = false;
+      if (stream) {
+        v.srcObject = stream;
+        v.muted = true;
+        v.play().catch(()=>{});
+      }
+      status.textContent = 'Ready. Tap Start Recording to begin.';
+      recordBtn.textContent = 'Start Recording';
+      controlsRow.style.display = 'flex';
+      previewRow.style.display = 'none';
+      recordBtn.disabled = false;
+    };
+
+    closeBtn.onclick = () => {
+      if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      if (timerInterval) clearInterval(timerInterval);
+      window.close();
+    };
+
+    window.addEventListener('beforeunload', () => {
+      if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      if (timerInterval) clearInterval(timerInterval);
+    });
+  <\/script>
+</body>
+</html>`;
+    }
 
     /* SUBMIT */
     $('rsvpForm').addEventListener('submit', async function(e) {
@@ -3116,7 +3513,12 @@
         return;
       }
       guests = guestCount;
-      if (!selfieData) { showMessage('Please take a selfie before submitting.', 'error'); return; }
+      
+      if (selectedAttendance === 'not_going') {
+        if (!videoData) { showMessage('Please record a video greeting before submitting.', 'error'); return; }
+      } else {
+        if (!selfieData) { showMessage('Please take a selfie before submitting.', 'error'); return; }
+      }
 
       const btn = $('submitBtn');
       btn.disabled = true;
@@ -3129,7 +3531,8 @@
         mobile: $('mobile').value.trim(),
         address: $('address').value.trim(),
         greetings: $('greetings').value.trim(),
-        selfie: selfieData,
+        selfie: selectedAttendance === 'not_going' ? null : selfieData,
+        videoGreeting: selectedAttendance === 'not_going' ? videoData : null,
         email: currentUser ? currentUser.name : '',
         loginMethod: 'name',
         guests: guestCount,
@@ -3260,6 +3663,7 @@
       document.querySelector('.progress-wrap').style.display = '';
       $('rsvpForm').reset();
       selfieData = null;
+      videoData = null;
       guests = 1;
       selectedAttendance = 'going';
       const attGridR = $('attendanceGrid');
@@ -3272,6 +3676,8 @@
       $('guestMinus').disabled = true;
       $('guestPlus').disabled = false;
       renderEmptyCamera();
+      renderEmptyVideo();
+      toggleSelfieVideoFields();
       updateProgress();
       if (currentUser && currentUser.name) { $('name').value = currentUser.name; }
       if (!silent) {
@@ -3298,10 +3704,12 @@
 
     /* INIT */
     renderEmptyCamera();
+    renderEmptyVideo();
     startCountdown();
     initApp();
     updateProgress();
     preloadSuccessSound();
+    toggleSelfieVideoFields();
   </script>
 </body>
 </html>
