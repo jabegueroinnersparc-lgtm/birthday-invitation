@@ -1443,7 +1443,7 @@
     .closed-state h3 { font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px; }
     .closed-state p { color: var(--steel); font-size: 14px; }
 
-    /* ⭐ SUBMITTING OVERLAY */
+    /* SUBMITTING OVERLAY */
     .submitting-overlay {
       display: none;
       position: fixed; inset: 0; z-index: 10000;
@@ -2175,7 +2175,7 @@
     </div>
   </div>
 
-  <!-- ⭐ SUBMITTING OVERLAY -->
+  <!-- SUBMITTING OVERLAY -->
   <div class="submitting-overlay" id="submittingOverlay" aria-hidden="true">
     <div class="submitting-spinner"></div>
     <div class="submitting-title">Sending…</div>
@@ -2186,7 +2186,13 @@
     /* CONFIG */
     const APPS_SCRIPT_URL = '/api/proxy';
 
-    /* ⭐ PER-ATTENDANCE MEDIA */
+    /* ============================================================
+       ⭐ PER-ATTENDANCE MEDIA
+       ------------------------------------------------------------
+       Each choice has its own sound, GIF image, caption, and toast.
+       Direct image format: https://lh3.googleusercontent.com/d/FILE_ID
+       Direct audio format: https://raw.githubusercontent.com/USER/REPO/main/FILE.mp3
+       ============================================================ */
     const ATTENDANCE_MEDIA = {
       going: {
         soundUrl: 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/shanghai%20salamat%20po.mp3',
@@ -2267,6 +2273,7 @@
     function playSuccessSound() { playAudio('success'); }
     function playTicketReadySound() { playAudio('ticket'); }
 
+    /* ⭐ Play the attendance-specific sound */
     function playAttendanceSound(attendance) {
       const media = ATTENDANCE_MEDIA[attendance] || DEFAULT_MEDIA;
       try {
@@ -2281,12 +2288,11 @@
     }
 
     /* ============================================================
-       ⭐ API CALL — NOW SENDS JSON
+       API CALL
        ============================================================ */
     async function api(action, params) {
       params = params || {};
 
-      // Apps Script htmlservice path (used when running inside GAS iframe)
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         const serverArgs = {
           bootstrap: [],
@@ -2306,7 +2312,7 @@
         return new Promise(function(resolve, reject) {
           const timeout = setTimeout(function() {
             reject(new Error('The server took too long to respond. Please try again.'));
-          }, action === 'submitForm' ? 120000 : 20000);   // ⭐ 2 min for submit
+          }, action === 'submitForm' ? 120000 : 20000);
           const runner = google.script.run
             .withSuccessHandler(function(result) {
               clearTimeout(timeout);
@@ -2331,10 +2337,9 @@
         });
       }
 
-      // ⭐ Vercel / external path — send JSON, with abort-based timeout
       const payload = Object.assign({ action: action }, params || {});
       const controller = new AbortController();
-      const timeoutMs = action === 'submitForm' ? 120000 : 30000;   // ⭐ 2 min for submit
+      const timeoutMs = action === 'submitForm' ? 120000 : 30000;
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
       let res;
@@ -2343,7 +2348,7 @@
           method: 'POST',
           mode: 'cors',
           redirect: 'follow',
-          headers: { 'Content-Type': 'application/json;charset=utf-8' },   // ⭐ JSON
+          headers: { 'Content-Type': 'application/json;charset=utf-8' },
           body: JSON.stringify(payload),
           signal: controller.signal
         });
@@ -2357,26 +2362,16 @@
       clearTimeout(timeoutId);
 
       if (!res.ok) {
-        if (res.status === 413) {
-          throw new Error('Your photo or video is too large. Please record a shorter video.');
-        }
-        if (res.status === 502 || res.status === 504) {
-          throw new Error('The server took too long. Please try again with a shorter video.');
-        }
+        if (res.status === 413) throw new Error('Your photo or video is too large. Please record a shorter video.');
+        if (res.status === 502 || res.status === 504) throw new Error('The server took too long. Please try again with a shorter video.');
         throw new Error('HTTP ' + res.status);
       }
 
       const text = await res.text();
+      if (text.trim().startsWith('<')) throw new Error('Server returned HTML instead of JSON. Please try again.');
 
-      if (text.trim().startsWith('<')) {
-        throw new Error('Server returned HTML instead of JSON. Please try again.');
-      }
-
-      try {
-        return JSON.parse(text);
-      } catch (e) {
-        throw new Error('Invalid response from server.');
-      }
+      try { return JSON.parse(text); }
+      catch (e) { throw new Error('Invalid response from server.'); }
     }
 
     /* STATE */
@@ -2392,7 +2387,7 @@
 
     const $ = id => document.getElementById(id);
 
-    /* UI SOUNDS (optional) */
+    /* UI SOUNDS */
     let clickAudioContext = null;
     function playClickSound(isPrivacyToggle) {
       try {
@@ -2579,9 +2574,7 @@
       this.setAttribute('aria-expanded', isClosed ? 'true' : 'false');
       box.setAttribute('aria-hidden', isClosed ? 'false' : 'true');
       if (isClosed) {
-        setTimeout(function() {
-          box.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 80);
+        setTimeout(function() { box.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 80);
         setTimeout(() => $('recoveryMobile').focus(), 320);
       }
     });
@@ -2669,12 +2662,10 @@
         }
         if (ticket) {
           lockRsvpAction(ticket);
-
           $('ticketQrImg').src = ticket.qrCodeUrl;
           $('ticketCode').textContent = ticket.code;
           $('ticketName').textContent = ticket.name;
-          $('ticketGuests').textContent = ticket.guests +
-            (ticket.guests === 1 ? ' person' : ' people');
+          $('ticketGuests').textContent = ticket.guests + (ticket.guests === 1 ? ' person' : ' people');
         }
       } catch (e) { console.log('Existing RSVP check failed:', e); }
     }
@@ -3146,7 +3137,6 @@
       cameraWindow.document.close();
     }
 
-    // ⭐ COMPRESSED selfie capture
     function getCameraHTML() {
       return `<!DOCTYPE html>
 <html>
@@ -3212,11 +3202,7 @@
     let stream = null, countdownTimer = null;
 
     navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: 'user',
-        width:  { ideal: 640, max: 640 },
-        height: { ideal: 480, max: 480 }
-      },
+      video: { facingMode: 'user', width: { ideal: 640, max: 640 }, height: { ideal: 480, max: 480 } },
       audio: false
     }).then(st => {
       stream = st;
@@ -3288,18 +3274,12 @@
 
     window.addEventListener('message', function(event) {
       if (event.data && event.data.type === 'SELFIE_CAPTURED') {
-        selfieData = {
-          data: event.data.data,
-          name: 'selfie_' + Date.now() + '.jpg'
-        };
+        selfieData = { data: event.data.data, name: 'selfie_' + Date.now() + '.jpg' };
         renderCapturedCamera(event.data.data);
         updateProgress();
       }
       if (event.data && event.data.type === 'VIDEO_CAPTURED') {
-        videoData = {
-          data: event.data.data,
-          name: 'video_greeting_' + Date.now() + '.webm'
-        };
+        videoData = { data: event.data.data, name: 'video_greeting_' + Date.now() + '.webm' };
         renderCapturedVideo(event.data.data);
         updateProgress();
       }
@@ -3361,7 +3341,6 @@
       videoWindow.document.close();
     }
 
-    // ⭐ COMPRESSED video recording (480x360, 250kbps, 20s max)
     function getVideoHTML() {
       return `<!DOCTYPE html>
 <html>
@@ -3440,12 +3419,7 @@
     let seconds = 0, isRecording = false;
 
     navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: 'user',
-        width:  { ideal: 480, max: 480 },
-        height: { ideal: 360, max: 360 },
-        frameRate: { ideal: 15, max: 20 }
-      },
+      video: { facingMode: 'user', width: { ideal: 480, max: 480 }, height: { ideal: 360, max: 360 }, frameRate: { ideal: 15, max: 20 } },
       audio: true
     }).then(st => {
       stream = st;
@@ -3473,48 +3447,23 @@
       timerEl.textContent = '00:00';
       
       try {
-        const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
-          ? 'video/webm;codecs=vp8,opus'
-          : 'video/webm';
-        mediaRecorder = new MediaRecorder(stream, {
-          mimeType: mimeType,
-          videoBitsPerSecond: 250000,
-          audioBitsPerSecond: 32000
-        });
+        const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus') ? 'video/webm;codecs=vp8,opus' : 'video/webm';
+        mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType, videoBitsPerSecond: 250000, audioBitsPerSecond: 32000 });
       } catch (e) {
-        try {
-          mediaRecorder = new MediaRecorder(stream);
-        } catch (e2) {
-          status.classList.add('error');
-          status.textContent = 'Recording not supported on this browser.';
-          return;
-        }
+        try { mediaRecorder = new MediaRecorder(stream); }
+        catch (e2) { status.classList.add('error'); status.textContent = 'Recording not supported on this browser.'; return; }
       }
       
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) recordedChunks.push(e.data);
-      };
+      mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) recordedChunks.push(e.data); };
       
       mediaRecorder.onstop = () => {
-        clearInterval(timerInterval);
-        timerInterval = null;
-        isRecording = false;
-        recIndicator.classList.remove('show');
-        timerEl.classList.remove('show');
-        
-        if (recordedChunks.length === 0) {
-          status.textContent = 'No recording data. Try again.';
-          return;
-        }
-        
+        clearInterval(timerInterval); timerInterval = null; isRecording = false;
+        recIndicator.classList.remove('show'); timerEl.classList.remove('show');
+        if (recordedChunks.length === 0) { status.textContent = 'No recording data. Try again.'; return; }
         const blob = new Blob(recordedChunks, { type: 'video/webm' });
         const reader = new FileReader();
         reader.onloadend = () => {
-          v.srcObject = null;
-          v.src = reader.result;
-          v.controls = true;
-          v.muted = false;
-          v.loop = false;
+          v.srcObject = null; v.src = reader.result; v.controls = true; v.muted = false; v.loop = false;
           v.play().catch(()=>{});
           status.textContent = 'Preview your video. Tap "Use This Video" to confirm.';
           controlsRow.style.display = 'none';
@@ -3525,8 +3474,7 @@
       
       mediaRecorder.start(200);
       isRecording = true;
-      recIndicator.classList.add('show');
-      timerEl.classList.add('show');
+      recIndicator.classList.add('show'); timerEl.classList.add('show');
       status.textContent = 'Recording... Tap Stop when done.';
       recordBtn.textContent = 'Stop Recording';
       
@@ -3534,19 +3482,14 @@
         seconds++;
         timerEl.textContent = formatTime(seconds);
         if (seconds >= 20) {
-          if (mediaRecorder && mediaRecorder.state === 'recording') {
-            mediaRecorder.stop();
-            recordBtn.textContent = 'Start Recording';
-          }
+          if (mediaRecorder && mediaRecorder.state === 'recording') { mediaRecorder.stop(); recordBtn.textContent = 'Start Recording'; }
         }
       }, 1000);
     }
 
     recordBtn.onclick = function() {
       if (isRecording && mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-        recordBtn.textContent = 'Start Recording';
-        return;
+        mediaRecorder.stop(); recordBtn.textContent = 'Start Recording'; return;
       }
       startRecording();
     };
@@ -3561,18 +3504,11 @@
     };
 
     retakeBtn.onclick = () => {
-      v.src = '';
-      v.controls = false;
-      if (stream) {
-        v.srcObject = stream;
-        v.muted = true;
-        v.play().catch(()=>{});
-      }
+      v.src = ''; v.controls = false;
+      if (stream) { v.srcObject = stream; v.muted = true; v.play().catch(()=>{}); }
       status.textContent = 'Ready. Tap Start Recording. Max 20 seconds.';
       recordBtn.textContent = 'Start Recording';
-      controlsRow.style.display = 'flex';
-      previewRow.style.display = 'none';
-      recordBtn.disabled = false;
+      controlsRow.style.display = 'flex'; previewRow.style.display = 'none'; recordBtn.disabled = false;
     };
 
     closeBtn.onclick = () => {
@@ -3592,7 +3528,7 @@
 </html>`;
     }
 
-    /* SUBMIT — ⭐ with overlay + robust try/catch/finally */
+    /* SUBMIT */
     $('rsvpForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       if (appConfig.isPastDeadline) { showMessage('Confirmations are closed.', 'error'); return; }
@@ -3615,7 +3551,7 @@
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>Sending...';
       $('message').style.display = 'none';
-      $('submittingOverlay').classList.add('show');   // ⭐ show overlay
+      $('submittingOverlay').classList.add('show');
       $('submittingOverlay').setAttribute('aria-hidden', 'false');
       primeAudio('ticket');
 
@@ -3662,7 +3598,7 @@
       el.className = 'message ' + type;
     }
 
-    /* SHOW SUCCESS SCREEN */
+    /* ⭐ SHOW SUCCESS SCREEN — attendance-aware */
     function showTicket(ticket) {
       currentTicket = ticket;
 
@@ -3683,6 +3619,7 @@
 
       $('successScreen').classList.add('show');
 
+      // ⭐ Swap caption, subtitle, and GIF per attendance
       const captionEl = $('successCaption');
       if (captionEl) captionEl.setAttribute('aria-label', media.caption);
       animateCaption(media.caption);
@@ -3701,6 +3638,8 @@
 
       fireConfetti();
       fireSparkles();
+
+      // ⭐ Play the attendance-specific sound
       playAttendanceSound(attendance);
 
       showToast(media.toast || "You're on the list! 🎉");
@@ -3713,9 +3652,8 @@
       const letters = String(text || '').split('');
       letters.forEach(function(ch, i) {
         const span = document.createElement('span');
-        if (ch === ' ') {
-          span.className = 'space';
-        } else {
+        if (ch === ' ') { span.className = 'space'; }
+        else {
           span.className = 'letter';
           span.textContent = ch;
           span.style.animationDelay = (1.0 + i * 0.06) + 's';
@@ -3728,7 +3666,6 @@
       const wrap = $('checkWrap');
       if (!wrap) return;
       wrap.querySelectorAll('.sparkle').forEach(s => s.remove());
-
       const count = 10;
       for (let i = 0; i < count; i++) {
         const s = document.createElement('div');
@@ -3748,10 +3685,8 @@
       if (!overlay) return;
       overlay.classList.add('show');
       overlay.innerHTML = '';
-
       const colors = ['#0a0a0a', '#2a2a2a', '#6b6b6b', '#a8a8a8', '#fbbf24', '#16a34a'];
       const pieces = 60;
-
       for (let i = 0; i < pieces; i++) {
         const p = document.createElement('div');
         p.className = 'confetti-piece';
@@ -3764,11 +3699,7 @@
         p.style.animationDuration = (2.4 + Math.random() * 1.6) + 's';
         overlay.appendChild(p);
       }
-
-      setTimeout(() => {
-        overlay.classList.remove('show');
-        overlay.innerHTML = '';
-      }, 5000);
+      setTimeout(() => { overlay.classList.remove('show'); overlay.innerHTML = ''; }, 5000);
     }
 
     function resetAfterTicket(silent) {
