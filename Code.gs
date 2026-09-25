@@ -84,19 +84,34 @@ function doOptions(e) {
 }
 
 /* ============================================================
-   PARAM PARSER
+   PARAM PARSER — JSON-first (new frontend), URL-encoded (legacy)
    ============================================================ */
 function parseParams(e) {
   const params = {};
 
+  // 1. Query string params
   if (e && e.parameter) {
     Object.keys(e.parameter).forEach(function(k) {
       params[k] = e.parameter[k];
     });
   }
 
+  // 2. POST body — try JSON first
   if (e && e.postData && e.postData.contents) {
     const body = e.postData.contents;
+
+    // ⭐ Try JSON first (new frontend sends application/json)
+    try {
+      const parsed = JSON.parse(body);
+      if (parsed && parsed.action) {
+        Object.keys(parsed).forEach(function(k) {
+          params[k] = parsed[k];
+        });
+        return params;
+      }
+    } catch (err) { /* not JSON — fall through to URL-encoded */ }
+
+    // Fallback: URL-encoded (legacy)
     if (body && body.indexOf('=') !== -1) {
       const pairs = body.split('&');
       pairs.forEach(function(pair) {
@@ -109,17 +124,6 @@ function parseParams(e) {
           }
         }
       });
-    }
-
-    if (!params.action) {
-      try {
-        const parsed = JSON.parse(body);
-        if (parsed && parsed.action) {
-          Object.keys(parsed).forEach(function(k) {
-            params[k] = parsed[k];
-          });
-        }
-      } catch (err) { /* not JSON, ignore */ }
     }
   }
 
