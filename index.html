@@ -2123,13 +2123,14 @@
               </div>
 
               <h2 class="success-caption" id="successCaption" aria-label="Shanghai secured"></h2>
-              <p class="success-sub">You're officially on the list. See you there!</p>
+              <p class="success-sub" id="successSub">You're officially on the list. See you there!</p>
 
+              <!-- ⭐ GIF now dynamic — src is set in JS per attendance -->
               <img
                 class="success-image"
-                src="https://drive.google.com/uc?export=view&id=1W9irZLA08BcU-JXFA__91vvLX_NXR9dE"
-                alt="Shanghai secured"
-                onerror="this.onerror=null;this.src='https://lh3.googleusercontent.com/d/1W9irZLA08BcU-JXFA__91vvLX_NXR9dE';"
+                id="successImage"
+                src=""
+                alt="Celebration"
               >
 
               <div class="ticket-card">
@@ -2172,6 +2173,42 @@
   <script>
     /* CONFIG */
     const APPS_SCRIPT_URL = '/api/proxy';
+
+    /* ============================================================
+       ⭐ PER-ATTENDANCE MEDIA CONFIG
+       ------------------------------------------------------------
+       Each attendance choice has its own success sound, GIF image,
+       and caption/subtitle shown on the success screen.
+       ============================================================ */
+    const ATTENDANCE_MEDIA = {
+      going: {
+        soundUrl: 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/shanghai%20salamat%20po.mp3',
+        imageUrl: 'https://lh3.googleusercontent.com/d/156E8il6rCtbGctl1qkAOuiWxBfC4lHef',
+        caption: 'Shanghai secured',
+        subtitle: "You're officially on the list. See you there!",
+        toast: "You're on the list! 🎉"
+      },
+      planning: {
+        soundUrl: 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/planning.mp3',
+        imageUrl: 'https://lh3.googleusercontent.com/d/1lsWjIEeYdixms9Stj2YR-EnqHkQ0jweN',
+        caption: 'Still planning',
+        subtitle: "No worries — take your time. We'd love to have you!",
+        toast: 'Marked as planning 🤔'
+      },
+      not_going: {
+        soundUrl: 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/walakangshanghai.mp3',
+        imageUrl: 'https://lh3.googleusercontent.com/d/1VPNxdPi5L_vr3MEAMyg0QP25GBjbquKy',
+        caption: "We'll miss you",
+        subtitle: 'Thanks for the video greeting — we felt the love! 💌',
+        toast: "We'll miss you! 💌"
+      }
+    };
+
+    // Default fallback (used before attendance is chosen)
+    const DEFAULT_MEDIA = ATTENDANCE_MEDIA.going;
+
+    // Cache the current media so we can reuse on reset
+    let currentMedia = DEFAULT_MEDIA;
 
     /* ============================================================
        SUCCESS SOUND
@@ -2227,6 +2264,20 @@
 
     function playSuccessSound() { playAudio('success'); }
     function playTicketReadySound() { playAudio('ticket'); }
+
+    /* ⭐ NEW: Play the attendance-specific success sound */
+    function playAttendanceSound(attendance) {
+      const media = ATTENDANCE_MEDIA[attendance] || DEFAULT_MEDIA;
+      try {
+        const audio = new Audio(media.soundUrl);
+        audio.preload = 'auto';
+        audio.playsInline = true;
+        audio.setAttribute('playsinline', '');
+        audio.volume = 0.9;
+        const p = audio.play();
+        if (p && typeof p.catch === 'function') p.catch(function() {});
+      } catch (e) { console.log('Attendance sound failed:', e); }
+    }
 
     /* ============================================================
        API CALL
@@ -3566,9 +3617,15 @@
       el.className = 'message ' + type;
     }
 
-    /* SHOW SUCCESS SCREEN */
+    /* ⭐ SHOW SUCCESS SCREEN — now attendance-aware */
     function showTicket(ticket) {
       currentTicket = ticket;
+
+      // Pick the right media bundle based on attendance stored on the ticket.
+      const attendance = (ticket && ticket.attendance) ? String(ticket.attendance).toLowerCase() : 'going';
+      const media = ATTENDANCE_MEDIA[attendance] || DEFAULT_MEDIA;
+      currentMedia = media;
+
       lockRsvpAction(ticket);
       $('ticketQrImg').src = ticket.qrCodeUrl;
       $('ticketCode').textContent = ticket.code;
@@ -3582,19 +3639,38 @@
 
       $('successScreen').classList.add('show');
 
-      animateCaption('Shanghai secured');
+      // ⭐ Swap in the correct caption, subtitle, and GIF
+      const captionEl = $('successCaption');
+      if (captionEl) captionEl.setAttribute('aria-label', media.caption);
+      animateCaption(media.caption);
+
+      const subEl = $('successSub');
+      if (subEl) subEl.textContent = media.subtitle;
+
+      const imgEl = $('successImage');
+      if (imgEl) {
+        imgEl.style.animation = 'none';
+        imgEl.src = media.imageUrl;
+        imgEl.alt = media.caption;
+        // Retrigger the fade/scale animation
+        void imgEl.offsetWidth;
+        imgEl.style.animation = '';
+      }
+
       fireConfetti();
       fireSparkles();
-      playTicketReadySound();
 
-      showToast('You\'re on the list! 🎉');
+      // ⭐ Play the attendance-specific sound
+      playAttendanceSound(attendance);
+
+      showToast(media.toast || "You're on the list! 🎉");
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function animateCaption(text) {
       const el = $('successCaption');
       el.innerHTML = '';
-      const letters = text.split('');
+      const letters = String(text || '').split('');
       letters.forEach(function(ch, i) {
         const span = document.createElement('span');
         if (ch === ' ') {
