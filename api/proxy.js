@@ -1,21 +1,16 @@
-// api/proxy.js
-// Vercel serverless proxy for Google Apps Script Web App.
-// Raises the body size limit and forwards JSON payloads.
-
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '25mb'   // ⭐ raise from default 4.5MB (Hobby: still capped ~4.5MB)
+      sizeLimit: '25mb'
     }
   }
 };
 
 const APPS_SCRIPT_URL =
   process.env.APPS_SCRIPT_URL ||
-  'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';   // ⭐ replace
+  'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID_HERE/exec';
 
 export default async function handler(req, res) {
-  // CORS preflight
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -28,8 +23,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Vercel may give us an object (parsed) or a string depending on content-type.
-    // Normalize to a string body.
     const outgoingBody =
       typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
 
