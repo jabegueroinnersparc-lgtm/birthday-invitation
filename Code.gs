@@ -34,6 +34,7 @@ const RESPONSES_HEADERS = [
    WEB APP ENTRY (GET)
    ============================================================ */
 function doGet(e) {
+  // API request via GET (fallback for small calls)
   if (e && e.parameter && e.parameter.action) {
     return handleApiRequest(e);
   }
@@ -54,20 +55,35 @@ function doGet(e) {
 }
 
 /* ============================================================
-   PARAM PARSER
+   CORS PREFLIGHT HANDLER
+   ------------------------------------------------------------
+   Vercel/browser fetch() with "Content-Type: text/plain" avoids
+   preflight, but this handler is included as a safety net for
+   any client that still sends an OPTIONS request.
+   ============================================================ */
+function doOptions(e) {
+  return ContentService.createTextOutput('')
+    .setMimeType(ContentService.MimeType.TEXT);
+}
+
+/* ============================================================
+   PARAM PARSER — handles GET query, urlencoded POST, and JSON
    ============================================================ */
 function parseParams(e) {
   const params = {};
 
+  // 1. Query string params (GET or POST with ?action=...)
   if (e && e.parameter) {
     Object.keys(e.parameter).forEach(function(k) {
       params[k] = e.parameter[k];
     });
   }
 
+  // 2. URL-encoded POST body (application/x-www-form-urlencoded OR text/plain)
   if (e && e.postData && e.postData.contents) {
     const body = e.postData.contents;
-    if (body) {
+    if (body && body.indexOf('=') !== -1 && body.indexOf('&') !== -1 || body.indexOf('=') !== -1) {
+      // Try URL-encoded parsing
       const pairs = body.split('&');
       pairs.forEach(function(pair) {
         const idx = pair.indexOf('=');
@@ -80,24 +96,25 @@ function parseParams(e) {
         }
       });
     }
-  }
 
-  if (e && e.postData && e.postData.contents && !params.action) {
-    try {
-      const parsed = JSON.parse(e.postData.contents);
-      if (parsed && parsed.action) {
-        Object.keys(parsed).forEach(function(k) {
-          params[k] = parsed[k];
-        });
-      }
-    } catch (err) { /* not JSON, ignore */ }
+    // 3. JSON POST body fallback
+    if (!params.action) {
+      try {
+        const parsed = JSON.parse(body);
+        if (parsed && parsed.action) {
+          Object.keys(parsed).forEach(function(k) {
+            params[k] = parsed[k];
+          });
+        }
+      } catch (err) { /* not JSON, ignore */ }
+    }
   }
 
   return params;
 }
 
 /* ============================================================
-   API ENTRY (POST + GET FALLBACK)
+   API ENTRY (POST)
    ============================================================ */
 function doPost(e) {
   return handleApiRequest(e);
@@ -108,7 +125,7 @@ function handleApiRequest(e) {
     const params = parseParams(e);
     const action = params.action;
 
-    Logger.log('doPost called: action=' + action);
+    Logger.log('handleApiRequest: action=' + action);
 
     if (action === 'bootstrap') {
       return jsonResponse(bootstrap());
@@ -167,7 +184,7 @@ function handleApiRequest(e) {
 
     return jsonResponse({ success: false, message: 'Unknown action: ' + action });
   } catch (err) {
-    Logger.log('doPost error: ' + err.toString());
+    Logger.log('handleApiRequest error: ' + err.toString());
     return jsonResponse({ success: false, message: err.toString() });
   }
 }
@@ -455,8 +472,6 @@ function simpleLogin(name, mobile) {
         // Allow old name-only accounts to claim their mobile number once.
         if (!existingName.mobile) {
           const whitelist = getSheet(SHEET_WHITELIST, false);
-          // Do not change the column format; typed Google Sheet columns reject
-          // setNumberFormat(). The comparison logic handles lost leading zeros.
           whitelist.getRange(existingName.row, 3).setValue(mobile);
           clearBirthdayCaches();
           const existingRsvp = checkExistingRSVP(name, mobile);
@@ -493,7 +508,6 @@ function simpleLogin(name, mobile) {
       if (whitelist.getLastRow() === 0) {
         whitelist.appendRow(['Email', 'Name', 'Mobile']);
       }
-      // Write the value without changing the sheet's typed-column format.
       whitelist.getRange(whitelist.getLastRow() + 1, 1, 1, 3)
         .setValues([['', name, mobile]]);
       clearBirthdayCaches();
@@ -1171,5 +1185,3 @@ function resetAllData() {
 
   return 'Reset complete.';
 }
-
-
