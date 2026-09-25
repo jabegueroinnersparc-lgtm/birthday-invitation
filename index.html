@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0a0a0a">
-  <title>Saira's birthday </title>
+  <title>Simon Jabeguero</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@500;600;700;900&display=swap" rel="stylesheet">
@@ -1673,7 +1673,7 @@
 
        If left empty (''), no sound plays — the animation still runs.
        ============================================================ */
-    const SUCCESS_SOUND_URL = 'https://files.catbox.moe/s98qec.mp3';
+    const SUCCESS_SOUND_URL = 'https://files.catbox.moe/rdo0e3.mp3';
 
     let successAudio = null;
     let successAudioPreloaded = false;
@@ -2044,6 +2044,7 @@
       void mascot.offsetWidth;
       mascot.classList.add('login-success');
       playHappyBark();
+      playSuccessSound();
       setTimeout(() => mascot.classList.remove('login-success'), 1600);
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -2130,9 +2131,9 @@
 
       const timeoutId = setTimeout(() => {
         if (list.querySelector('.attendees-loading')) {
-          showAttendeesError('Taking too long', 'The server didn\'t respond. Please check your connection and try again.');
+          showAttendeesUnavailable('Attendees are taking a moment to load', 'Please try again in a few seconds.');
         }
-      }, 15000);
+      }, 30000);
 
       try {
         const res = await api('getAllAttendees');
@@ -2140,6 +2141,11 @@
 
         if (!res || !res.success) {
           showAttendeesError('Could not load', (res && res.message) || 'The server returned an error.');
+          return;
+        }
+
+        if (res.unavailable) {
+          showAttendeesUnavailable('Attendees are temporarily unavailable', 'Please try again in a few seconds.');
           return;
         }
 
@@ -2188,8 +2194,22 @@
       } catch (err) {
         clearTimeout(timeoutId);
         console.error('loadAttendees error:', err);
-        showAttendeesError('Connection error', err.message || 'Please try again.');
+        showAttendeesUnavailable('Attendees are temporarily unavailable', 'Please try again in a few seconds.');
       }
+    }
+
+    function showAttendeesUnavailable(title, message) {
+      const list = $('attendeesList');
+      list.innerHTML = `
+        <div class="attendees-empty">
+          <span class="ic">🎈</span>
+          <h3>${escapeHtml(title)}</h3>
+          <p>${escapeHtml(message)}</p>
+          <button type="button" id="retryAttendeesBtn">Try Again</button>
+        </div>
+      `;
+      const btn = $('retryAttendeesBtn');
+      if (btn) btn.addEventListener('click', loadAttendees);
     }
 
     function showAttendeesError(title, message) {
