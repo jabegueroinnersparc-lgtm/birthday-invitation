@@ -1811,50 +1811,66 @@
 
        If left empty (''), no sound plays — the animation still runs.
        ============================================================ */
-    const SUCCESS_SOUND_URL ='https://drive.google.com/uc?export=download&id=1KG2AA0EXAX0T4jwAHP42Q6TAcXlF9FYY';
+    // Google Drive direct-download URLs. The /file/d/.../view URL is only a preview page.
+    const SUCCESS_SOUND_URL = 'https://drive.google.com/uc?export=download&id=1KG2AA0EXAX0T4jwAHP42Q6TAcXlF9FYY';
     const TICKET_READY_SOUND_URL = 'https://drive.google.com/uc?export=download&id=1XPK4OB--wnSd4lAg1i4uLfwYBxsGLTWC';
 
     let successAudio = null;
-    let successAudioPreloaded = false;
+    let ticketReadyAudio = null;
+
+    function getAudio(which) {
+      const isSuccess = which === 'success';
+      const url = isSuccess ? SUCCESS_SOUND_URL : TICKET_READY_SOUND_URL;
+      const volume = isSuccess ? 0.8 : 0.9;
+      const audio = isSuccess ? successAudio : ticketReadyAudio;
+      if (audio) return audio;
+      const created = new Audio(url);
+      created.preload = 'auto';
+      created.volume = volume;
+      if (isSuccess) successAudio = created;
+      else ticketReadyAudio = created;
+      return created;
+    }
+
+    // Browsers block audio started after an async server response. Calling this
+    // from the user's submit gesture unlocks the audio before the response returns.
+    function primeAudio(which) {
+      const audio = getAudio(which);
+      audio.muted = true;
+      audio.load();
+      const p = audio.play();
+      if (p && typeof p.then === 'function') {
+        p.then(function() {
+          audio.pause();
+          audio.currentTime = 0;
+          audio.muted = false;
+        }).catch(function() {
+          audio.muted = false;
+        });
+      } else {
+        audio.muted = false;
+      }
+    }
+
+    function playAudio(which) {
+      const audio = getAudio(which);
+      audio.pause();
+      audio.currentTime = 0;
+      audio.muted = false;
+      const p = audio.play();
+      if (p && typeof p.catch === 'function') p.catch(function() {});
+    }
 
     function preloadSuccessSound() {
-      if (!SUCCESS_SOUND_URL || successAudioPreloaded) return;
-      try {
-        successAudio = new Audio(SUCCESS_SOUND_URL);
-        successAudio.volume = 0.8;
-        successAudio.preload = 'auto';
-        successAudio.load();
-        successAudioPreloaded = true;
-      } catch (e) { /* ignore */ }
+      if (SUCCESS_SOUND_URL) getAudio('success').load();
     }
 
     function playSuccessSound() {
-      if (!SUCCESS_SOUND_URL) return;
-      try {
-        if (!successAudio) {
-          successAudio = new Audio(SUCCESS_SOUND_URL);
-          successAudio.volume = 0.8;
-        }
-        successAudio.currentTime = 0;
-        const p = successAudio.play();
-        if (p && typeof p.catch === 'function') {
-          p.catch(() => { /* autoplay blocked or file missing — ignore */ });
-        }
-      } catch (e) { /* ignore */ }
+      playAudio('success');
     }
 
-    let ticketReadyAudio = null;
     function playTicketReadySound() {
-      if (!TICKET_READY_SOUND_URL || TICKET_READY_SOUND_URL.indexOf('__') === 0) return;
-      try {
-        if (!ticketReadyAudio) {
-          ticketReadyAudio = new Audio(TICKET_READY_SOUND_URL);
-          ticketReadyAudio.volume = 0.9;
-        }
-        ticketReadyAudio.currentTime = 0;
-        const p = ticketReadyAudio.play();
-        if (p && typeof p.catch === 'function') p.catch(() => { /* autoplay blocked */ });
-      } catch (e) { /* optional sound */ }
+      playAudio('ticket');
     }
 
     async function api(action, params) {
@@ -2104,6 +2120,7 @@
       const btn = $('pwBtn');
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>Checking...';
+      primeAudio('success');
 
       try {
         const res = await api('simpleLogin', { name: name, mobile: mobile });
@@ -2155,6 +2172,7 @@
       const btn = $('recoveryBtn');
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>Finding...';
+      primeAudio('success');
       try {
         const res = await api('loginByMobile', { mobile: mobile });
         if (res && res.success) {
@@ -2771,6 +2789,7 @@
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>Sending...';
       $('message').style.display = 'none';
+      primeAudio('ticket');
 
       const formData = {
         name: $('name').value.trim(),
