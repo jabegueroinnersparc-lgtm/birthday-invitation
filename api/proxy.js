@@ -8,7 +8,7 @@ export const config = {
 
 const APPS_SCRIPT_URL =
   process.env.APPS_SCRIPT_URL ||
-  'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID_HERE/exec';
+  'https://script.google.com/macros/s/AKfycbzzoNUCRIwXKbndf9QWsalqq5jn026zRc3DUfzCW6dihq8p4fol6GyX2MWp2FkGQz_0/exec';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
