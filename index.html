@@ -1566,30 +1566,58 @@
 
     .social-sidebar-header {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
-      padding: 32px 28px 24px;
+      gap: 16px;
+      padding: 32px 28px 26px;
       border-bottom: 1px solid rgba(0, 0, 0, 0.06);
       flex-shrink: 0;
       background: linear-gradient(180deg, rgba(255,255,255,0.6), transparent);
     }
 
+    .social-sidebar-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--steel);
+      margin-bottom: 10px;
+    }
+
+    .social-sidebar-eyebrow .dot-mark {
+      width: 6px;
+      height: 6px;
+      background: var(--black);
+      border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(10,10,10,0.1);
+    }
+
     .social-sidebar-header h2 {
       font-family: 'Playfair Display', serif;
-      font-size: 26px;
+      font-size: 27px;
       font-weight: 700;
       letter-spacing: -0.02em;
+      line-height: 1.15;
       color: var(--black);
     }
 
+    .social-sidebar-header h2 em {
+      font-style: italic;
+      font-weight: 500;
+      color: var(--steel);
+    }
+
     .social-sidebar-close {
-      width: 44px;
-      height: 44px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
       border: 1.5px solid var(--pearl);
       background: var(--white);
       color: var(--black);
-      font-size: 22px;
+      font-size: 21px;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -1607,7 +1635,7 @@
     }
 
     .social-sidebar-links {
-      padding: 24px 28px;
+      padding: 22px 24px 6px;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -1617,107 +1645,152 @@
     .social-sidebar-link {
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding: 16px 18px;
+      gap: 14px;
+      padding: 14px 16px;
       border-radius: 16px;
       text-decoration: none;
       color: var(--ink);
-      font-size: 15px;
-      font-weight: 600;
       transition: all 0.3s var(--ease-out);
       -webkit-tap-highlight-color: transparent;
-      border: 1px solid transparent;
+      border: 1.5px solid var(--pearl);
+      background: var(--white);
       position: relative;
       overflow: hidden;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: sidebarLinkIn 0.5s var(--ease-out) forwards;
     }
 
-    .social-sidebar-link::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: var(--fog);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      z-index: -1;
-      border-radius: 16px;
+    .social-sidebar-link:nth-child(1) { animation-delay: 0.05s; }
+    .social-sidebar-link:nth-child(2) { animation-delay: 0.12s; }
+    .social-sidebar-link:nth-child(3) { animation-delay: 0.19s; }
+
+    @keyframes sidebarLinkIn {
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .social-sidebar-link:hover {
-      border-color: var(--pearl);
-      transform: translateX(6px);
-      box-shadow: 0 4px 16px -6px rgba(0,0,0,0.1);
-    }
-
-    .social-sidebar-link:hover::before {
-      opacity: 1;
+      border-color: var(--black);
+      transform: translateX(4px);
+      box-shadow: 0 10px 26px -10px rgba(0,0,0,0.18);
     }
 
     .social-sidebar-link .sidebar-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
+      width: 46px;
+      height: 46px;
+      border-radius: 13px;
       background: var(--black);
       color: var(--white);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
-      font-weight: 700;
       flex-shrink: 0;
-      transition: transform 0.35s var(--ease-out), border-radius 0.35s var(--ease-out);
+      transition: transform 0.35s var(--ease-out), border-radius 0.35s var(--ease-out), background 0.35s var(--ease-out);
+    }
+
+    .social-sidebar-link .sidebar-icon svg {
+      width: 21px;
+      height: 21px;
     }
 
     .social-sidebar-link:hover .sidebar-icon {
-      transform: scale(1.1) rotate(-6deg);
-      border-radius: 12px;
+      transform: scale(1.08) rotate(-4deg);
+      border-radius: 11px;
+    }
+
+    .social-sidebar-link:hover .sidebar-icon-fb { background: #1877F2; }
+    .social-sidebar-link:hover .sidebar-icon-ig { background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af); }
+    .social-sidebar-link:hover .sidebar-icon-tt { background: #010101; }
+
+    .social-sidebar-link-meta {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .social-sidebar-link-title {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--black);
+    }
+
+    .social-sidebar-link-sub {
+      font-size: 11.5px;
+      color: var(--steel);
     }
 
     .social-sidebar-link .sidebar-arrow {
-      margin-left: auto;
       color: var(--silver);
-      font-size: 18px;
+      font-size: 16px;
+      flex-shrink: 0;
       transition: transform 0.35s var(--ease-out), color 0.3s ease;
     }
 
     .social-sidebar-link:hover .sidebar-arrow {
-      transform: translateX(6px);
+      transform: translate(3px, -3px);
       color: var(--black);
     }
 
     .social-sidebar-divider {
       height: 1px;
       background: rgba(0, 0, 0, 0.06);
-      margin: 8px 28px;
+      margin: 20px 28px 4px;
       flex-shrink: 0;
     }
 
     .social-sidebar-gift {
-      padding: 24px 28px 32px;
+      padding: 20px 24px 32px;
       flex: 1;
       display: flex;
       flex-direction: column;
     }
 
+    .social-sidebar-gift-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .social-sidebar-gift-icon {
+      width: 46px;
+      height: 46px;
+      flex-shrink: 0;
+      border-radius: 13px;
+      background: var(--fog);
+      border: 1.5px solid var(--pearl);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--black);
+    }
+
+    .social-sidebar-gift-icon svg {
+      width: 21px;
+      height: 21px;
+    }
+
     .social-sidebar-gift h3 {
       font-family: 'Playfair Display', serif;
-      font-size: 20px;
+      font-size: 19px;
       font-weight: 700;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
       color: var(--black);
     }
 
     .social-sidebar-gift p {
-      font-size: 13px;
+      font-size: 12.5px;
       color: var(--steel);
-      line-height: 1.6;
-      margin-bottom: 20px;
+      line-height: 1.55;
     }
 
     .social-sidebar-qr {
-      background: var(--white);
+      background: linear-gradient(160deg, var(--fog), var(--white));
       border: 1.5px solid var(--pearl);
-      border-radius: 20px;
-      padding: 20px;
+      border-radius: 22px;
+      padding: 22px;
       text-align: center;
       box-shadow: 0 4px 20px -8px rgba(0, 0, 0, 0.1);
       transition: transform 0.35s var(--ease-out), box-shadow 0.35s var(--ease-out);
@@ -1725,30 +1798,71 @@
 
     .social-sidebar-qr:hover {
       transform: translateY(-3px);
-      box-shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 14px 34px -10px rgba(0, 0, 0, 0.2);
     }
 
-    .social-sidebar-qr img {
+    .social-sidebar-qr-frame {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 12px;
+      border: 1px solid var(--pearl);
+      margin-bottom: 16px;
+    }
+
+    .social-sidebar-qr-frame img {
       display: block;
       width: 100%;
-      max-width: 260px;
+      max-width: 230px;
       height: auto;
-      margin: 0 auto 16px;
-      border-radius: 10px;
+      margin: 0 auto;
+      border-radius: 8px;
       background: #0b0b0b;
     }
 
-    .social-sidebar-qr .btn {
-      min-height: 48px;
-      font-size: 14px;
+    .social-sidebar-qr-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .social-sidebar-qr-actions .btn {
+      min-height: 46px;
+      font-size: 12.5px;
+      padding: 12px 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .social-sidebar-qr-actions .btn svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
     }
 
     .social-sidebar-hint {
-      font-size: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 11.5px;
       color: var(--steel);
-      line-height: 1.5;
-      margin-top: 12px;
-      text-align: center;
+      line-height: 1.55;
+      margin-top: 16px;
+      text-align: left;
+      padding: 12px 14px;
+      background: var(--fog);
+      border-radius: 12px;
+      border: 1px solid var(--pearl);
+    }
+
+    .social-sidebar-hint .hint-dot {
+      width: 6px;
+      height: 6px;
+      margin-top: 5px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: #f59e0b;
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.18);
     }
 
     /* ⭐ SIDEBAR TRIGGER — BIGGER, WIDER, MORE NOTICEABLE, HIDDEN ON LOGIN ⭐ */
@@ -1876,7 +1990,7 @@
         padding: 20px 22px 28px;
       }
 
-      .social-sidebar-qr img {
+      .social-sidebar-qr-frame img {
         max-width: 220px;
       }
     }
@@ -2019,6 +2133,16 @@
     .qr-modal-close:hover {
       background: rgba(255, 255, 255, 0.25);
       transform: rotate(90deg);
+    }
+    .qr-modal-actions {
+      display: flex;
+      justify-content: center;
+      margin: 14px 4px 0;
+    }
+    .qr-modal-actions .btn {
+      min-height: 46px;
+      padding: 12px 28px;
+      width: auto;
     }
     .qr-modal-help {
       margin: 10px 4px 0;
@@ -2506,24 +2630,42 @@
   <aside class="social-sidebar" id="socialSidebar" aria-hidden="true" role="dialog" aria-label="Social links and gifts">
     <div class="social-sidebar-inner">
       <div class="social-sidebar-header">
-        <h2>Stay Connected</h2>
+        <div>
+          <span class="social-sidebar-eyebrow"><span class="dot-mark"></span>Let's stay in touch</span>
+          <h2>Connect <em>&amp; celebrate.</em></h2>
+        </div>
         <button type="button" class="social-sidebar-close" id="socialSidebarClose" aria-label="Close sidebar">×</button>
       </div>
 
       <nav class="social-sidebar-links" aria-label="Social media links">
         <a class="social-sidebar-link" href="https://www.facebook.com/profile.php?id=100008068869833" target="_blank" rel="noopener noreferrer">
-          <span class="sidebar-icon">f</span>
-          <span>Facebook</span>
+          <span class="sidebar-icon sidebar-icon-fb">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 12.06C22 6.51 17.52 2 12 2S2 6.51 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.91h2.54V9.85c0-2.51 1.49-3.9 3.77-3.9 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.78-1.63 1.57v1.88h2.78l-.45 2.91h-2.33v7.03C18.34 21.21 22 17.06 22 12.06z"/></svg>
+          </span>
+          <span class="social-sidebar-link-meta">
+            <span class="social-sidebar-link-title">Facebook</span>
+            <span class="social-sidebar-link-sub">Updates &amp; photo albums</span>
+          </span>
           <span class="sidebar-arrow">↗</span>
         </a>
         <a class="social-sidebar-link" href="https://www.instagram.com/sayyymn/" target="_blank" rel="noopener noreferrer">
-          <span class="sidebar-icon">◎</span>
-          <span>Instagram</span>
+          <span class="sidebar-icon sidebar-icon-ig">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </span>
+          <span class="social-sidebar-link-meta">
+            <span class="social-sidebar-link-title">Instagram</span>
+            <span class="social-sidebar-link-sub">Behind-the-scenes &amp; reels</span>
+          </span>
           <span class="sidebar-arrow">↗</span>
         </a>
         <a class="social-sidebar-link" href="https://www.tiktok.com/@simojabeguero" target="_blank" rel="noopener noreferrer">
-          <span class="sidebar-icon">♪</span>
-          <span>TikTok</span>
+          <span class="sidebar-icon sidebar-icon-tt">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.6 5.82s.51.5 0 0A4.278 4.278 0 0 1 15.54 3h-3.09v12.4a2.592 2.592 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6c0-1.72 1.66-3.02 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64c0 3.33 2.76 5.7 5.69 5.7c3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg>
+          </span>
+          <span class="social-sidebar-link-meta">
+            <span class="social-sidebar-link-title">TikTok</span>
+            <span class="social-sidebar-link-sub">Short clips &amp; highlights</span>
+          </span>
           <span class="sidebar-arrow">↗</span>
         </a>
       </nav>
@@ -2531,13 +2673,33 @@
       <div class="social-sidebar-divider"></div>
 
       <section class="social-sidebar-gift" aria-labelledby="sidebarGiftTitle">
-        <h3 id="sidebarGiftTitle">Send a birthday gift</h3>
-        <p>Scan this QR with GCash or your banking app. Verify the recipient name before confirming.</p>
-        <div class="social-sidebar-qr">
-          <img id="gcashQrImage" src="https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/sairasivyqr.png" alt="GCash and InstaPay QR code" loading="lazy">
-          <button type="button" class="btn btn-primary" id="downloadGcashQrBtn">View QR</button>
+        <div class="social-sidebar-gift-head">
+          <span class="social-sidebar-gift-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+          </span>
+          <div>
+            <h3 id="sidebarGiftTitle">Send a birthday gift</h3>
+            <p>Scan with GCash or your banking app — always confirm the recipient's name first.</p>
+          </div>
         </div>
-        <p class="social-sidebar-hint">In GCash, choose <strong>Scan QR</strong> or <strong>Scan from Gallery</strong>, then check the recipient details.</p>
+
+        <div class="social-sidebar-qr">
+          <div class="social-sidebar-qr-frame">
+            <img id="gcashQrImage" src="https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/sairasivyqr.png" alt="GCash and InstaPay QR code" loading="lazy">
+          </div>
+          <div class="social-sidebar-qr-actions">
+            <button type="button" class="btn btn-primary" id="downloadGcashQrBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download
+            </button>
+            <button type="button" class="btn btn-outline" id="viewGcashQrBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+              View Full Size
+            </button>
+          </div>
+        </div>
+
+        <p class="social-sidebar-hint"><span class="hint-dot"></span><span>In GCash, tap <strong>Scan QR</strong> or <strong>Scan from Gallery</strong>, then double-check the recipient details before confirming.</span></p>
       </section>
     </div>
   </aside>
@@ -2547,7 +2709,10 @@
       <button type="button" class="qr-modal-close" id="gcashQrModalClose" aria-label="Close QR code">×</button>
       <h2 class="qr-modal-title" id="gcashQrModalTitle">GCash QR Code</h2>
       <img class="qr-modal-image" id="gcashQrModalImage" src="" alt="GCash QR Code">
-      <p class="qr-modal-help">Scan this code with GCash, or press and hold the image to save it on mobile.</p>
+      <div class="qr-modal-actions">
+        <button type="button" class="btn btn-primary" id="gcashQrModalDownload">Download QR</button>
+      </div>
+      <p class="qr-modal-help">Tap Download, or press and hold the image to save it manually.</p>
     </div>
   </div>
 
@@ -3169,6 +3334,39 @@
       if (event.key === 'Escape') setSocialSidebar(false);
     });
 
+    /* UNIVERSAL QR DOWNLOAD — works on desktop + Android + iOS Safari */
+    function triggerAnchorDownload(href, filename) {
+      const link = document.createElement('a');
+      link.href = href;
+      link.download = filename || 'qr-code.png';
+      link.rel = 'noopener';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    async function downloadQrUniversal(url, filename, onFallback) {
+      if (!url) return false;
+      try {
+        if (url.indexOf('data:') === 0) {
+          triggerAnchorDownload(url, filename);
+          return true;
+        }
+        const response = await fetch(url, { mode: 'cors', cache: 'no-store' });
+        if (!response.ok) throw new Error('Network response was not ok');
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        triggerAnchorDownload(blobUrl, filename);
+        setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 8000);
+        return true;
+      } catch (err) {
+        console.log('QR download falling back to new tab:', err.message);
+        window.open(url, '_blank', 'noopener');
+        if (typeof onFallback === 'function') onFallback();
+        return false;
+      }
+    }
+
     /* QR MODAL */
     let qrAudioContext = null;
     function playModernPop() {
@@ -3194,10 +3392,12 @@
       const modal = document.getElementById('gcashQrModal');
       const modalImage = document.getElementById('gcashQrModalImage');
       const closeBtn = document.getElementById('gcashQrModalClose');
-      const viewBtn = document.getElementById('downloadGcashQrBtn');
+      const viewBtn = document.getElementById('viewGcashQrBtn');
+      const downloadBtn = document.getElementById('downloadGcashQrBtn');
+      const modalDownloadBtn = document.getElementById('gcashQrModalDownload');
       const sourceImg = document.getElementById('gcashQrImage');
 
-      if (!modal || !modalImage || !closeBtn || !viewBtn || !sourceImg) return;
+      if (!modal || !modalImage || !closeBtn || !sourceImg) return;
 
       function openModal() {
         playModernPop();
@@ -3214,11 +3414,38 @@
         document.body.style.overflow = '';
       }
 
-      viewBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        openModal();
-      });
+      async function downloadGiftQr() {
+        const ok = await downloadQrUniversal(
+          sourceImg.currentSrc || sourceImg.src,
+          'birthday-gift-qr.png',
+          function() { showToast('Opening QR — press and hold the image to save it.'); }
+        );
+        if (ok) showToast('QR code downloaded!');
+      }
+
+      if (viewBtn) {
+        viewBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          openModal();
+        });
+      }
+
+      if (downloadBtn) {
+        downloadBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          downloadGiftQr();
+        });
+      }
+
+      if (modalDownloadBtn) {
+        modalDownloadBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          downloadGiftQr();
+        });
+      }
 
       closeBtn.addEventListener('click', function(e) {
         e.preventDefault();
@@ -4159,17 +4386,14 @@
     }
 
     $('newRsvpBtn').addEventListener('click', () => resetAfterTicket(false));
-    $('downloadQrBtn').addEventListener('click', () => {
+    $('downloadQrBtn').addEventListener('click', async () => {
       if (!currentTicket) return;
-      const link = document.createElement('a');
-      link.href = currentTicket.qrCodeUrl;
-      link.download = 'ticket-' + currentTicket.code + '.png';
-      link.target = '_blank';
-      link.rel = 'noopener';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      showToast('Opening QR — long-press to save.');
+      const ok = await downloadQrUniversal(
+        currentTicket.qrCodeUrl,
+        'ticket-' + currentTicket.code + '.png',
+        function() { showToast('Opening QR — press and hold the image to save it.'); }
+      );
+      if (ok) showToast('QR code downloaded!');
     });
 
     /* INIT */
