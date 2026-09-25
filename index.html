@@ -349,9 +349,30 @@
     .dog-eye-model-left { left: 16px; }
     .dog-eye-model-right { right: 16px; }
     .dog-model-black .dog-eye-model { box-shadow: 0 0 0 2px #9b6a42; }
+    .dog-brow {
+      position: absolute; top: 18px; width: 8px; height: 8px; z-index: 2;
+      border-radius: 50%; background: #facca3;
+      box-shadow: 0 1px 1px rgba(45, 24, 12, 0.3);
+    }
+    .dog-brow-left { left: 16px; }
+    .dog-brow-right { right: 16px; }
     .dog-tan-mask { position: absolute; left: 12px; right: 12px; bottom: 8px; height: 22px; border-radius: 50%; background: #d89554; }
     .dog-model-merle .dog-tan-mask { background: #d7a06a; }
     .dog-nose { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); width: 11px; height: 8px; border-radius: 50%; background: #211916; z-index: 2; }
+    .dog-tail {
+      position: absolute; bottom: 2px; width: 17px; height: 25px; z-index: -2;
+      border: 5px solid currentColor; border-left-color: transparent; border-radius: 50%;
+      transform-origin: bottom center;
+    }
+    .dog-tail-merle { left: -12px; color: #625c58; transform: rotate(35deg); }
+    .dog-tail-black { right: -12px; color: #302e2b; transform: rotate(-35deg); }
+    @keyframes tailWag {
+      0%, 100% { rotate: 0deg; }
+      25% { rotate: 24deg; }
+      50% { rotate: -20deg; }
+      75% { rotate: 18deg; }
+    }
+    .privacy-mascot.login-success .dog-tail { animation: tailWag 0.72s ease-in-out 2; }
     .privacy-paw {
       position: absolute; top: 27px; width: 20px; height: 29px; z-index: 3;
       border-radius: 55% 55% 45% 45%; background: #e6b27b;
@@ -1340,12 +1361,16 @@
               <span class="field-error" id="pwMobileError" role="alert" aria-live="polite"></span>
               <div class="privacy-mascot privacy-on" id="privacyMascot" aria-hidden="true">
                 <div class="dog-model dog-model-merle">
+                  <span class="dog-tail dog-tail-merle"></span>
                   <span class="dog-spot dog-spot-a"></span><span class="dog-spot dog-spot-b"></span>
+                  <span class="dog-brow dog-brow-left"></span><span class="dog-brow dog-brow-right"></span>
                   <span class="dog-eye-model dog-eye-model-left"></span><span class="dog-eye-model dog-eye-model-right"></span>
                   <span class="dog-tan-mask"></span><span class="dog-nose"></span>
                 </div>
                 <div class="dog-model dog-model-black">
+                  <span class="dog-tail dog-tail-black"></span>
                   <span class="dog-spot dog-spot-a"></span><span class="dog-spot dog-spot-b"></span>
+                  <span class="dog-brow dog-brow-left"></span><span class="dog-brow dog-brow-right"></span>
                   <span class="dog-eye-model dog-eye-model-left"></span><span class="dog-eye-model dog-eye-model-right"></span>
                   <span class="dog-tan-mask"></span><span class="dog-nose"></span>
                 </div>
@@ -1770,26 +1795,32 @@
 
     const $ = id => document.getElementById(id);
 
-    /* Small click sound generated locally; no external audio file is needed. */
+    /* Cute two-tone bark generated locally; no external audio file is needed. */
     let clickAudioContext = null;
-    function playClickSound() {
+    function playClickSound(isPrivacyToggle) {
       try {
         clickAudioContext = clickAudioContext || new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = clickAudioContext.createOscillator();
-        const gain = clickAudioContext.createGain();
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(560, clickAudioContext.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(420, clickAudioContext.currentTime + 0.045);
-        gain.gain.setValueAtTime(0.045, clickAudioContext.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, clickAudioContext.currentTime + 0.055);
-        oscillator.connect(gain);
-        gain.connect(clickAudioContext.destination);
-        oscillator.start();
-        oscillator.stop(clickAudioContext.currentTime + 0.06);
+        const now = clickAudioContext.currentTime;
+        const barkNotes = isPrivacyToggle ? [[460, 0], [305, 0.085]] : [[330, 0], [220, 0.085]];
+        barkNotes.forEach(function(pair) {
+          const oscillator = clickAudioContext.createOscillator();
+          const gain = clickAudioContext.createGain();
+          oscillator.type = 'triangle';
+          oscillator.frequency.setValueAtTime(pair[0], now + pair[1]);
+          oscillator.frequency.exponentialRampToValueAtTime(pair[0] * 0.62, now + pair[1] + 0.075);
+          gain.gain.setValueAtTime(0.0001, now + pair[1]);
+          gain.gain.exponentialRampToValueAtTime(0.12, now + pair[1] + 0.012);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + pair[1] + 0.09);
+          oscillator.connect(gain);
+          gain.connect(clickAudioContext.destination);
+          oscillator.start(now + pair[1]);
+          oscillator.stop(now + pair[1] + 0.095);
+        });
       } catch (e) { /* sound is optional */ }
     }
     document.addEventListener('click', function(event) {
-      if (event.target.closest('button')) playClickSound();
+      const button = event.target.closest('button');
+      if (button) playClickSound(button.id === 'privacyToggle');
     }, true);
 
     /* MOBILE NUMBER: allow digits only, including when text is pasted. */
@@ -1988,6 +2019,11 @@
       $('loginView').classList.remove('active');
       $('welcomeView').classList.add('active');
       showToast('Welcome, ' + currentUser.name.split(' ')[0] + '!');
+      const mascot = $('privacyMascot');
+      mascot.classList.remove('login-success');
+      void mascot.offsetWidth;
+      mascot.classList.add('login-success');
+      setTimeout(() => mascot.classList.remove('login-success'), 1600);
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
       try {
