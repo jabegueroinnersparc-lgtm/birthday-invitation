@@ -1244,6 +1244,17 @@
               <span class="btn-arrow">→</span>
             </button>
             <div class="message" id="pwMessage"></div>
+            <button type="button" class="btn btn-outline" id="forgotAccountBtn" style="margin-top:12px;">Forgot account?</button>
+            <div id="recoveryBox" style="display:none; margin-top:18px;">
+              <div class="field">
+                <label class="field-label" for="recoveryMobile">Mobile Number Used During Sign-up</label>
+                <input type="text" id="recoveryMobile" placeholder="09123456789"
+                       pattern="[0-9]{7,15}" inputmode="numeric" autocomplete="tel" maxlength="15"
+                       aria-describedby="recoveryMessage">
+              </div>
+              <button type="button" class="btn btn-primary" id="recoveryBtn">Find My Account</button>
+              <div class="message" id="recoveryMessage"></div>
+            </div>
           </form>
         </div>
       </div>
@@ -1562,6 +1573,7 @@
         const serverArgs = {
           bootstrap: [],
           simpleLogin: [params.name || '', params.mobile || ''],
+          loginByMobile: [params.mobile || ''],
           submitForm: [JSON.parse(params.data || '{}')],
           adminLogin: [params.password || ''],
           verifyTicket: [params.code || ''],
@@ -1590,6 +1602,7 @@
           // than dynamic .apply() calls through the google.script.run bridge.
           if (action === 'bootstrap') runner.bootstrap();
           else if (action === 'simpleLogin') runner.simpleLogin(serverArgs[0], serverArgs[1]);
+          else if (action === 'loginByMobile') runner.loginByMobile(serverArgs[0]);
           else if (action === 'submitForm') runner.submitForm(serverArgs[0]);
           else if (action === 'adminLogin') runner.adminLogin(serverArgs[0]);
           else if (action === 'verifyTicket') runner.verifyTicket(serverArgs[0]);
@@ -1640,6 +1653,28 @@
     let appConfig = { deadline: '', isPastDeadline: false };
 
     const $ = id => document.getElementById(id);
+
+    /* Small click sound generated locally; no external audio file is needed. */
+    let clickAudioContext = null;
+    function playClickSound() {
+      try {
+        clickAudioContext = clickAudioContext || new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = clickAudioContext.createOscillator();
+        const gain = clickAudioContext.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(560, clickAudioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(420, clickAudioContext.currentTime + 0.045);
+        gain.gain.setValueAtTime(0.045, clickAudioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, clickAudioContext.currentTime + 0.055);
+        oscillator.connect(gain);
+        gain.connect(clickAudioContext.destination);
+        oscillator.start();
+        oscillator.stop(clickAudioContext.currentTime + 0.06);
+      } catch (e) { /* sound is optional */ }
+    }
+    document.addEventListener('click', function(event) {
+      if (event.target.closest('button')) playClickSound();
+    }, true);
 
     /* MOBILE NUMBER: allow digits only, including when text is pasted. */
     $('mobile').addEventListener('input', function() {
@@ -1756,6 +1791,49 @@
       }
       btn.disabled = false;
       btn.innerHTML = 'Continue <span class="btn-arrow">→</span>';
+    });
+
+    $('forgotAccountBtn').addEventListener('click', function() {
+      const box = $('recoveryBox');
+      const isHidden = box.style.display === 'none';
+      box.style.display = isHidden ? 'block' : 'none';
+      if (isHidden) $('recoveryMobile').focus();
+    });
+
+    $('recoveryMobile').addEventListener('input', function() {
+      this.value = this.value.replace(/\D/g, '');
+    });
+
+    $('recoveryBtn').addEventListener('click', async function() {
+      const mobile = $('recoveryMobile').value.trim();
+      const message = $('recoveryMessage');
+      if (!/^\d{7,15}$/.test(mobile)) {
+        message.textContent = 'Please enter the 7 to 15 digit number used during sign-up.';
+        message.className = 'message error';
+        return;
+      }
+
+      const btn = $('recoveryBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Finding...';
+      try {
+        const res = await api('loginByMobile', { mobile: mobile });
+        if (res && res.success) {
+          currentUser = res.user;
+          try { localStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
+          try { sessionStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
+          $('recoveryBox').style.display = 'none';
+          completeLogin(res.ticket || null);
+        } else {
+          message.textContent = (res && res.message) || 'No account was found for that mobile number.';
+          message.className = 'message error';
+        }
+      } catch (err) {
+        message.textContent = 'Error: ' + err.message;
+        message.className = 'message error';
+      }
+      btn.disabled = false;
+      btn.innerHTML = 'Find My Account';
     });
 
     function showPwMessage(text, type) {
