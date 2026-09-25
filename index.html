@@ -869,14 +869,20 @@
     .guest-btn:active:not(:disabled) { background: var(--pearl); }
     .guest-btn:disabled { opacity: 0.35; cursor: not-allowed; }
     .guest-value {
-      flex: 1; text-align: center; font-size: 20px; font-weight: 700;
+      flex: 1; width: 0; text-align: center; font-size: 20px; font-weight: 700;
       font-variant-numeric: tabular-nums; padding: 0 8px;
-      border-left: 1.5px solid var(--mist);
-      border-right: 1.5px solid var(--mist);
-      line-height: 52px; min-width: 60px;
+      border: none; border-left: 1.5px solid var(--mist); border-right: 1.5px solid var(--mist);
+      line-height: 52px; min-width: 60px; font-family: inherit; color: var(--black);
+      background: var(--white); outline: none; -moz-appearance: textfield;
     }
+    .guest-value::-webkit-outer-spin-button,
+    .guest-value::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .guest-value:focus { box-shadow: inset 0 0 0 2px rgba(10,10,10,0.12); }
+    .guest-value.invalid { color: var(--danger); background: #fff7f7; }
     @media (max-width: 640px) { .guest-value { line-height: 56px; } }
     .guest-hint { font-size: 12px; color: var(--steel); margin-top: 8px; display: block; }
+    .field-error { display: none; color: var(--danger); font-size: 12px; margin-top: 7px; font-weight: 500; }
+    .field-error.show { display: block; }
 
     .camera-box {
       background: var(--fog);
@@ -1412,10 +1418,13 @@
                 <label class="field-label">How many are coming? *</label>
                 <div class="guest-counter">
                   <button type="button" class="guest-btn" id="guestMinus">−</button>
-                  <div class="guest-value" id="guestValue">1</div>
+                  <input class="guest-value" id="guestValue" type="number" min="1" max="20" step="1" value="1"
+                         inputmode="numeric" aria-label="Number of guests" required>
+
                   <button type="button" class="guest-btn" id="guestPlus">+</button>
                 </div>
                 <span class="guest-hint">Include yourself. Max 20.</span>
+                <span class="field-error" id="guestError" role="alert" aria-live="polite"></span>
               </div>
 
               <div class="field">
@@ -1838,7 +1847,7 @@
           b.classList.toggle('selected', i === 0);
         });
       }
-      $('guestValue').textContent = '1';
+      $('guestValue').value = '1';
       $('guestMinus').disabled = true;
       $('guestPlus').disabled = false;
       $('rsvpForm').reset();
@@ -1860,17 +1869,60 @@
     $('logoutBtnDesktop').addEventListener('click', logout);
     $('logoutBtnMobile').addEventListener('click', logout);
 
-    /* GUEST COUNTER */
-    function updateGuests(delta) {
-      guests = Math.max(1, Math.min(20, guests + delta));
-      $('guestValue').textContent = guests;
-      $('guestMinus').disabled = guests <= 1;
-      $('guestPlus').disabled = guests >= 20;
-      updateProgress();
+    /* GUEST COUNTER + NUMBER VALIDATION */
+    function setGuestError(text) {
+      const input = $('guestValue');
+      const error = $('guestError');
+      input.classList.toggle('invalid', !!text);
+      input.setAttribute('aria-invalid', text ? 'true' : 'false');
+      error.textContent = text || '';
+      error.classList.toggle('show', !!text);
     }
+
+    function readGuestValue(showError) {
+      const raw = String($('guestValue').value || '').trim();
+      if (!/^\d+$/.test(raw)) {
+        if (showError) setGuestError('Please enter a valid number of guests.');
+        return null;
+      }
+      const value = Number(raw);
+      if (!Number.isInteger(value) || value < 1 || value > 20) {
+        if (showError) setGuestError('Please enter a whole number from 1 to 20.');
+        return null;
+      }
+      setGuestError('');
+      return value;
+    }
+
+    function syncGuestControls() {
+      const value = readGuestValue(false);
+      $('guestMinus').disabled = value === 1;
+      $('guestPlus').disabled = value === 20;
+    }
+
+    function updateGuests(delta) {
+      const value = readGuestValue(true);
+      if (value === null) return;
+      const next = Math.max(1, Math.min(20, value + delta));
+      guests = next;
+      $('guestValue').value = String(next);
+      setGuestError('');
+      syncGuestControls();
+    }
+
+    $('guestValue').addEventListener('input', function() {
+      const value = readGuestValue(true);
+      if (value !== null) guests = value;
+      syncGuestControls();
+    });
+    $('guestValue').addEventListener('blur', function() {
+      const value = readGuestValue(true);
+      if (value !== null) guests = value;
+      syncGuestControls();
+    });
     $('guestMinus').addEventListener('click', () => updateGuests(-1));
     $('guestPlus').addEventListener('click', () => updateGuests(1));
-    $('guestMinus').disabled = true;
+    syncGuestControls();
 
     /* ATTENDANCE SELECTOR */
     (function initAttendanceSelector() {
@@ -2115,6 +2167,14 @@
     $('rsvpForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       if (appConfig.isPastDeadline) { showMessage('Confirmations are closed.', 'error'); return; }
+
+      const guestCount = readGuestValue(true);
+      if (guestCount === null) {
+        showMessage('Please enter a valid number of guests from 1 to 20.', 'error');
+        $('guestValue').focus();
+        return;
+      }
+      guests = guestCount;
       if (!selfieData) { showMessage('Please take a selfie before submitting.', 'error'); return; }
 
       const btn = $('submitBtn');
@@ -2130,7 +2190,7 @@
         selfie: selfieData,
         email: currentUser ? currentUser.name : '',
         loginMethod: 'name',
-        guests: guests,
+        guests: guestCount,
         attendance: selectedAttendance
       };
 
@@ -2266,7 +2326,7 @@
           b.classList.toggle('selected', i === 0);
         });
       }
-      $('guestValue').textContent = '1';
+      $('guestValue').value = '1';
       $('guestMinus').disabled = true;
       $('guestPlus').disabled = false;
       renderEmptyCamera();
