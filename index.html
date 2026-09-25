@@ -1405,24 +1405,32 @@
     .gcash-payment-ui { display: grid; gap: 12px; }
     .gcash-qr-wrap { display: grid; justify-items: center; gap: 10px; padding: 12px; border: 1px solid var(--pearl); border-radius: 16px; background: var(--white); }
     .gcash-qr { display: block; width: min(100%, 320px); height: auto; border-radius: 10px; background: #0866df; }
-    .gcash-verify { display: grid; gap: 10px; padding-top: 6px; border-top: 1px dashed var(--mist); }
-    .gcash-verify h4 { font-size: 15px; color: var(--ink); }
-    .gcash-verify .field { margin-bottom: 0; }
-    .gcash-verify input, .gcash-verify textarea { width: 100%; padding: 11px 12px; border: 1.5px solid var(--mist); border-radius: 10px; font: inherit; font-size: 15px; }
-    .gcash-verify textarea { min-height: 64px; resize: vertical; }
-    .gcash-verify input:focus, .gcash-verify textarea:focus { outline: none; border-color: var(--black); box-shadow: 0 0 0 3px rgba(10,10,10,.08); }
     .gcash-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .gcash-actions .btn { min-height: 42px; padding: 10px 12px; font-size: 12px; text-align: center; text-decoration: none; }
     .gcash-hint { font-size: 11px; color: var(--steel); line-height: 1.45; }
-    .gcash-confirm-message { display: none; padding: 10px 12px; border-radius: 10px; font-size: 12px; line-height: 1.4; }
-    .gcash-confirm-message.show { display: block; }
-    .gcash-confirm-message.success { color: #14532d; background: #f0fdf4; border: 1px solid #bbf7d0; }
-    .gcash-confirm-message.error { color: #7f1d1d; background: #fef2f2; border: 1px solid #fecaca; }
     @media (max-width: 640px) {
       .gcash-card { margin-top: 14px; padding-top: 14px; }
       .gcash-qr { width: min(100%, 270px); }
       .gcash-actions { grid-template-columns: 1fr; }
       .gcash-actions .btn { width: 100%; }
+    }
+    @media (max-width: 640px) {
+      .social-tab { z-index: 1001; }
+      .social-drawer {
+        left: 8px;
+        right: 8px;
+        bottom: calc(64px + env(safe-area-inset-bottom));
+        width: auto;
+        max-height: calc(100dvh - 80px);
+        padding: 18px;
+        border-radius: 18px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .social-drawer.open { transform: translateY(0) scale(1); }
+      .gcash-qr-wrap { padding: 10px; }
+      .gcash-qr { width: min(100%, 260px); }
+      .gcash-actions { grid-template-columns: 1fr; width: 100%; }
+      .gcash-actions .btn { width: 100%; min-height: 46px; }
     }
     @media (max-width: 640px) {
       .social-tab { top: auto; right: 14px; bottom: calc(18px + env(safe-area-inset-bottom)); transform: none; writing-mode: horizontal-tb; border-radius: 100px; padding: 12px 16px; }
@@ -1612,18 +1620,8 @@
                 <a class="btn btn-primary" href="https://gcash.com/" target="_blank" rel="noopener">Open GCash</a>
                 <button type="button" class="btn btn-outline" id="downloadGcashQrBtn">Download QR</button>
               </div>
-              <p class="gcash-hint">In GCash: choose <strong>Scan QR</strong> or <strong>Scan from Gallery</strong>, then check the recipient details.</p>
+              <p class="gcash-hint">In GCash, choose <strong>Scan QR</strong> or <strong>Scan from Gallery</strong>, then check the recipient details.</p>
             </div>
-            <form class="gcash-verify" id="paymentConfirmationForm" autocomplete="off">
-              <h4>I've sent my payment</h4>
-              <div class="field"><label class="field-label" for="paymentName">Name *</label><input id="paymentName" required maxlength="80" placeholder="Your name" autocomplete="name"></div>
-              <div class="field"><label class="field-label" for="paymentMobile">Mobile Number *</label><input id="paymentMobile" required maxlength="15" inputmode="numeric" pattern="[0-9]{7,15}" placeholder="09123456789" autocomplete="tel"></div>
-              <div class="field"><label class="field-label" for="paymentAmount">Amount Sent (₱) *</label><input id="paymentAmount" required inputmode="decimal" type="number" min="0.01" step="0.01" placeholder="0.00"></div>
-              <div class="field"><label class="field-label" for="paymentReference">Transaction Reference *</label><input id="paymentReference" required maxlength="100" placeholder="e.g. 1234567890"></div>
-              <div class="field"><label class="field-label" for="paymentNotes">Note (optional)</label><textarea id="paymentNotes" maxlength="500" placeholder="Optional message"></textarea></div>
-              <button type="submit" class="btn btn-primary" id="paymentSubmitBtn">Submit Payment Reference <span class="btn-arrow">→</span></button>
-              <div class="gcash-confirm-message" id="paymentConfirmMessage" role="status" aria-live="polite"></div>
-            </form>
           </div>
         </section>
       </aside>
@@ -2360,57 +2358,6 @@
         setSocialDrawer(false);
       }
     });
-
-    /* PAYMENT CONFIRMATION */
-    const paymentForm = $('paymentConfirmationForm');
-    if (paymentForm) {
-      $('paymentMobile').addEventListener('input', function() {
-        this.value = this.value.replace(/\D/g, '').slice(0, 15);
-      });
-
-      $('downloadGcashQrBtn').addEventListener('click', function() {
-        const link = document.createElement('a');
-        link.href = $('gcashQrImage').src;
-        link.download = 'gcash-qr.webp';
-        link.click();
-      });
-
-      paymentForm.addEventListener('submit', async function(event) {
-        event.preventDefault();
-        const btn = $('paymentSubmitBtn');
-        const message = $('paymentConfirmMessage');
-        const data = {
-          name: $('paymentName').value.trim(),
-          mobile: $('paymentMobile').value.trim(),
-          amount: $('paymentAmount').value.trim(),
-          reference: $('paymentReference').value.trim(),
-          notes: $('paymentNotes').value.trim()
-        };
-        if (!paymentForm.checkValidity()) {
-          paymentForm.reportValidity();
-          return;
-        }
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span>Submitting...';
-        message.className = 'gcash-confirm-message';
-        message.textContent = '';
-        try {
-          const res = await api('submitPayment', { data: JSON.stringify(data) });
-          message.className = 'gcash-confirm-message ' + (res && res.success ? 'success' : 'error') + ' show';
-          message.textContent = (res && res.message) || 'Unable to submit payment reference.';
-          if (res && res.success) {
-            $('paymentReference').value = '';
-            $('paymentNotes').value = '';
-          }
-        } catch (error) {
-          message.className = 'gcash-confirm-message error show';
-          message.textContent = 'Could not submit right now. Please try again.';
-        } finally {
-          btn.disabled = false;
-          btn.innerHTML = 'Submit Payment Reference <span class="btn-arrow">→</span>';
-        }
-      });
-    }
 
     /* ATTENDEES */
     let attendeesCache = null;
