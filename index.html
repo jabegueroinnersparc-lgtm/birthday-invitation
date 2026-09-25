@@ -1211,7 +1211,7 @@
 
         <div class="login-form-side">
           <h2 class="login-heading">Welcome.</h2>
-          <p class="login-subtext">Enter your name to continue.</p>
+            <p class="login-subtext">Enter your name and mobile number to continue.</p>
 
           <div class="countdown-box">
             <div class="countdown-eyebrow">
@@ -1231,6 +1231,13 @@
             <div class="field">
               <label class="field-label" for="pwName">Your Name</label>
               <input type="text" id="pwName" required placeholder="Saira cute" autocomplete="name">
+            </div>
+            <div class="field">
+              <label class="field-label" for="pwMobile">Mobile Number</label>
+              <input type="text" id="pwMobile" required placeholder="09123456789"
+                     pattern="[0-9]{7,15}" inputmode="numeric" autocomplete="tel" maxlength="15"
+                     aria-describedby="pwMobileError">
+              <span class="field-error" id="pwMobileError" role="alert" aria-live="polite"></span>
             </div>
             <button type="submit" class="btn btn-primary" id="pwBtn">
               Continue
@@ -1640,19 +1647,36 @@
     }
 
     /* LOGIN */
+    $('pwMobile').addEventListener('input', function() {
+      const digitsOnly = this.value.replace(/\D/g, '');
+      if (this.value !== digitsOnly) this.value = digitsOnly;
+
+      const error = $('pwMobileError');
+      const invalid = digitsOnly.length > 0 && digitsOnly.length < 7;
+      error.textContent = invalid ? 'Please enter 7 to 15 digits.' : '';
+      error.classList.toggle('show', invalid);
+      this.setCustomValidity(invalid ? 'Please enter at least 7 digits.' : '');
+    });
+
     $('loginForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       const name = $('pwName').value.trim();
+      const mobile = $('pwMobile').value.trim();
 
       if (!name) { showPwMessage('Please enter your name.', 'error'); return; }
       if (name.length < 2) { showPwMessage('Please enter a valid name.', 'error'); return; }
+      if (!/^\d{7,15}$/.test(mobile)) {
+        showPwMessage('Please enter a valid mobile number using 7 to 15 digits.', 'error');
+        $('pwMobile').focus();
+        return;
+      }
 
       const btn = $('pwBtn');
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>Checking...';
 
       try {
-        const res = await api('simpleLogin', { name: name });
+        const res = await api('simpleLogin', { name: name, mobile: mobile });
         if (res && res.success) {
           currentUser = res.user;
           try { localStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
@@ -1679,6 +1703,7 @@
     async function completeLogin() {
       updateUserUI(currentUser);
       $('name').value = currentUser.name;
+      $('mobile').value = currentUser.mobile || $('pwMobile').value;
 
       $('welcomeName').textContent = currentUser.name.split(' ')[0];
       $('welcomeEmail').textContent = currentUser.name;
@@ -1695,7 +1720,10 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
       try {
-        const res = await api('checkExistingRSVP', { name: currentUser.name });
+        const res = await api('checkExistingRSVP', {
+          name: currentUser.name,
+          mobile: currentUser.mobile || $('pwMobile').value
+        });
         if (res && res.success && res.exists) {
           $('goRsvpBtn').style.opacity = '0.5';
           $('goRsvpBtn').style.pointerEvents = 'none';
