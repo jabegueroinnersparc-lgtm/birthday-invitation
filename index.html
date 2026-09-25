@@ -1814,6 +1814,7 @@
     // Public GitHub raw MP3 URLs. The /blob/ URL is only a preview page.
     const SUCCESS_SOUND_URL = 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/saira%20ingay%202%20(mp3cut.net).mp3';
     const TICKET_READY_SOUND_URL = 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/shanghai%20salamat%20po.mp3';
+    const USE_LOCAL_UI_SOUNDS = false;
 
     let successAudio = null;
     let ticketReadyAudio = null;
@@ -1826,14 +1827,14 @@
       if (audio) return audio;
       const created = new Audio(url);
       created.preload = 'auto';
+      created.playsInline = true;
+      created.setAttribute('playsinline', '');
       created.volume = volume;
       if (isSuccess) successAudio = created;
       else ticketReadyAudio = created;
       return created;
     }
 
-    // Browsers block audio started after an async server response. Calling this
-    // from the user's submit gesture unlocks the audio before the response returns.
     function primeAudio(which) {
       const audio = getAudio(which);
       audio.muted = true;
@@ -1844,9 +1845,7 @@
           audio.pause();
           audio.currentTime = 0;
           audio.muted = false;
-        }).catch(function() {
-          audio.muted = false;
-        });
+        }).catch(function() { audio.muted = false; });
       } else {
         audio.muted = false;
       }
@@ -1865,13 +1864,8 @@
       if (SUCCESS_SOUND_URL) getAudio('success').load();
     }
 
-    function playSuccessSound() {
-      playAudio('success');
-    }
-
-    function playTicketReadySound() {
-      playAudio('ticket');
-    }
+    function playSuccessSound() { playAudio('success'); }
+    function playTicketReadySound() { playAudio('ticket'); }
 
     async function api(action, params) {
       params = params || {};
@@ -2008,6 +2002,7 @@
       } catch (e) { /* sound is optional */ }
     }
     document.addEventListener('click', function(event) {
+      if (!USE_LOCAL_UI_SOUNDS) return;
       const button = event.target.closest('button');
       if (button) playClickSound(button.id === 'privacyToggle');
     }, true);
@@ -2223,17 +2218,20 @@
       mascot.classList.remove('login-success');
       void mascot.offsetWidth;
       mascot.classList.add('login-success');
-      playHappyBark();
+      if (USE_LOCAL_UI_SOUNDS) playHappyBark();
       playSuccessSound();
       setTimeout(() => mascot.classList.remove('login-success'), 1600);
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
       try {
-        const res = await api('checkExistingRSVP', {
-          name: currentUser.name,
-          mobile: currentUser.mobile || $('pwMobile').value
-        });
-        const ticket = loginTicket || (res && res.success && res.exists ? res.ticket : null);
+        let ticket = loginTicket || null;
+        if (!ticket) {
+          const res = await api('checkExistingRSVP', {
+            name: currentUser.name,
+            mobile: currentUser.mobile || $('pwMobile').value
+          });
+          ticket = res && res.success && res.exists ? res.ticket : null;
+        }
         if (ticket) {
           lockRsvpAction(ticket);
 
@@ -2321,82 +2319,62 @@
     });
 
     /* ATTENDEES */
-    async function loadAttendees() {
+    let attendeesCache = null;
+    let attendeesCacheTime = 0;
+    let attendeesRequest = null;
+    const ATTENDEES_CACHE_MS = 30000;
+
+    function renderAttendees(res) {
       const list = $('attendeesList');
-      list.innerHTML = `
-        <div class="attendees-loading">
-          <div class="loader-spinner"></div>
-          <div>Loading attendees…</div>
-        </div>
-      `;
+      if (!res || !res.success) {
+        showAttendeesError('Could not load', (res && res.message) || 'The server returned an error.');
+        return;
+      }
+      if (res.unavailable) {
+        showAttendeesUnavailable('Attendees are temporarily unavailable', 'Please try again in a few seconds.');
+        return;
+      }
+      $('statParties').textContent = res.totalParties || 0;
+      $('statGuests').textContent = res.totalGuests || 0;
+      const attendees = res.attendees || [];
+      if (attendees.length === 0) {
+        list.innerHTML = `<div class="attendees-empty"><span class="ic">🎈</span><h3>No responses yet</h3><p>Be the first to confirm your attendance!</p><button type="button" onclick="document.getElementById('backFromAttendeesBtn').click()">Back</button></div>`;
+        return;
+      }
+      list.innerHTML = attendees.map((att, i) => {
+        const initial = att.name.charAt(0).toUpperCase();
+        const guests = att.guests || 1;
+        const attendance = att.attendance || 'going';
+        const delay = Math.min(i * 20, 300);
+        let statusText = 'Going';
+        let badgeClass = 'badge-going';
+        if (attendance === 'planning') { statusText = 'Planning'; badgeClass = 'badge-planning'; }
+        if (attendance === 'not_going') { statusText = 'Can\'t Make It'; badgeClass = 'badge-notgoing'; }
+        const guestLabel = attendance === 'not_going' ? '—' : `${guests} ${guests === 1 ? 'guest' : 'guests'}`;
+        return `<div class="attendee-row" style="animation-delay: ${delay}ms"><div class="attendee-avatar">${escapeHtml(initial)}</div><div class="attendee-info"><div class="n">${escapeHtml(att.name)}</div><div class="e ${badgeClass}">${statusText}</div></div><div class="attendee-badge">${guestLabel}</div></div>`;
+      }).join('');
+    }
 
+    async function loadAttendees(force) {
+      const list = $('attendeesList');
+      const fresh = attendeesCache && Date.now() - attendeesCacheTime < ATTENDEES_CACHE_MS;
+      if (!force && fresh) { renderAttendees(attendeesCache); return; }
+      if (!attendeesCache) list.innerHTML = `<div class="attendees-loading"><div class="loader-spinner"></div><div>Loading attendees…</div></div>`;
+      if (attendeesRequest) return attendeesRequest;
       const timeoutId = setTimeout(() => {
-        if (list.querySelector('.attendees-loading')) {
-          showAttendeesUnavailable('Attendees are taking a moment to load', 'Please try again in a few seconds.');
-        }
-      }, 30000);
-
-      try {
-        const res = await api('getAllAttendees');
+        if (!attendeesCache && list.querySelector('.attendees-loading')) showAttendeesUnavailable('Attendees are taking a moment to load', 'Please try again in a few seconds.');
+      }, 12000);
+      attendeesRequest = api('getAllAttendees').then(function(res) {
         clearTimeout(timeoutId);
-
-        if (!res || !res.success) {
-          showAttendeesError('Could not load', (res && res.message) || 'The server returned an error.');
-          return;
-        }
-
-        if (res.unavailable) {
-          showAttendeesUnavailable('Attendees are temporarily unavailable', 'Please try again in a few seconds.');
-          return;
-        }
-
-        $('statParties').textContent = res.totalParties || 0;
-        $('statGuests').textContent = res.totalGuests || 0;
-
-        const attendees = res.attendees || [];
-        if (attendees.length === 0) {
-          list.innerHTML = `
-            <div class="attendees-empty">
-              <span class="ic">🎈</span>
-              <h3>No responses yet</h3>
-              <p>Be the first to confirm your attendance!</p>
-              <button type="button" onclick="document.getElementById('backFromAttendeesBtn').click()">Back</button>
-            </div>
-          `;
-          return;
-        }
-
-        list.innerHTML = attendees.map((att, i) => {
-          const initial = att.name.charAt(0).toUpperCase();
-          const guests = att.guests || 1;
-          const attendance = att.attendance || 'going';
-          const delay = Math.min(i * 40, 600);
-
-          let statusText = 'Going';
-          let badgeClass = 'badge-going';
-          if (attendance === 'planning') { statusText = 'Planning'; badgeClass = 'badge-planning'; }
-          if (attendance === 'not_going') { statusText = 'Can\'t Make It'; badgeClass = 'badge-notgoing'; }
-
-          const guestLabel = attendance === 'not_going'
-            ? '—'
-            : `${guests} ${guests === 1 ? 'guest' : 'guests'}`;
-
-          return `
-            <div class="attendee-row" style="animation-delay: ${delay}ms">
-              <div class="attendee-avatar">${escapeHtml(initial)}</div>
-              <div class="attendee-info">
-                <div class="n">${escapeHtml(att.name)}</div>
-                <div class="e ${badgeClass}">${statusText}</div>
-              </div>
-              <div class="attendee-badge">${guestLabel}</div>
-            </div>
-          `;
-        }).join('');
-      } catch (err) {
+        if (res && res.success) { attendeesCache = res; attendeesCacheTime = Date.now(); }
+        renderAttendees(res);
+        return res;
+      }).catch(function(err) {
         clearTimeout(timeoutId);
         console.error('loadAttendees error:', err);
-        showAttendeesUnavailable('Attendees are temporarily unavailable', 'Please try again in a few seconds.');
-      }
+        if (!attendeesCache) showAttendeesUnavailable('Attendees are temporarily unavailable', 'Please try again in a few seconds.');
+      }).finally(function() { attendeesRequest = null; });
+      return attendeesRequest;
     }
 
     function showAttendeesUnavailable(title, message) {
@@ -2806,6 +2784,8 @@
       try {
         const res = await api('submitForm', { data: JSON.stringify(formData) });
         if (res && res.success && res.ticket) {
+          attendeesCache = null;
+          attendeesCacheTime = 0;
           showTicket(res.ticket);
         } else if (res && res.duplicate && res.ticket) {
           showMessage('You already confirmed. Showing your ticket…', 'success');
