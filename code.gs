@@ -106,6 +106,10 @@ function handleApiRequest(e) {
       return jsonResponse(simpleLogin(params.name || '', params.mobile || ''));
     }
 
+    if (action === 'loginByMobile') {
+      return jsonResponse(loginByMobile(params.mobile || ''));
+    }
+
     if (action === 'submitForm') {
       let formData = {};
       try {
@@ -383,6 +387,7 @@ function simpleLogin(name, mobile) {
     try {
       const existing = findWhitelistAccount(name, mobile);
       if (existing) {
+        const existingRsvp = checkExistingRSVP(name, mobile);
         return {
           success: true,
           exists: true,
@@ -393,6 +398,7 @@ function simpleLogin(name, mobile) {
             mobile: existing.mobile,
             method: 'name'
           },
+          ticket: existingRsvp && existingRsvp.exists ? existingRsvp.ticket : null,
           message: 'Welcome back.'
         };
       }
@@ -402,7 +408,10 @@ function simpleLogin(name, mobile) {
         // Allow old name-only accounts to claim their mobile number once.
         if (!existingName.mobile) {
           const whitelist = getSheet(SHEET_WHITELIST, false);
-          whitelist.getRange(existingName.row, 3).setNumberFormat('@').setValue(mobile);
+          // Do not change the column format; typed Google Sheet columns reject
+          // setNumberFormat(). The comparison logic handles lost leading zeros.
+          whitelist.getRange(existingName.row, 3).setValue(mobile);
+          const existingRsvp = checkExistingRSVP(name, mobile);
           return {
             success: true,
             created: false,
@@ -412,6 +421,7 @@ function simpleLogin(name, mobile) {
               mobile: mobile,
               method: 'name_mobile'
             },
+            ticket: existingRsvp && existingRsvp.exists ? existingRsvp.ticket : null,
             message: 'Account updated. Welcome back.'
           };
         }
@@ -435,8 +445,9 @@ function simpleLogin(name, mobile) {
       if (whitelist.getLastRow() === 0) {
         whitelist.appendRow(['Email', 'Name', 'Mobile']);
       }
-      const newRow = whitelist.getRange(whitelist.getLastRow() + 1, 1, 1, 3);
-      newRow.setNumberFormat('@').setValues([['', name, mobile]]);
+      // Write the value without changing the sheet's typed-column format.
+      whitelist.getRange(whitelist.getLastRow() + 1, 1, 1, 3)
+        .setValues([['', name, mobile]]);
 
       Logger.log('Created guest account for ' + name + '.');
 
@@ -452,6 +463,38 @@ function simpleLogin(name, mobile) {
   } catch (e) {
     Logger.log('simpleLogin error: ' + e.toString());
     return { success: false, message: 'Unable to sign in.' };
+  }
+}
+
+/** Recover an account using the unique mobile number only. */
+function loginByMobile(mobile) {
+  try {
+    mobile = normalizeMobile(mobile);
+    if (!/^\d{7,15}$/.test(mobile)) {
+      return { success: false, message: 'Please enter a valid mobile number using 7 to 15 digits.' };
+    }
+
+    const account = findWhitelistMobile(mobile);
+    if (!account || !account.name) {
+      return { success: false, message: 'No account was found for that mobile number.' };
+    }
+
+    const existingRsvp = checkExistingRSVP(account.name, mobile);
+    return {
+      success: true,
+      recovered: true,
+      user: {
+        name: account.name,
+        email: account.email || account.name,
+        mobile: account.mobile,
+        method: 'mobile'
+      },
+      ticket: existingRsvp && existingRsvp.exists ? existingRsvp.ticket : null,
+      message: 'Account found. Welcome back.'
+    };
+  } catch (e) {
+    Logger.log('loginByMobile error: ' + e.toString());
+    return { success: false, message: 'Unable to recover the account.' };
   }
 }
 
