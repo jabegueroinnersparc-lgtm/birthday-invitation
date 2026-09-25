@@ -22,6 +22,10 @@ const RESPONSES_HEADERS = [
    WEB APP ENTRY (GET)
    ============================================================ */
 function doGet(e) {
+  if (e && e.parameter && e.parameter.action) {
+    return handleApiRequest(e);
+  }
+
   const page = (e && e.parameter && e.parameter.page) || 'index';
 
   if (page === 'scan') {
@@ -81,9 +85,13 @@ function parseParams(e) {
 }
 
 /* ============================================================
-   API ENTRY (POST)
+   API ENTRY (POST + GET FALLBACK)
    ============================================================ */
 function doPost(e) {
+  return handleApiRequest(e);
+}
+
+function handleApiRequest(e) {
   try {
     const params = parseParams(e);
     const action = params.action;
