@@ -4610,7 +4610,9 @@
       border-bottom: 1px solid #1c1c1c; font-weight: 600; font-size: 13px;
       letter-spacing: 0.15em; text-transform: uppercase; color: #a8a8a8; flex-shrink: 0; }
     .video-container { flex: 1; position: relative; background: #000; overflow: hidden; min-height: 0; }
-    video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+    .video-container.flash-preview { background: rgba(255,255,255,0.12); }
+    video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; transition: filter 0.2s ease; }
+    .video-container.flash-preview video { filter: brightness(1.7) contrast(1.15) saturate(1.15); }
     .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
     .flash.fire { animation: flashAnim 0.4s ease; }
     @keyframes flashAnim { 0% { opacity: 0.9; } 100% { opacity: 0; } }
@@ -4660,30 +4662,55 @@
     const flashBtn = document.getElementById('flashBtn');
     const flash = document.getElementById('flash');
     const countdownEl = document.getElementById('countdown');
+    const videoContainer = document.querySelector('.video-container');
     let stream = null, countdownTimer = null, flashEnabled = false, videoTrack = null;
 
     function updateFlashButton() {
       flashBtn.textContent = flashEnabled ? 'Flash: On' : 'Flash: Off';
       flashBtn.classList.toggle('on', flashEnabled);
       flashBtn.setAttribute('aria-pressed', String(flashEnabled));
+      if (videoContainer) {
+        videoContainer.classList.toggle('flash-preview', flashEnabled);
+      }
+    }
+
+    function supportsTorch() {
+      if (!videoTrack) return false;
+      if (videoTrack.getCapabilities) {
+        const caps = videoTrack.getCapabilities();
+        if (caps && (Object.prototype.hasOwnProperty.call(caps, 'torch') || caps.torch !== undefined)) {
+          return true;
+        }
+      }
+      if (videoTrack.getSettings) {
+        const settings = videoTrack.getSettings();
+        if (settings && Object.prototype.hasOwnProperty.call(settings, 'torch')) {
+          return true;
+        }
+      }
+      return false;
     }
 
     async function setFlashMode(enabled) {
-      if (!videoTrack || typeof videoTrack.applyConstraints !== 'function') return false;
-      try {
-        const capabilities = videoTrack.getCapabilities ? videoTrack.getCapabilities() : {};
-        if (!capabilities.torch && !(Object.prototype.hasOwnProperty.call(capabilities, 'torch'))) {
-          return false;
+      const next = !!enabled;
+      if (videoTrack && typeof videoTrack.applyConstraints === 'function' && supportsTorch()) {
+        try {
+          await videoTrack.applyConstraints({
+            advanced: [{ torch: next }]
+          });
+          flashEnabled = next;
+          updateFlashButton();
+          return true;
+        } catch (err) {
+          // Fall through to a cross-device preview flash fallback.
         }
-        await videoTrack.applyConstraints({
-          advanced: [{ torch: !!enabled }]
-        });
-        flashEnabled = !!enabled;
-        updateFlashButton();
-        return true;
-      } catch (err) {
-        return false;
       }
+
+      flashEnabled = next;
+      updateFlashButton();
+      status.classList.toggle('flash-on', next);
+      status.textContent = next ? 'Flash preview is on for a brighter shot.' : 'Center your face and tap Capture';
+      return true;
     }
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -4702,24 +4729,17 @@
       status.textContent = 'Center your face and tap Capture';
       snapBtn.disabled = false;
 
-      if (videoTrack && videoTrack.getCapabilities) {
-        const caps = videoTrack.getCapabilities();
-        if (caps && Object.prototype.hasOwnProperty.call(caps, 'torch')) {
-          flashBtn.disabled = false;
-          flashBtn.addEventListener('click', async function() {
-            const next = !flashEnabled;
-            const ok = await setFlashMode(next);
-            if (!ok) {
-              flashEnabled = false;
-              updateFlashButton();
-              status.textContent = 'Flash is not available on this camera.';
-            } else {
-              status.textContent = next ? 'Flash is on for a brighter shot.' : 'Flash is off.';
-            }
-          });
+      flashBtn.disabled = false;
+      flashBtn.addEventListener('click', async function() {
+        const next = !flashEnabled;
+        const ok = await setFlashMode(next);
+        if (!ok) {
+          flashEnabled = false;
           updateFlashButton();
+          status.textContent = 'Flash is not available on this camera.';
         }
-      }
+      });
+      updateFlashButton();
       }).catch(err => {
         status.classList.add('error');
         let msg = 'Cannot access camera: ' + err.name;
