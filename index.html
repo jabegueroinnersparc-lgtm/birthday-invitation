@@ -3823,16 +3823,24 @@
       btn.innerHTML = 'Continue <span class="btn-arrow">→</span>';
     });
 
-    $('forgotAccountBtn').addEventListener('click', function() {
+    $('forgotAccountBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      const toggle = $('forgotAccountBtn');
       const box = $('recoveryBox');
-      const isClosed = !box.classList.contains('open');
-      box.classList.toggle('open', isClosed);
-      this.textContent = isClosed ? 'Close account recovery' : 'Forgot account?';
-      this.setAttribute('aria-expanded', isClosed ? 'true' : 'false');
-      box.setAttribute('aria-hidden', isClosed ? 'false' : 'true');
-      if (isClosed) {
+      if (!toggle || !box) return;
+
+      const shouldOpen = !box.classList.contains('open');
+      box.classList.toggle('open', shouldOpen);
+      box.setAttribute('aria-hidden', shouldOpen ? 'false' : 'true');
+      toggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+      toggle.textContent = shouldOpen ? 'Close account recovery' : 'Forgot account?';
+
+      if (shouldOpen) {
         setTimeout(function() { box.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 80);
-        setTimeout(() => $('recoveryMobile').focus(), 320);
+        setTimeout(function() {
+          const field = $('recoveryMobile');
+          if (field) field.focus();
+        }, 320);
       }
     });
 
