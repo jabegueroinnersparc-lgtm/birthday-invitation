@@ -1,0 +1,24 @@
+# Saira, Sivy, and Simon's Birthday
+
+> A joint birthday celebration invitation page. Guests can confirm attendance, receive an entrance ticket with QR code, and see who else is coming.
+
+## About
+- Event: Joint birthday celebration for Saira, Sivy, and Simon
+- Date: October 31, 2026 at 1:00 PM
+- Location: To be announced
+- Admission: Free (by invitation)
+
+## What This Site Does
+- Allows invited guests to confirm their attendance
+- Generates a unique entrance ticket with QR code
+- Shows a live list of confirmed attendees
+- Accepts optional birthday gifts via GCash/InstaPay
+
+## Key Pages
+- [Home / Login](https://sairasivybirthday.vercel.app/): Entry point for guests to sign in and confirm attendance
+- [Attendance Confirmation](https://sairasivybirthday.vercel.app/#form): RSVP form with selfie and details
+- [Who's Coming](https://sairasivybirthday.vercel.app/#attendees): List of confirmed guests
+
+## Contact
+- Host: Simon Jabeguero
+- Site: https://sairasivybirthday.vercel.app/
