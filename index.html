@@ -602,7 +602,7 @@
       .recovery-panel .message { transition: none; }
     }
 
-    /* FAQ SECTION (AEO) */
+    /* ===== FAQ ACCORDION ===== */
     .faq-section {
       margin-top: 32px;
       padding-top: 24px;
@@ -613,10 +613,70 @@
       font-size: 18px;
       font-weight: 700;
       color: var(--black);
-      margin-bottom: 16px;
       letter-spacing: -0.01em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      padding: 4px 0;
+      border-radius: 8px;
+      transition: color 0.2s ease;
+      margin-bottom: 0;
+    }
+    .faq-section h3:hover { color: var(--steel); }
+    .faq-section h3:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(10,10,10,0.12);
+    }
+    .faq-chevron {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: var(--fog);
+      border: 1.5px solid var(--pearl);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.35s var(--ease-out), background 0.25s ease, border-color 0.25s ease;
+    }
+    .faq-chevron svg {
+      width: 11px;
+      height: 11px;
+      stroke: var(--ink);
+      stroke-width: 2.4;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke 0.25s ease;
+    }
+    .faq-section.open .faq-chevron {
+      transform: rotate(180deg);
+      background: var(--black);
+      border-color: var(--black);
+    }
+    .faq-section.open .faq-chevron svg { stroke: var(--white); }
+
+    .faq-body {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transform: translateY(-6px);
+      transition: max-height 0.45s var(--ease-out), opacity 0.3s ease,
+                  transform 0.45s var(--ease-out), margin-top 0.45s var(--ease-out);
+      margin-top: 0;
+    }
+    .faq-section.open .faq-body {
+      max-height: 600px;
+      opacity: 1;
+      transform: translateY(0);
+      margin-top: 14px;
     }
     .faq-item { margin-bottom: 16px; }
+    .faq-item:last-child { margin-bottom: 0; }
     .faq-item h4 {
       font-size: 13.5px;
       font-weight: 700;
@@ -632,6 +692,10 @@
       .faq-section h3 { font-size: 16px; }
       .faq-item h4 { font-size: 13px; }
       .faq-item p { font-size: 12.5px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .faq-body { transition: none; }
+      .faq-chevron { transition: none; }
     }
 
     /* WELCOME VIEW */
@@ -1680,6 +1744,7 @@
     .closed-state h3 { font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px; }
     .closed-state p { color: var(--steel); font-size: 14px; }
 
+    /* ===== SUBMITTING OVERLAY (RUNNING DOG) ===== */
     .submitting-overlay {
       display: none;
       position: fixed; inset: 0; z-index: 10000;
@@ -1693,15 +1758,176 @@
       text-align: center;
     }
     .submitting-overlay.show { display: flex; }
-    .submitting-spinner {
-      width: 48px; height: 48px;
-      border: 4px solid rgba(255,255,255,0.25);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
     .submitting-title { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; }
     .submitting-sub { font-size: 12px; color: #a8a8a8; max-width: 300px; line-height: 1.55; }
+
+    .submitting-dog-scene {
+      position: relative;
+      width: 140px;
+      height: 90px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .submitting-ground {
+      position: absolute;
+      bottom: 12px;
+      left: -20px;
+      right: -20px;
+      height: 2px;
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(255,255,255,0.4) 0px,
+        rgba(255,255,255,0.4) 10px,
+        transparent 10px,
+        transparent 20px
+      );
+      background-size: 20px 2px;
+      animation: groundMove 0.5s linear infinite;
+      border-radius: 2px;
+      opacity: 0.5;
+    }
+    @keyframes groundMove {
+      from { background-position-x: 0; }
+      to   { background-position-x: -20px; }
+    }
+
+    .submitting-dog {
+      position: relative;
+      width: 72px;
+      height: 50px;
+      animation: dogBob 0.5s ease-in-out infinite;
+      margin-bottom: 10px;
+    }
+    @keyframes dogBob {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-4px); }
+    }
+
+    .dog-body {
+      position: absolute;
+      left: 14px;
+      top: 16px;
+      width: 44px;
+      height: 22px;
+      background: #fff;
+      border-radius: 12px 14px 8px 10px;
+      box-shadow: inset -2px -2px 0 rgba(0,0,0,0.08);
+    }
+
+    .dog-head {
+      position: absolute;
+      right: 2px;
+      top: 6px;
+      width: 24px;
+      height: 22px;
+      background: #fff;
+      border-radius: 10px 12px 8px 8px;
+      box-shadow: inset -1px -1px 0 rgba(0,0,0,0.08);
+    }
+    .dog-ear {
+      position: absolute;
+      top: -1px;
+      right: 4px;
+      width: 9px;
+      height: 13px;
+      background: #d4d4d4;
+      border-radius: 60% 40% 50% 50%;
+      transform-origin: top center;
+      animation: dogEarFlap 0.5s ease-in-out infinite;
+    }
+    @keyframes dogEarFlap {
+      0%, 100% { transform: rotate(0deg); }
+      50%      { transform: rotate(18deg); }
+    }
+    .dog-eye {
+      position: absolute;
+      right: 7px;
+      top: 7px;
+      width: 3px;
+      height: 3px;
+      background: #0a0a0a;
+      border-radius: 50%;
+    }
+    .dog-nose {
+      position: absolute;
+      right: -1px;
+      top: 11px;
+      width: 5px;
+      height: 4px;
+      background: #0a0a0a;
+      border-radius: 50%;
+    }
+    .dog-tail {
+      position: absolute;
+      left: 6px;
+      top: 14px;
+      width: 14px;
+      height: 4px;
+      background: #fff;
+      border-radius: 4px;
+      transform-origin: right center;
+      animation: dogTailWag 0.28s ease-in-out infinite;
+    }
+    @keyframes dogTailWag {
+      0%, 100% { transform: rotate(-18deg); }
+      50%      { transform: rotate(18deg); }
+    }
+
+    .dog-leg {
+      position: absolute;
+      bottom: 0;
+      width: 7px;
+      height: 16px;
+      background: #fff;
+      border-radius: 3px;
+      transform-origin: top center;
+    }
+    .dog-leg-front-1 { right: 6px;  animation: dogRunFront 0.4s linear infinite; }
+    .dog-leg-front-2 { right: 15px; animation: dogRunFront 0.4s linear infinite 0.2s; }
+    .dog-leg-back-1  { left: 12px;  animation: dogRunBack  0.4s linear infinite; }
+    .dog-leg-back-2  { left: 21px;  animation: dogRunBack  0.4s linear infinite 0.2s; }
+
+    @keyframes dogRunFront {
+      0%   { transform: rotate(22deg); }
+      50%  { transform: rotate(-22deg); }
+      100% { transform: rotate(22deg); }
+    }
+    @keyframes dogRunBack {
+      0%   { transform: rotate(-22deg); }
+      50%  { transform: rotate(22deg); }
+      100% { transform: rotate(-22deg); }
+    }
+
+    .dog-dust {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.35);
+      animation: dustPuff 0.8s ease-out infinite;
+    }
+    .dog-dust.d2 { animation-delay: 0.25s; left: 2px; }
+    .dog-dust.d3 { animation-delay: 0.5s;  left: -6px; }
+    @keyframes dustPuff {
+      0%   { opacity: 0; transform: scale(0.4) translateY(0); }
+      30%  { opacity: 0.7; }
+      100% { opacity: 0; transform: scale(1.4) translateY(-14px); }
+    }
+
+    @media (max-width: 480px) {
+      .submitting-dog-scene { width: 120px; height: 80px; }
+      .submitting-dog { transform: scale(0.9); transform-origin: bottom center; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .submitting-dog,
+      .submitting-dog *,
+      .submitting-ground,
+      .dog-dust { animation: none !important; }
+    }
 
     /* SIDEBAR */
     .social-sidebar {
@@ -2325,24 +2551,31 @@
             </div>
           </form>
 
-          <!-- ===== FAQ SECTION (for AEO — helps AI answer engines cite your site) ===== -->
-          <div class="faq-section">
-            <h3>Frequently Asked Questions</h3>
-            <div class="faq-item">
-              <h4>What is this website for?</h4>
-              <p>This is the official invitation and RSVP page for Saira, Sivy, and Simon's joint birthday celebration on October 31, 2026.</p>
-            </div>
-            <div class="faq-item">
-              <h4>How do I confirm my attendance?</h4>
-              <p>Sign in with your name and mobile number, then complete the RSVP form to receive your entrance ticket with QR code.</p>
-            </div>
-            <div class="faq-item">
-              <h4>Is there a deadline to RSVP?</h4>
-              <p>Yes, please confirm your attendance as soon as possible. The confirmation period may close closer to the event date.</p>
-            </div>
-            <div class="faq-item">
-              <h4>Do I need to bring anything?</h4>
-              <p>Just your entrance ticket (QR code) and yourself! Your presence is the gift.</p>
+          <!-- ===== FAQ SECTION (collapsible accordion) ===== -->
+          <div class="faq-section" id="faqSection">
+            <h3 id="faqToggle" role="button" tabindex="0" aria-expanded="false" aria-controls="faqBody">
+              <span>Frequently Asked Questions</span>
+              <span class="faq-chevron" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+              </span>
+            </h3>
+            <div class="faq-body" id="faqBody" role="region" aria-labelledby="faqToggle">
+              <div class="faq-item">
+                <h4>What is this website for?</h4>
+                <p>This is the official invitation and RSVP page for Saira, Sivy, and Simon's joint birthday celebration on October 31, 2026.</p>
+              </div>
+              <div class="faq-item">
+                <h4>How do I confirm my attendance?</h4>
+                <p>Sign in with your name and mobile number, then complete the RSVP form to receive your entrance ticket with QR code.</p>
+              </div>
+              <div class="faq-item">
+                <h4>Is there a deadline to RSVP?</h4>
+                <p>Yes, please confirm your attendance as soon as possible. The confirmation period may close closer to the event date.</p>
+              </div>
+              <div class="faq-item">
+                <h4>Do I need to bring anything?</h4>
+                <p>Just your entrance ticket (QR code) and yourself! Your presence is the gift.</p>
+              </div>
             </div>
           </div>
 
@@ -2728,8 +2961,27 @@
     </div>
   </div>
 
+  <!-- ===== SUBMITTING OVERLAY (RUNNING DOG) ===== -->
   <div class="submitting-overlay" id="submittingOverlay" aria-hidden="true">
-    <div class="submitting-spinner"></div>
+    <div class="submitting-dog-scene">
+      <div class="submitting-dog">
+        <div class="dog-tail"></div>
+        <div class="dog-body"></div>
+        <div class="dog-head">
+          <div class="dog-ear"></div>
+          <div class="dog-eye"></div>
+          <div class="dog-nose"></div>
+        </div>
+        <div class="dog-leg dog-leg-front-1"></div>
+        <div class="dog-leg dog-leg-front-2"></div>
+        <div class="dog-leg dog-leg-back-1"></div>
+        <div class="dog-leg dog-leg-back-2"></div>
+      </div>
+      <div class="dog-dust d1"></div>
+      <div class="dog-dust d2"></div>
+      <div class="dog-dust d3"></div>
+      <div class="submitting-ground"></div>
+    </div>
     <div class="submitting-title">Sending…</div>
     <div class="submitting-sub">Uploading your photo or video can take a few seconds. Please don't close this page.</div>
   </div>
@@ -3155,6 +3407,29 @@
     if (copyInviteBtnLogin) copyInviteBtnLogin.addEventListener('click', function() { copyInviteLink(this); });
     const copyInviteBtnWelcome = $('copyInviteBtnWelcome');
     if (copyInviteBtnWelcome) copyInviteBtnWelcome.addEventListener('click', function() { copyInviteLink(this); });
+
+    /* FAQ ACCORDION */
+    (function initFaqAccordion() {
+      const section = $('faqSection');
+      const toggle = $('faqToggle');
+      if (!section || !toggle) return;
+
+      function setOpen(open) {
+        section.classList.toggle('open', open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+
+      toggle.addEventListener('click', function() {
+        setOpen(!section.classList.contains('open'));
+      });
+
+      toggle.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          setOpen(!section.classList.contains('open'));
+        }
+      });
+    })();
 
     /* BOOTSTRAP */
     async function initApp() {
