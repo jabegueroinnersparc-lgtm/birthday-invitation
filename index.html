@@ -3084,8 +3084,11 @@
     let clickSoundAudio = null;
     function playButtonClick() {
       try {
+        const media = browserMediaSupport();
+        if (!media.hasAudio) return;
         if (!clickSoundAudio) {
-          clickSoundAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
+          clickSoundAudio = createSafeAudio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
+          if (!clickSoundAudio) return;
           clickSoundAudio.volume = 0.25;
           clickSoundAudio.preload = 'auto';
           clickSoundAudio.playsInline = true;
@@ -3136,7 +3139,10 @@
     function unlockAudio() {
       if (audioUnlocked) return;
       try {
-        const silent = new Audio('data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA');
+        const media = browserMediaSupport();
+        if (!media.hasAudio) return;
+        const silent = createSafeAudio('data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA');
+        if (!silent) return;
         silent.volume = 0;
         silent.play().then(() => { audioUnlocked = true; }).catch(() => {});
       } catch (e) {}
@@ -3152,12 +3158,15 @@
     let ticketReadyAudio = null;
 
     function getAudio(which) {
+      const media = browserMediaSupport();
+      if (!media.hasAudio) return null;
       const isSuccess = which === 'success';
       const url = isSuccess ? SUCCESS_SOUND_URL : TICKET_READY_SOUND_URL;
       const volume = isSuccess ? 0.8 : 0.9;
       const audio = isSuccess ? successAudio : ticketReadyAudio;
       if (audio) return audio;
-      const created = new Audio(url);
+      const created = createSafeAudio(url);
+      if (!created) return null;
       created.preload = 'auto';
       created.playsInline = true;
       created.setAttribute('playsinline', '');
@@ -3169,6 +3178,7 @@
 
     function primeAudio(which) {
       const audio = getAudio(which);
+      if (!audio) return;
       audio.muted = true;
       audio.load();
       const p = audio.play();
@@ -3182,6 +3192,7 @@
 
     function playAudio(which) {
       const audio = getAudio(which);
+      if (!audio) return;
       audio.pause();
       audio.currentTime = 0;
       audio.muted = false;
@@ -3199,7 +3210,10 @@
     function playAttendanceSound(attendance) {
       const media = ATTENDANCE_MEDIA[attendance] || DEFAULT_MEDIA;
       try {
-        const audio = new Audio(media.soundUrl);
+        const mediaSupport = browserMediaSupport();
+        if (!mediaSupport.hasAudio) return;
+        const audio = createSafeAudio(media.soundUrl);
+        if (!audio) return;
         audio.preload = 'auto';
         audio.playsInline = true;
         audio.setAttribute('playsinline', '');
@@ -3593,8 +3607,7 @@
         const res = await api('simpleLogin', { name: name, mobile: mobile });
         if (res && res.success) {
           currentUser = res.user;
-          try { localStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
-          try { sessionStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
+          safeStorageSet('birthdayUser', JSON.stringify(currentUser));
           completeLogin(res.ticket || null);
         } else if (res && res.exists) {
           showPwMessage('This name is already logged in. Please try another name.', 'error');
@@ -3643,8 +3656,7 @@
         const res = await api('loginByMobile', { mobile: mobile });
         if (res && res.success) {
           currentUser = res.user;
-          try { localStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
-          try { sessionStorage.setItem('birthdayUser', JSON.stringify(currentUser)); } catch (err) {}
+          safeStorageSet('birthdayUser', JSON.stringify(currentUser));
           $('recoveryBox').classList.remove('open');
           $('recoveryBox').setAttribute('aria-hidden', 'true');
           $('forgotAccountBtn').setAttribute('aria-expanded', 'false');
@@ -4056,18 +4068,18 @@
 
       function savePosition(left, top) {
         try {
-          localStorage.setItem(GIFT_TRIGGER_POS_KEY, JSON.stringify({ left, top }));
+          safeStorageSet(GIFT_TRIGGER_POS_KEY, JSON.stringify({ left, top }));
         } catch (e) {}
       }
 
       function clearStoredPosition() {
-        try { localStorage.removeItem(GIFT_TRIGGER_POS_KEY); } catch (e) {}
+        safeStorageRemove(GIFT_TRIGGER_POS_KEY);
       }
 
       function applyStoredPosition() {
         let stored = null;
         try {
-          const raw = localStorage.getItem(GIFT_TRIGGER_POS_KEY);
+          const raw = safeStorageGet(GIFT_TRIGGER_POS_KEY);
           if (raw) stored = JSON.parse(raw);
         } catch (e) { stored = null; }
         if (!stored || typeof stored.left !== 'number' || typeof stored.top !== 'number') return false;
@@ -4344,7 +4356,7 @@
 
     /* LOGOUT */
     function logout() {
-      try { localStorage.removeItem('birthdayUser'); sessionStorage.removeItem('birthdayUser'); } catch (e) {}
+      safeStorageRemove('birthdayUser');
       currentUser = null; selfieData = null; videoData = null; guests = 1; currentTicket = null;
       selectedAttendance = 'going';
       const attGridReset = $('attendanceGrid');
@@ -4557,6 +4569,11 @@
     }
 
     function openCameraPopup() {
+      const media = browserMediaSupport();
+      if (!media.hasCamera) {
+        alert('This browser is blocking camera access. Please allow camera permissions or use a standard browser tab.');
+        return;
+      }
       const isMobile = window.innerWidth < 640;
       let width, height;
       if (isMobile) {
@@ -4639,22 +4656,28 @@
     const countdownEl = document.getElementById('countdown');
     let stream = null, countdownTimer = null;
 
-    navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user', width: { ideal: 640, max: 640 }, height: { ideal: 480, max: 480 } },
-      audio: false
-    }).then(st => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      status.classList.add('error');
+      status.textContent = 'Camera access is not available in this browser. Please use a standard browser tab and allow camera permissions.';
+      snapBtn.disabled = true;
+    } else {
+      navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 640, max: 640 }, height: { ideal: 480, max: 480 } },
+        audio: false
+      }).then(st => {
       stream = st;
       v.srcObject = st;
       status.textContent = 'Center your face and tap Capture';
       snapBtn.disabled = false;
-    }).catch(err => {
-      status.classList.add('error');
-      let msg = 'Cannot access camera: ' + err.name;
-      if (err.name === 'NotAllowedError') msg = 'Permission denied. Please allow camera access.';
-      if (err.name === 'NotFoundError') msg = 'No camera detected.';
-      if (err.name === 'NotReadableError') msg = 'Camera in use by another app.';
-      status.textContent = msg;
-    });
+      }).catch(err => {
+        status.classList.add('error');
+        let msg = 'Cannot access camera: ' + err.name;
+        if (err.name === 'NotAllowedError') msg = 'Permission denied. Please allow camera access.';
+        if (err.name === 'NotFoundError') msg = 'No camera detected.';
+        if (err.name === 'NotReadableError') msg = 'Camera in use by another app.';
+        status.textContent = msg;
+      });
+    }
 
     snapBtn.onclick = () => {
       let count = 3;
@@ -4856,21 +4879,27 @@
     let stream = null, mediaRecorder = null, recordedChunks = [], timerInterval = null;
     let seconds = 0, isRecording = false;
 
-    navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user', width: { ideal: 480, max: 480 }, height: { ideal: 360, max: 360 }, frameRate: { ideal: 15, max: 20 } },
-      audio: true
-    }).then(st => {
-      stream = st;
-      v.srcObject = st;
-      status.textContent = 'Ready. Tap Start Recording. Max 20 seconds.';
-      recordBtn.disabled = false;
-    }).catch(err => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       status.classList.add('error');
-      let msg = 'Cannot access camera/mic: ' + err.name;
-      if (err.name === 'NotAllowedError') msg = 'Permission denied. Please allow camera and microphone access.';
-      if (err.name === 'NotFoundError') msg = 'No camera or microphone detected.';
-      status.textContent = msg;
-    });
+      status.textContent = 'Camera and microphone access is not available in this browser. Please use a standard browser tab and allow media permissions.';
+      recordBtn.disabled = true;
+    } else {
+      navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 480, max: 480 }, height: { ideal: 360, max: 360 }, frameRate: { ideal: 15, max: 20 } },
+        audio: true
+      }).then(st => {
+        stream = st;
+        v.srcObject = st;
+        status.textContent = 'Ready. Tap Start Recording. Max 20 seconds.';
+        recordBtn.disabled = false;
+      }).catch(err => {
+        status.classList.add('error');
+        let msg = 'Cannot access camera/mic: ' + err.name;
+        if (err.name === 'NotAllowedError') msg = 'Permission denied. Please allow camera and microphone access.';
+        if (err.name === 'NotFoundError') msg = 'No camera or microphone detected.';
+        status.textContent = msg;
+      });
+    }
 
     function formatTime(s) {
       const m = Math.floor(s / 60);
@@ -5035,6 +5064,43 @@
       const el = $('message');
       el.textContent = text;
       el.className = 'message ' + type;
+    }
+
+    function safeStorageSet(key, value) {
+      try {
+        localStorage.setItem(key, value);
+      } catch (e) {
+        try { sessionStorage.setItem(key, value); } catch (inner) {}
+      }
+    }
+
+    function safeStorageGet(key) {
+      try {
+        return localStorage.getItem(key);
+      } catch (e) {
+        try { return sessionStorage.getItem(key); } catch (inner) { return null; }
+      }
+    }
+
+    function safeStorageRemove(key) {
+      try { localStorage.removeItem(key); } catch (e) {}
+      try { sessionStorage.removeItem(key); } catch (inner) {}
+    }
+
+    function browserMediaSupport() {
+      const hasAudio = typeof window !== 'undefined' && typeof window.Audio !== 'undefined';
+      const hasCamera = !!(navigator && navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function');
+      return { hasAudio, hasCamera };
+    }
+
+    function createSafeAudio(url) {
+      try {
+        const media = browserMediaSupport();
+        if (!media.hasAudio || !url) return null;
+        return new Audio(url);
+      } catch (e) {
+        return null;
+      }
     }
 
     function showTicket(ticket) {
