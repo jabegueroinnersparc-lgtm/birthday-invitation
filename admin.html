@@ -762,20 +762,30 @@
       if (status) { status.className = 'attendee-load-status error'; status.textContent = message; }
       return;
     }
-    google.script.run.withSuccessHandler(res => {
-      if (!res || !res.success) {
-        const message = (res && res.message) || 'Backend returned no attendee data.';
+    const applyRows = (res, fallback) => {
+      if (!res || !res.success) return false;
+      adminAttendees = Array.isArray(res.attendees) ? res.attendees : [];
+      if (fallback) adminAttendees = adminAttendees.map(a => ({ ...a, rowIndex: null, email: a.email || '', mobile: a.mobile || '' }));
+      renderAdminAttendees();
+      if (status) { status.className = 'attendee-load-status ok'; status.textContent = 'Connected — ' + adminAttendees.length + ' attendee record(s) loaded' + (fallback ? ' using compatibility mode.' : '.'); }
+      return true;
+    };
+    const loadCompatibilityList = (reason) => {
+      google.script.run.withSuccessHandler(fallbackRes => {
+        if (applyRows(fallbackRes, true)) return;
+        const message = (fallbackRes && fallbackRes.message) || reason || 'Backend returned no attendee data.';
         $('attendeeList').innerHTML = '<div class="attendee-empty">' + escapeHtml(message) + '</div>';
         if (status) { status.className = 'attendee-load-status error'; status.textContent = 'Load failed: ' + message; }
-        return;
-      }
-      adminAttendees = Array.isArray(res.attendees) ? res.attendees : [];
-      renderAdminAttendees();
-      if (status) { status.className = 'attendee-load-status ok'; status.textContent = 'Connected — ' + adminAttendees.length + ' attendee record(s) loaded.'; }
+      }).withFailureHandler(err => {
+        const message = (err && err.message) || reason || 'Could not contact the backend.';
+        $('attendeeList').innerHTML = '<div class="attendee-empty">' + escapeHtml(message) + '</div>';
+        if (status) { status.className = 'attendee-load-status error'; status.textContent = 'Connection failed: ' + message; }
+      }).getAllAttendees();
+    };
+    google.script.run.withSuccessHandler(res => {
+      if (!applyRows(res, false)) loadCompatibilityList((res && res.message) || 'The admin attendee action is not available in the deployed Code.gs.');
     }).withFailureHandler(err => {
-      const message = (err && err.message) || 'Could not contact the backend.';
-      $('attendeeList').innerHTML = '<div class="attendee-empty">' + escapeHtml(message) + '</div>';
-      if (status) { status.className = 'attendee-load-status error'; status.textContent = 'Connection failed: ' + message; }
+      loadCompatibilityList((err && err.message) || 'The admin attendee action failed.');
     }).getAdminAttendees();
   }
   function renderAdminAttendees() {
@@ -785,7 +795,7 @@
     $('attendeeGuestTotal').textContent = adminAttendees.filter(a => a.attendance === 'going').reduce((sum, a) => sum + (Number(a.guests) || 0), 0);
     $('attendeeCheckedTotal').textContent = adminAttendees.filter(a => a.checkedIn).length;
     if (!rows.length) { list.innerHTML = '<div class="attendee-empty">No matching attendees.</div>'; return; }
-    list.innerHTML = rows.map(a => '<article class="attendee-row"><div><div class="attendee-name">' + escapeHtml(a.name) + '</div><div class="attendee-muted">' + escapeHtml(a.email || a.mobile || 'No contact details') + '</div></div><div><div class="attendee-muted">Ticket: ' + escapeHtml(a.ticketCode || '—') + '</div><div class="attendee-muted">' + (a.checkedIn ? 'Checked in' : 'Not checked in') + '</div></div><div><span class="attendee-status ' + escapeHtml(a.attendance || 'going') + '">' + escapeHtml((a.attendance || 'going').replace('_', ' ')) + '</span></div><div class="attendee-muted">' + escapeHtml(String(a.guests || 1)) + ' guest' + (Number(a.guests) === 1 ? '' : 's') + '</div><div class="attendee-actions"><button type="button" data-edit-row="' + a.rowIndex + '">Edit</button><button type="button" class="danger" data-delete-row="' + a.rowIndex + '">Remove</button></div></article>').join('');
+    list.innerHTML = rows.map(a => '<article class="attendee-row"><div><div class="attendee-name">' + escapeHtml(a.name) + '</div><div class="attendee-muted">' + escapeHtml(a.email || a.mobile || 'No contact details') + '</div></div><div><div class="attendee-muted">Ticket: ' + escapeHtml(a.ticketCode || '—') + '</div><div class="attendee-muted">' + (a.checkedIn ? 'Checked in' : 'Not checked in') + '</div></div><div><span class="attendee-status ' + escapeHtml(a.attendance || 'going') + '">' + escapeHtml((a.attendance || 'going').replace('_', ' ')) + '</span></div><div class="attendee-muted">' + escapeHtml(String(a.guests || 1)) + ' guest' + (Number(a.guests) === 1 ? '' : 's') + '</div><div class="attendee-actions">' + (a.rowIndex ? '<button type="button" data-edit-row="' + a.rowIndex + '">Edit</button><button type="button" class="danger" data-delete-row="' + a.rowIndex + '">Remove</button>' : '<span class="attendee-muted">View only</span>') + '</div></article>').join('');
     list.querySelectorAll('[data-edit-row]').forEach(btn => btn.addEventListener('click', () => openAttendeeEditor(Number(btn.dataset.editRow))));
     list.querySelectorAll('[data-delete-row]').forEach(btn => btn.addEventListener('click', () => removeAttendee(Number(btn.dataset.deleteRow))));
   }
