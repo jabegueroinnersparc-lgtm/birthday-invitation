@@ -167,6 +167,14 @@ function handleApiRequest(e) {
     }
 
     if (action === 'getAllAttendees') return jsonResponse(getAllAttendees());
+    if (action === 'getAdminAttendees') return jsonResponse(getAdminAttendees());
+    if (action === 'updateAttendee') {
+      let attendeeData = {};
+      try { attendeeData = JSON.parse(params.data || '{}'); }
+      catch (err) { return jsonResponse({ success: false, message: 'Invalid attendee data.' }); }
+      return jsonResponse(updateAttendee(attendeeData));
+    }
+    if (action === 'deleteAttendee') return jsonResponse(deleteAttendee(params.rowIndex || ''));
 
     if (action === 'submitPayment') {
       let paymentData = {};
@@ -699,6 +707,126 @@ function getAllAttendees() {
       totalParties: 0,
       warning: 'Could not load attendees: ' + e.toString()
     };
+  }
+}
+
+/* ============================================================
+   ADMIN ATTENDEE MANAGEMENT
+   ============================================================ */
+function serializeAdminCell(value) {
+  if (value instanceof Date) return value.toISOString();
+  return value == null ? '' : String(value);
+}
+
+function adminAttendeeFromRow(row, rowIndex) {
+  return {
+    rowIndex: rowIndex,
+    timestamp: serializeAdminCell(row[COL.TIMESTAMP]),
+    name: serializeAdminCell(row[COL.NAME]),
+    mobile: serializeAdminCell(row[COL.MOBILE]),
+    address: serializeAdminCell(row[COL.ADDRESS]),
+    greetings: serializeAdminCell(row[COL.GREETINGS]),
+    selfieUrl: serializeAdminCell(row[COL.SELFIE_URL]),
+    email: serializeAdminCell(row[COL.EMAIL]),
+    guests: parseInt(row[COL.GUESTS] || 1, 10) || 1,
+    loginMethod: serializeAdminCell(row[COL.LOGIN_METHOD]),
+    ticketCode: serializeAdminCell(row[COL.TICKET_CODE]).toUpperCase(),
+    checkedIn: serializeAdminCell(row[COL.CHECKED_IN]),
+    attendance: serializeAdminCell(row[COL.ATTENDANCE] || 'going').toLowerCase(),
+    videoUrl: serializeAdminCell(row[COL.VIDEO_URL])
+  };
+}
+
+function getAdminAttendees() {
+  try {
+    const sh = getSheet(SHEET_RESPONSES, false);
+    if (!sh || sh.getLastRow() < 2) {
+      return { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
+    }
+    const count = sh.getLastRow() - 1;
+    const data = sh.getRange(2, 1, count, RESPONSES_HEADERS.length).getValues();
+    const attendees = [];
+    let totalGuests = 0;
+    data.forEach(function(row, index) {
+      if (!String(row[COL.NAME] || '').trim()) return;
+      const attendee = adminAttendeeFromRow(row, index + 2);
+      attendees.push(attendee);
+      if (attendee.attendance === 'going') totalGuests += attendee.guests;
+    });
+    attendees.reverse();
+    return {
+      success: true,
+      attendees: attendees,
+      totalGuests: totalGuests,
+      totalParties: attendees.length,
+      fetchedAt: new Date().toISOString()
+    };
+  } catch (e) {
+    Logger.log('getAdminAttendees error: ' + e.toString());
+    return { success: false, attendees: [], message: 'Could not load attendees: ' + e.toString() };
+  }
+}
+
+function updateAttendee(attendeeData) {
+  const lock = LockService.getScriptLock();
+  try {
+    attendeeData = attendeeData || {};
+    const rowIndex = Number(attendeeData.rowIndex);
+    if (!Number.isInteger(rowIndex) || rowIndex < 2) {
+      return { success: false, message: 'Invalid attendee row.' };
+    }
+    const name = String(attendeeData.name || '').replace(/\s+/g, ' ').trim();
+    const mobile = String(attendeeData.mobile || '').trim();
+    const email = String(attendeeData.email || '').trim();
+    const address = String(attendeeData.address || '').trim();
+    const greetings = String(attendeeData.greetings || '').trim();
+    const guests = Number(attendeeData.guests);
+    const attendance = String(attendeeData.attendance || 'going').trim().toLowerCase();
+    if (!name) return { success: false, message: 'Name is required.' };
+    if (!/^\d{7,15}$/.test(mobile.replace(/\D/g, ''))) return { success: false, message: 'Enter a valid mobile number.' };
+    if (!Number.isInteger(guests) || guests < 1 || guests > 20) return { success: false, message: 'Guests must be a whole number from 1 to 20.' };
+    if (['going', 'planning', 'not_going'].indexOf(attendance) === -1) return { success: false, message: 'Invalid attendance status.' };
+    lock.waitLock(10000);
+    const sh = getResponsesSheet();
+    if (rowIndex > sh.getLastRow()) return { success: false, message: 'Attendee no longer exists.' };
+    const existing = sh.getRange(rowIndex, 1, 1, RESPONSES_HEADERS.length).getValues()[0];
+    if (!String(existing[COL.NAME] || '').trim()) return { success: false, message: 'Attendee no longer exists.' };
+    sh.getRange(rowIndex, COL.NAME + 1, 1, 1).setValue(name);
+    sh.getRange(rowIndex, COL.MOBILE + 1, 1, 1).setValue(mobile);
+    sh.getRange(rowIndex, COL.ADDRESS + 1, 1, 1).setValue(address);
+    sh.getRange(rowIndex, COL.GREETINGS + 1, 1, 1).setValue(greetings);
+    sh.getRange(rowIndex, COL.EMAIL + 1, 1, 1).setValue(email);
+    sh.getRange(rowIndex, COL.GUESTS + 1, 1, 1).setValue(guests);
+    sh.getRange(rowIndex, COL.ATTENDANCE + 1, 1, 1).setValue(attendance);
+    clearBirthdayCaches();
+    const updated = sh.getRange(rowIndex, 1, 1, RESPONSES_HEADERS.length).getValues()[0];
+    return { success: true, attendee: adminAttendeeFromRow(updated, rowIndex), message: 'Attendee updated.' };
+  } catch (e) {
+    Logger.log('updateAttendee error: ' + e.toString());
+    return { success: false, message: 'Could not update attendee: ' + e.toString() };
+  } finally {
+    try { lock.releaseLock(); } catch (e) {}
+  }
+}
+
+function deleteAttendee(rowIndexValue) {
+  const lock = LockService.getScriptLock();
+  try {
+    const rowIndex = Number(rowIndexValue);
+    if (!Number.isInteger(rowIndex) || rowIndex < 2) return { success: false, message: 'Invalid attendee row.' };
+    lock.waitLock(10000);
+    const sh = getResponsesSheet();
+    if (rowIndex > sh.getLastRow()) return { success: false, message: 'Attendee no longer exists.' };
+    const name = String(sh.getRange(rowIndex, COL.NAME + 1).getValue() || '').trim();
+    if (!name) return { success: false, message: 'Attendee no longer exists.' };
+    sh.deleteRow(rowIndex);
+    clearBirthdayCaches();
+    return { success: true, message: 'Attendee removed.' };
+  } catch (e) {
+    Logger.log('deleteAttendee error: ' + e.toString());
+    return { success: false, message: 'Could not remove attendee: ' + e.toString() };
+  } finally {
+    try { lock.releaseLock(); } catch (e) {}
   }
 }
 
