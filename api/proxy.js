@@ -38,6 +38,20 @@ export default async function handler(req, res) {
     });
 
     const text = await upstream.text();
+    const responsePreview = text.slice(0, 500).replace(/\s+/g, ' ').trim();
+    const contentType = upstream.headers.get('content-type') || '';
+    const looksLikeHtml = /text\/html|application\/xhtml\+xml|<!doctype html|<html/i.test(`${contentType} ${responsePreview}`) || responsePreview.startsWith('<');
+
+    if ((upstream.status === 404 || upstream.status >= 400) && looksLikeHtml) {
+      return res.status(502).json({
+        success: false,
+        message: 'Apps Script returned an HTML redirect or login page. Check that APPS_SCRIPT_URL ends with /exec and that the Web App is published with "Anyone" access.'
+      });
+    }
+
+    if (!upstream.ok && !looksLikeHtml) {
+      return res.status(upstream.status).send(text);
+    }
 
     res.setHeader('Content-Type', upstream.headers.get('content-type') || 'application/json;charset=utf-8');
     return res.status(upstream.status).send(text);

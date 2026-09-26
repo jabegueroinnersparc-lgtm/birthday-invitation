@@ -3291,17 +3291,24 @@
       }
       clearTimeout(timeoutId);
 
-      if (!res.ok) {
-        if (res.status === 413) throw new Error('Your photo or video is too large. Please record a shorter video.');
-        if (res.status === 502 || res.status === 504) throw new Error('The server took too long. Please try again with a shorter video.');
-        throw new Error('HTTP ' + res.status);
+      const text = await res.text();
+      const responsePreview = text.slice(0, 400).replace(/\s+/g, ' ').trim();
+      const contentType = res.headers.get('content-type') || '';
+      const looksLikeHtml = /text\/html|application\/xhtml\+xml|<!doctype html|<html/i.test(`${contentType} ${responsePreview}`) || responsePreview.startsWith('<');
+
+      if (looksLikeHtml) {
+        throw new Error('Apps Script returned an HTML redirect or login page. Check that the deployed URL ends with /exec and the Web App is published with "Anyone" access.');
       }
 
-      const text = await res.text();
-      if (text.trim().startsWith('<')) throw new Error('Server returned HTML instead of JSON. Please try again.');
+      if (!res.ok) {
+        if (res.status === 404) throw new Error('Apps Script route not found. Check that the deployed URL ends with /exec and points to the live Web App.');
+        if (res.status === 413) throw new Error('Your photo or video is too large. Please record a shorter video.');
+        if (res.status === 502 || res.status === 504) throw new Error('The server took too long. Please try again with a shorter video.');
+        throw new Error('HTTP ' + res.status + ': ' + responsePreview.slice(0, 180) || 'Unknown error');
+      }
 
       try { return JSON.parse(text); }
-      catch (e) { throw new Error('Invalid response from server.'); }
+      catch (e) { throw new Error('Invalid response from server. The Apps Script endpoint may be unreachable or not returning JSON.'); }
     }
 
     /* STATE */
