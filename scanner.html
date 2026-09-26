@@ -672,6 +672,50 @@
 <script>
   const $ = id => document.getElementById(id);
 
+  /* ============================================================
+     VERCEL API BRIDGE
+     Keeps the existing google.script.run-style calls working on Vercel.
+     ============================================================ */
+  (function installVercelBridge() {
+    if (window.google && google.script && google.script.run) return;
+    const state = { success: null, failure: null };
+    let proxy;
+    const bridge = {
+      withSuccessHandler(fn) { state.success = fn; return proxy; },
+      withFailureHandler(fn) { state.failure = fn; return proxy; }
+    };
+    proxy = new Proxy(bridge, {
+      get(target, prop) {
+        if (prop in target) return target[prop];
+        return function (...args) {
+          const body = new URLSearchParams();
+          body.set('action', String(prop));
+          const value = args[0];
+          if (prop === 'updateAttendee') body.set('data', JSON.stringify(value || {}));
+          else if (prop === 'deleteAttendee') body.set('rowIndex', String(value || ''));
+          else if (prop === 'submitForm' || prop === 'submitPayment') body.set('data', JSON.stringify(value || {}));
+          else if (prop === 'adminLogin') body.set('password', String(value || ''));
+          else if (prop === 'verifyTicket' || prop === 'checkInTicket') body.set('code', String(value || ''));
+          else if (value !== undefined) body.set('value', String(value));
+
+          fetch('/api/admin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+            body
+          })
+            .then(response => response.json().then(data => ({ ok: response.ok, data })))
+            .then(({ ok, data }) => {
+              if (ok) { if (state.success) state.success(data); }
+              else if (state.failure) state.failure({ message: data.message || 'Request failed.' });
+            })
+            .catch(error => { if (state.failure) state.failure(error); });
+        };
+      }
+    });
+    window.google = { script: { run: proxy } };
+  }());
+
+
   let html5QrCode = null;
   let isScanning = false;
   let lastScannedCode = '';
@@ -792,7 +836,7 @@
     if (!hasAppsScriptBridge()) {
       btn.disabled = false;
       btn.textContent = 'Unlock Scanner';
-      showLoginError('This admin panel must be opened from the deployed Google Apps Script web app.');
+      showLoginError('The Vercel API bridge is unavailable. Add /api/admin.js and configure APPS_SCRIPT_URL.');
       return;
     }
 
@@ -801,7 +845,7 @@
     const loginTimeout = setTimeout(() => {
       if (settled) return;
       finish();
-      showLoginError('The server did not respond. Confirm that Code.gs is deployed as the current web-app version and try again.');
+      showLoginError('The server did not respond. Confirm APPS_SCRIPT_URL points to the current Apps Script /exec deployment and try again.');
     }, 12000);
 
     google.script.run
