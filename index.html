@@ -4470,9 +4470,12 @@
     function renderAttendees(res) {
       const list = $('attendeesList');
       const safeRes = (res && typeof res === 'object') ? res : { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
+      const attendees = Array.isArray(safeRes.attendees) ? safeRes.attendees : [];
+      const hasAttendees = attendees.length > 0;
+      const isUnavailable = safeRes.unavailable === true;
 
       if (!safeRes.success) {
-        if (safeRes.attendees && safeRes.attendees.length === 0) {
+        if (!hasAttendees) {
           $('statParties').textContent = 0;
           $('statGuests').textContent = 0;
           list.innerHTML = `<div class="attendees-empty"><span class="ic">🎈</span><h3>No responses yet</h3><p>Be the first to confirm your attendance!</p><button type="button" onclick="document.getElementById('backFromAttendeesBtn').click()">Back</button></div>`;
@@ -4481,14 +4484,14 @@
         showAttendeesError('Could not load', (safeRes && safeRes.message) || 'The server returned an error.');
         return;
       }
-      if (safeRes.unavailable) {
-        if (!safeRes.attendees || safeRes.attendees.length === 0) {
-          $('statParties').textContent = 0;
-          $('statGuests').textContent = 0;
-          list.innerHTML = `<div class="attendees-empty"><span class="ic">🎈</span><h3>No responses yet</h3><p>Be the first to confirm your attendance!</p><button type="button" onclick="document.getElementById('backFromAttendeesBtn').click()">Back</button></div>`;
-          return;
-        }
+      if (isUnavailable && hasAttendees) {
         showAttendeesUnavailable('Attendees are temporarily unavailable', 'Please try again in a few seconds.');
+        return;
+      }
+      if (!hasAttendees) {
+        $('statParties').textContent = 0;
+        $('statGuests').textContent = 0;
+        list.innerHTML = `<div class="attendees-empty"><span class="ic">🎈</span><h3>No responses yet</h3><p>Be the first to confirm your attendance!</p><button type="button" onclick="document.getElementById('backFromAttendeesBtn').click()">Back</button></div>`;
         return;
       }
       $('statParties').textContent = safeRes.totalParties || 0;
@@ -4553,6 +4556,18 @@
 
     function showAttendeesUnavailable(title, message) {
       const list = $('attendeesList');
+      const hasContent = list && list.querySelector('.attendee-row');
+      if (!hasContent) {
+        list.innerHTML = `
+          <div class="attendees-empty">
+            <span class="ic">🎈</span>
+            <h3>No responses yet</h3>
+            <p>Be the first to confirm your attendance!</p>
+            <button type="button" onclick="document.getElementById('backFromAttendeesBtn').click()">Back</button>
+          </div>
+        `;
+        return;
+      }
       list.innerHTML = `
         <div class="attendees-empty">
           <span class="ic">🎈</span>
