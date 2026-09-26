@@ -1729,6 +1729,28 @@
       max-width: 340px;
     }
     .ticket-note .ic { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .location-card {
+      background: linear-gradient(180deg, #ffffff 0%, #f7f7f7 100%);
+      border: 1.5px solid var(--pearl);
+      border-radius: 16px;
+      padding: 16px 16px 14px;
+      margin: 0 auto 18px;
+      max-width: 340px;
+      box-shadow: 0 10px 28px -18px rgba(11, 18, 32, 0.22);
+    }
+    .location-header { display: flex; align-items: flex-start; gap: 10px; text-align: left; }
+    .location-pin { width: 32px; height: 32px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; background: rgba(228, 94, 94, 0.1); font-size: 16px; flex-shrink: 0; }
+    .location-address { font-size: 14px; line-height: 1.5; font-weight: 700; color: var(--ink); margin-top: 6px; word-break: break-word; }
+    .location-map-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 46px;
+      margin-top: 14px;
+      text-decoration: none;
+      font-weight: 700;
+    }
     .ticket-actions { display: flex; gap: 10px; max-width: 340px; margin: 0 auto; }
     .ticket-actions .btn { flex: 1; min-height: 48px; padding: 13px 16px; font-size: 14px; }
 
@@ -1775,6 +1797,8 @@
     @media (max-width: 480px) {
       .ticket-gift-card { padding: 18px 16px 16px; }
       .ticket-gift-qr-frame img { width: 100px; height: 100px; }
+      .location-card { padding: 14px 14px 12px; }
+      .location-address { font-size: 13px; }
     }
 
     @media (max-width: 480px) {
@@ -2930,6 +2954,18 @@
                 <span class="ic">💡</span>
                 <span>Save or screenshot this QR code. You'll need it at the entrance for check-in.</span>
               </div>
+
+              <div class="location-card" id="ticketLocationCard" aria-label="Event location">
+                <div class="location-header">
+                  <span class="location-pin">📍</span>
+                  <div>
+                    <div class="ticket-label">Venue</div>
+                    <div class="location-address">14°21'18.2"N 120°54'36.7"E</div>
+                  </div>
+                </div>
+                <a class="btn btn-primary location-map-btn" href="https://www.google.com/maps?q=14.3550556,120.9101944" target="_blank" rel="noopener noreferrer">Open in Maps</a>
+              </div>
+
               <div class="ticket-actions">
                 <button type="button" class="btn btn-outline" id="downloadQrBtn">Download QR</button>
                 <button type="button" class="btn btn-primary" id="newRsvpBtn">Back to Home</button>
@@ -5180,6 +5216,12 @@
       const attendance = (ticket && ticket.attendance) ? String(ticket.attendance).toLowerCase() : 'going';
       const media = ATTENDANCE_MEDIA[attendance] || DEFAULT_MEDIA;
       currentMedia = media;
+
+      const locationCard = $('ticketLocationCard');
+      if (locationCard) {
+        locationCard.style.display = 'block';
+        locationCard.setAttribute('aria-label', 'Event location');
+      }
 
       lockRsvpAction(ticket);
       $('ticketQrImg').src = ticket.qrCodeUrl;
