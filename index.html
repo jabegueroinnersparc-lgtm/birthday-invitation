@@ -4139,6 +4139,16 @@
     .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
     .flash.fire { animation: flashAnim 0.4s ease; }
     @keyframes flashAnim { 0% { opacity: 0.9; } 100% { opacity: 0; } }
+    .torch-btn { position: absolute; top: 16px; right: 16px; width: 48px; height: 48px;
+      border-radius: 50%; background: rgba(0,0,0,0.55); border: 1.5px solid rgba(255,255,255,0.3);
+      color: #fff; font-size: 22px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; padding: 0; min-height: 0; z-index: 5;
+      -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+      transition: background 0.25s, border-color 0.25s, transform 0.15s; }
+    .torch-btn:active { transform: scale(0.92); }
+    .torch-btn.on { background: #fbbf24; border-color: #fbbf24; color: #0a0a0a;
+      box-shadow: 0 0 0 4px rgba(251,191,36,0.25); }
+    .torch-btn.unsupported { display: none; }
     .countdown { position: absolute; inset: 0; background: rgba(10,10,10,0.7);
       display: none; align-items: center; justify-content: center; color: #fff;
       font-size: clamp(72px, 25vw, 120px); font-weight: 800; letter-spacing: -0.05em; }
@@ -4164,6 +4174,7 @@
     <video id="v" autoplay playsinline muted webkit-playsinline></video>
     <div class="flash" id="flash"></div>
     <div class="countdown" id="countdown">3</div>
+    <button id="torchBtn" class="torch-btn unsupported" aria-label="Toggle flash" title="Toggle flash">🔦</button>
   </div>
   <div class="bottom">
     <div class="status" id="status">Starting camera...</div>
@@ -4180,6 +4191,39 @@
     const flash = document.getElementById('flash');
     const countdownEl = document.getElementById('countdown');
     let stream = null, countdownTimer = null;
+    let torchOn = false, torchTrack = null, torchSupported = false;
+
+    function setupTorch(st) {
+      try {
+        torchTrack = st.getVideoTracks()[0];
+        const caps = torchTrack && torchTrack.getCapabilities ? torchTrack.getCapabilities() : {};
+        torchSupported = !!(caps && caps.torch);
+      } catch (e) { torchSupported = false; }
+      const btn = document.getElementById('torchBtn');
+      if (!btn) return;
+      if (torchSupported) {
+        btn.classList.remove('unsupported');
+      } else {
+        btn.classList.add('unsupported');
+      }
+    }
+
+    async function toggleTorch() {
+      if (!torchSupported || !torchTrack) return;
+      const btn = document.getElementById('torchBtn');
+      try {
+        torchOn = !torchOn;
+        await torchTrack.applyConstraints({ advanced: [{ torch: torchOn }] });
+        btn.classList.toggle('on', torchOn);
+        btn.setAttribute('aria-label', torchOn ? 'Turn flash off' : 'Turn flash on');
+      } catch (e) {
+        torchOn = false;
+        btn.classList.remove('on');
+        console.warn('Torch toggle failed:', e);
+      }
+    }
+
+    document.getElementById('torchBtn').addEventListener('click', toggleTorch);
 
     navigator.mediaDevices.getUserMedia({
       video: { facingMode: 'user', width: { ideal: 640, max: 640 }, height: { ideal: 480, max: 480 } },
@@ -4187,6 +4231,7 @@
     }).then(st => {
       stream = st;
       v.srcObject = st;
+      setupTorch(st);
       status.textContent = 'Center your face and tap Capture';
       snapBtn.disabled = false;
     }).catch(err => {
@@ -4216,6 +4261,10 @@
     function doCapture() {
       flash.classList.add('fire');
       setTimeout(() => flash.classList.remove('fire'), 400);
+      if (torchOn && torchTrack) {
+        try { torchTrack.applyConstraints({ advanced: [{ torch: false }] }); } catch (e) {}
+        torchOn = false;
+      }
       const w = v.videoWidth, h = v.videoHeight;
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
@@ -4239,12 +4288,19 @@
     }
 
     closeBtn.onclick = () => {
+      if (torchOn && torchTrack) {
+        try { torchTrack.applyConstraints({ advanced: [{ torch: false }] }); } catch (e) {}
+        torchOn = false;
+      }
       if (stream) stream.getTracks().forEach(t => t.stop());
       if (countdownTimer) clearInterval(countdownTimer);
       window.close();
     };
 
     window.addEventListener('beforeunload', () => {
+      if (torchOn && torchTrack) {
+        try { torchTrack.applyConstraints({ advanced: [{ torch: false }] }); } catch (e) {}
+      }
       if (stream) stream.getTracks().forEach(t => t.stop());
     });
   <\/script>
@@ -4346,9 +4402,19 @@
     .recording-indicator.show { display: flex; }
     .recording-indicator .dot { width: 8px; height: 8px; background: #fff; border-radius: 50%; animation: recPulse 1s infinite; }
     @keyframes recPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-    .timer { position: absolute; top: 16px; right: 16px; background: rgba(0,0,0,0.7); padding: 6px 14px;
+    .timer { position: absolute; top: 16px; right: 76px; background: rgba(0,0,0,0.7); padding: 6px 14px;
       border-radius: 100px; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; display: none; }
     .timer.show { display: block; }
+    .torch-btn { position: absolute; top: 16px; right: 16px; width: 48px; height: 48px;
+      border-radius: 50%; background: rgba(0,0,0,0.55); border: 1.5px solid rgba(255,255,255,0.3);
+      color: #fff; font-size: 22px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; padding: 0; min-height: 0; z-index: 5;
+      -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+      transition: background 0.25s, border-color 0.25s, transform 0.15s; }
+    .torch-btn:active { transform: scale(0.92); }
+    .torch-btn.on { background: #fbbf24; border-color: #fbbf24; color: #0a0a0a;
+      box-shadow: 0 0 0 4px rgba(251,191,36,0.25); }
+    .torch-btn.unsupported { display: none; }
     .bottom { padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
       background: #0a0a0a; border-top: 1px solid #1c1c1c;
       display: flex; flex-direction: column; align-items: center; gap: 12px; flex-shrink: 0; }
@@ -4371,6 +4437,7 @@
     <video id="v" autoplay playsinline muted webkit-playsinline></video>
     <div class="recording-indicator" id="recIndicator"><span class="dot"></span>Recording</div>
     <div class="timer" id="timer">00:00</div>
+    <button id="torchBtn" class="torch-btn unsupported" aria-label="Toggle flash" title="Toggle flash">🔦</button>
   </div>
   <div class="bottom">
     <div class="status" id="status">Starting camera...</div>
@@ -4397,6 +4464,36 @@
     
     let stream = null, mediaRecorder = null, recordedChunks = [], timerInterval = null;
     let seconds = 0, isRecording = false;
+    let torchOn = false, torchTrack = null, torchSupported = false;
+
+    function setupTorch(st) {
+      try {
+        torchTrack = st.getVideoTracks()[0];
+        const caps = torchTrack && torchTrack.getCapabilities ? torchTrack.getCapabilities() : {};
+        torchSupported = !!(caps && caps.torch);
+      } catch (e) { torchSupported = false; }
+      const btn = document.getElementById('torchBtn');
+      if (!btn) return;
+      if (torchSupported) btn.classList.remove('unsupported');
+      else btn.classList.add('unsupported');
+    }
+
+    async function toggleTorch() {
+      if (!torchSupported || !torchTrack) return;
+      const btn = document.getElementById('torchBtn');
+      try {
+        torchOn = !torchOn;
+        await torchTrack.applyConstraints({ advanced: [{ torch: torchOn }] });
+        btn.classList.toggle('on', torchOn);
+        btn.setAttribute('aria-label', torchOn ? 'Turn flash off' : 'Turn flash on');
+      } catch (e) {
+        torchOn = false;
+        btn.classList.remove('on');
+        console.warn('Torch toggle failed:', e);
+      }
+    }
+
+    document.getElementById('torchBtn').addEventListener('click', toggleTorch);
 
     navigator.mediaDevices.getUserMedia({
       video: { facingMode: 'user', width: { ideal: 480, max: 480 }, height: { ideal: 360, max: 360 }, frameRate: { ideal: 15, max: 20 } },
@@ -4404,6 +4501,7 @@
     }).then(st => {
       stream = st;
       v.srcObject = st;
+      setupTorch(st);
       status.textContent = 'Ready. Tap Start Recording. Max 20 seconds.';
       recordBtn.disabled = false;
     }).catch(err => {
@@ -4439,6 +4537,8 @@
       mediaRecorder.onstop = () => {
         clearInterval(timerInterval); timerInterval = null; isRecording = false;
         recIndicator.classList.remove('show'); timerEl.classList.remove('show');
+        const tb = document.getElementById('torchBtn');
+        if (tb) tb.style.display = '';
         if (recordedChunks.length === 0) { status.textContent = 'No recording data. Try again.'; return; }
         const blob = new Blob(recordedChunks, { type: 'video/webm' });
         const reader = new FileReader();
@@ -4457,6 +4557,8 @@
       recIndicator.classList.add('show'); timerEl.classList.add('show');
       status.textContent = 'Recording... Tap Stop when done.';
       recordBtn.textContent = 'Stop Recording';
+      const tb = document.getElementById('torchBtn');
+      if (tb) tb.style.display = 'none';
       
       timerInterval = setInterval(() => {
         seconds++;
@@ -4479,6 +4581,10 @@
       if (window.opener && !window.opener.closed) {
         window.opener.postMessage({ type: 'VIDEO_CAPTURED', data: v.src }, '*');
       }
+      if (torchOn && torchTrack) {
+        try { torchTrack.applyConstraints({ advanced: [{ torch: false }] }); } catch (e) {}
+        torchOn = false;
+      }
       if (stream) stream.getTracks().forEach(t => t.stop());
       window.close();
     };
@@ -4489,10 +4595,16 @@
       status.textContent = 'Ready. Tap Start Recording. Max 20 seconds.';
       recordBtn.textContent = 'Start Recording';
       controlsRow.style.display = 'flex'; previewRow.style.display = 'none'; recordBtn.disabled = false;
+      const tb = document.getElementById('torchBtn');
+      if (tb) tb.style.display = '';
     };
 
     closeBtn.onclick = () => {
       if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+      if (torchOn && torchTrack) {
+        try { torchTrack.applyConstraints({ advanced: [{ torch: false }] }); } catch (e) {}
+        torchOn = false;
+      }
       if (stream) stream.getTracks().forEach(t => t.stop());
       if (timerInterval) clearInterval(timerInterval);
       window.close();
@@ -4500,6 +4612,9 @@
 
     window.addEventListener('beforeunload', () => {
       if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+      if (torchOn && torchTrack) {
+        try { torchTrack.applyConstraints({ advanced: [{ torch: false }] }); } catch (e) {}
+      }
       if (stream) stream.getTracks().forEach(t => t.stop());
       if (timerInterval) clearInterval(timerInterval);
     });
