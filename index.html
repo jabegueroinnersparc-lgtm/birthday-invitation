@@ -4,16 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0a0a0a">
-  <title>Saira, Sivy, and Simon's Birthday🎂</title>
+  <title>Saira, Sivy, and Simon's Birthday 🎂 | Confirm Your Attendance</title>
 
-  <!-- ===== SOCIAL SHARE / LINK PREVIEW META TAGS ===== -->
-  <!-- Primary Meta Tags -->
-  <meta name="title" content="Saira, Sivy, and Simon's Birthday 🎂">
-  <meta name="description" content="You're invited! Confirm your attendance and get your entrance ticket.">
+  <!-- ===== PRIMARY META TAGS ===== -->
+  <meta name="title" content="Saira, Sivy, and Simon's Birthday 🎂 | Confirm Your Attendance">
+  <meta name="description" content="You're invited to Saira, Sivy, and Simon's joint birthday celebration! Confirm your attendance, get your entrance ticket, and see who's coming. Free admission.">
   <meta name="author" content="Simon Jabeguero">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 
-  <!-- Open Graph / Facebook / WhatsApp / iMessage / Viber / Messenger -->
-  <meta property="og:type" content="website">
+  <!-- ===== OPEN GRAPH / SOCIAL SHARING ===== -->
+  <meta property="og:type" content="event">
   <meta property="og:url" content="https://sairasivybirthday.vercel.app/">
   <meta property="og:title" content="Saira, Sivy, and Simon's Birthday 🎂">
   <meta property="og:description" content="You're invited! Confirm your attendance and get your entrance ticket.">
@@ -23,14 +23,82 @@
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Saira, Sivy, and Simon's Birthday invitation">
+  <meta property="og:site_name" content="Saira, Sivy, and Simon's Birthday">
+  <meta property="og:locale" content="en_PH">
 
-  <!-- Twitter / X -->
+  <!-- ===== TWITTER / X ===== -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://sairasivybirthday.vercel.app/">
   <meta name="twitter:title" content="Saira, Sivy, and Simon's Birthday 🎂">
   <meta name="twitter:description" content="You're invited! Confirm your attendance and get your entrance ticket.">
   <meta name="twitter:image" content="https://sairasivybirthday.vercel.app/preview.png">
   <meta name="twitter:image:alt" content="Saira, Sivy, and Simon's Birthday invitation">
+
+  <!-- ===== STRUCTURED DATA / SCHEMA.ORG ===== -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Event",
+        "@id": "https://sairasivybirthday.vercel.app/#event",
+        "name": "Saira, Sivy, and Simon's Birthday Celebration",
+        "description": "A joint birthday celebration for Saira, Sivy, and Simon. Confirm your attendance to receive your entrance ticket.",
+        "startDate": "2026-10-31T13:00:00+08:00",
+        "endDate": "2026-10-31T23:00:00+08:00",
+        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+        "eventStatus": "https://schema.org/EventScheduled",
+        "location": {
+          "@type": "Place",
+          "name": "To Be Announced",
+          "address": {
+            "@type": "PostalAddress",
+            "addressCountry": "PH"
+          }
+        },
+        "organizer": {
+          "@type": "Person",
+          "name": "Simon Jabeguero"
+        },
+        "image": [
+          "https://sairasivybirthday.vercel.app/preview.png"
+        ],
+        "offers": {
+          "@type": "Offer",
+          "name": "Free Admission",
+          "price": "0",
+          "priceCurrency": "PHP",
+          "availability": "https://schema.org/InStock",
+          "validFrom": "2026-01-01T00:00:00+08:00"
+        }
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://sairasivybirthday.vercel.app/#webpage",
+        "url": "https://sairasivybirthday.vercel.app/",
+        "name": "Saira, Sivy, and Simon's Birthday 🎂",
+        "description": "You're invited! Confirm your attendance and get your entrance ticket.",
+        "isPartOf": { "@id": "https://sairasivybirthday.vercel.app/#website" },
+        "about": { "@id": "https://sairasivybirthday.vercel.app/#event" },
+        "primaryImageOfPage": {
+          "@type": "ImageObject",
+          "url": "https://sairasivybirthday.vercel.app/preview.png",
+          "width": 1200,
+          "height": 630
+        },
+        "datePublished": "2026-01-01T00:00:00+08:00",
+        "dateModified": "2026-09-26T00:00:00+08:00"
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://sairasivybirthday.vercel.app/#website",
+        "url": "https://sairasivybirthday.vercel.app/",
+        "name": "Saira, Sivy, and Simon's Birthday",
+        "inLanguage": "en"
+      }
+    ]
+  }
+  </script>
 
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -532,6 +600,38 @@
       .recovery-panel .field,
       .recovery-panel .btn,
       .recovery-panel .message { transition: none; }
+    }
+
+    /* FAQ SECTION (AEO) */
+    .faq-section {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--pearl);
+    }
+    .faq-section h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--black);
+      margin-bottom: 16px;
+      letter-spacing: -0.01em;
+    }
+    .faq-item { margin-bottom: 16px; }
+    .faq-item h4 {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--black);
+      margin-bottom: 6px;
+    }
+    .faq-item p {
+      font-size: 13px;
+      color: var(--steel);
+      line-height: 1.6;
+    }
+    @media (max-width: 640px) {
+      .faq-section h3 { font-size: 16px; }
+      .faq-item h4 { font-size: 13px; }
+      .faq-item p { font-size: 12.5px; }
     }
 
     /* WELCOME VIEW */
@@ -1103,18 +1203,10 @@
       border-color: var(--black);
       transform: translateX(-2px);
     }
-    .form-back-btn:active {
-      transform: scale(0.97);
-    }
+    .form-back-btn:active { transform: scale(0.97); }
     @media (max-width: 640px) {
-      .form-back-btn {
-        padding: 8px 12px;
-        font-size: 11px;
-      }
-      .form-head {
-        flex-wrap: nowrap;
-        align-items: center;
-      }
+      .form-back-btn { padding: 8px 12px; font-size: 11px; }
+      .form-head { flex-wrap: nowrap; align-items: center; }
     }
 
     .progress-wrap {
@@ -1137,21 +1229,16 @@
       gap: 4px;
       width: 100%;
       max-width: 280px;
-      box-shadow:
-        0 1px 2px rgba(0,0,0,0.04),
-        0 8px 24px -12px rgba(0,0,0,0.12);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px -12px rgba(0,0,0,0.12);
       transition: box-shadow 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
       position: relative;
       overflow: hidden;
     }
     .guest-counter:focus-within {
       border-color: var(--black);
-      box-shadow:
-        0 0 0 4px rgba(10,10,10,0.08),
-        0 10px 30px -12px rgba(0,0,0,0.18);
+      box-shadow: 0 0 0 4px rgba(10,10,10,0.08), 0 10px 30px -12px rgba(0,0,0,0.18);
     }
     @media (max-width: 640px) { .guest-counter { max-width: 100%; } }
-
     .guest-counter::before {
       content: "";
       position: absolute;
@@ -1160,7 +1247,6 @@
       pointer-events: none;
       opacity: 0.6;
     }
-
     .guest-btn {
       position: relative;
       width: 54px;
@@ -1182,14 +1268,9 @@
       touch-action: manipulation;
       overflow: hidden;
       isolation: isolate;
-      transition:
-        background 0.25s var(--ease-out),
-        color 0.25s var(--ease-out),
-        transform 0.15s var(--ease-out),
-        box-shadow 0.25s var(--ease-out);
+      transition: background 0.25s var(--ease-out), color 0.25s var(--ease-out), transform 0.15s var(--ease-out), box-shadow 0.25s var(--ease-out);
       z-index: 1;
     }
-
     .guest-btn::after {
       content: "";
       position: absolute;
@@ -1202,7 +1283,6 @@
       pointer-events: none;
       z-index: -1;
     }
-
     @media (hover: hover) {
       .guest-btn:hover:not(:disabled) {
         background: var(--black);
@@ -1210,36 +1290,17 @@
         transform: translateY(-1px);
         box-shadow: 0 8px 20px -8px rgba(0,0,0,0.4);
       }
-      .guest-btn:hover:not(:disabled)::after {
-        opacity: 1;
-        transform: scale(1);
-      }
+      .guest-btn:hover:not(:disabled)::after { opacity: 1; transform: scale(1); }
     }
-
-    .guest-btn:active:not(:disabled) {
-      transform: scale(0.92);
-      transition: transform 0.1s var(--ease-out);
-    }
-
-    .guest-btn:focus-visible {
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(10,10,10,0.18);
-    }
-
-    .guest-btn:disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
-      background: var(--pearl);
-      color: var(--silver);
-    }
-
+    .guest-btn:active:not(:disabled) { transform: scale(0.92); transition: transform 0.1s var(--ease-out); }
+    .guest-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(10,10,10,0.18); }
+    .guest-btn:disabled { opacity: 0.35; cursor: not-allowed; background: var(--pearl); color: var(--silver); }
     @keyframes guestBtnPulse {
       0%   { box-shadow: 0 0 0 0 rgba(10,10,10,0.35); }
       70%  { box-shadow: 0 0 0 12px rgba(10,10,10,0); }
       100% { box-shadow: 0 0 0 0 rgba(10,10,10,0); }
     }
     .guest-btn.pulse { animation: guestBtnPulse 0.55s var(--ease-out); }
-
     .guest-value {
       flex: 1;
       width: 0;
@@ -1263,14 +1324,12 @@
     .guest-value::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .guest-value:focus { color: var(--black); }
     .guest-value.invalid { color: var(--danger); }
-
     @keyframes guestValuePop {
       0%   { transform: scale(1); }
       40%  { transform: scale(1.18); }
       100% { transform: scale(1); }
     }
     .guest-value.pop { animation: guestValuePop 0.4s var(--ease-out); }
-
     .guest-hint { font-size: 12px; color: var(--steel); margin-top: 8px; display: block; }
     .field-error { display: none; color: var(--danger); font-size: 12px; margin-top: 7px; font-weight: 500; }
     .field-error.show { display: block; }
@@ -1542,7 +1601,6 @@
     .ticket-actions { display: flex; gap: 10px; max-width: 340px; margin: 0 auto; }
     .ticket-actions .btn { flex: 1; min-height: 48px; padding: 13px 16px; font-size: 14px; }
 
-    /* COMPACT GIFT CARD — shown right under the ticket, peak-goodwill moment */
     .ticket-gift-card {
       max-width: 340px;
       margin: 24px auto 0;
@@ -1553,17 +1611,8 @@
       box-shadow: 0 10px 28px -14px rgba(180, 130, 20, 0.28);
       text-align: center;
     }
-    .ticket-gift-icon {
-      font-size: 26px;
-      margin-bottom: 8px;
-      line-height: 1;
-    }
-    .ticket-gift-copy {
-      font-size: 12.5px;
-      color: #7a5c1e;
-      line-height: 1.55;
-      margin-bottom: 16px;
-    }
+    .ticket-gift-icon { font-size: 26px; margin-bottom: 8px; line-height: 1; }
+    .ticket-gift-copy { font-size: 12.5px; color: #7a5c1e; line-height: 1.55; margin-bottom: 16px; }
     .ticket-gift-qr-frame {
       display: inline-block;
       background: var(--white);
@@ -1572,12 +1621,7 @@
       padding: 10px;
       margin-bottom: 14px;
     }
-    .ticket-gift-qr-frame img {
-      display: block;
-      width: 120px;
-      height: 120px;
-      border-radius: 6px;
-    }
+    .ticket-gift-qr-frame img { display: block; width: 120px; height: 120px; border-radius: 6px; }
     .btn-gift {
       display: block;
       width: 100%;
@@ -1636,7 +1680,6 @@
     .closed-state h3 { font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px; }
     .closed-state p { color: var(--steel); font-size: 14px; }
 
-    /* SUBMITTING OVERLAY */
     .submitting-overlay {
       display: none;
       position: fixed; inset: 0; z-index: 10000;
@@ -1657,21 +1700,16 @@
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
-    .submitting-title {
-      font-size: 15px; font-weight: 600; letter-spacing: 0.02em;
-    }
-    .submitting-sub {
-      font-size: 12px; color: #a8a8a8;
-      max-width: 300px; line-height: 1.55;
-    }
+    .submitting-title { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; }
+    .submitting-sub { font-size: 12px; color: #a8a8a8; max-width: 300px; line-height: 1.55; }
 
-    /* ⭐ MODERN SIDEBAR – WIDER & MORE SPACIOUS ⭐ */
+    /* SIDEBAR */
     .social-sidebar {
       position: fixed;
       top: 0;
       right: 0;
       height: 100%;
-      width: 400px ;
+      width: 400px;
       z-index: 2000;
       background: rgba(255, 255, 255, 0.96);
       backdrop-filter: blur(24px) saturate(200%);
@@ -1684,14 +1722,9 @@
       flex-direction: column;
       overflow: hidden;
     }
-
-    .social-sidebar.open {
-      transform: translateX(0);
-    }
-
+    .social-sidebar.open { transform: translateX(0); }
     .social-sidebar-overlay {
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background: rgba(0, 0, 0, 0.45);
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
@@ -1700,400 +1733,200 @@
       pointer-events: none;
       transition: opacity 0.45s ease;
     }
-
-    .social-sidebar-overlay.open {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
+    .social-sidebar-overlay.open { opacity: 1; pointer-events: auto; }
     .social-sidebar-inner {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      overflow-y: auto;
+      display: flex; flex-direction: column;
+      height: 100%; overflow-y: auto;
       -webkit-overflow-scrolling: touch;
     }
-
-    /* SCROLL FADE INDICATORS */
     .social-sidebar-fade {
-      position: absolute;
-      left: 0; right: 0;
-      height: 34px;
-      pointer-events: none;
-      z-index: 5;
-      opacity: 0;
-      transition: opacity 0.25s ease;
+      position: absolute; left: 0; right: 0;
+      height: 34px; pointer-events: none; z-index: 5;
+      opacity: 0; transition: opacity 0.25s ease;
     }
-    .social-sidebar-fade-top {
-      top: 0;
-      background: linear-gradient(to bottom, rgba(255,255,255,0.98), rgba(255,255,255,0));
-    }
-    .social-sidebar-fade-bottom {
-      bottom: 0;
-      background: linear-gradient(to top, rgba(255,255,255,0.98), rgba(255,255,255,0));
-    }
+    .social-sidebar-fade-top { top: 0; background: linear-gradient(to bottom, rgba(255,255,255,0.98), rgba(255,255,255,0)); }
+    .social-sidebar-fade-bottom { bottom: 0; background: linear-gradient(to top, rgba(255,255,255,0.98), rgba(255,255,255,0)); }
     .social-sidebar-fade.show { opacity: 1; }
-
     .social-sidebar-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 32px 28px 26px;
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 16px; padding: 32px 28px 26px;
       border-bottom: 1px solid rgba(0, 0, 0, 0.06);
       flex-shrink: 0;
       background: linear-gradient(180deg, rgba(255,255,255,0.6), transparent);
     }
-
     .social-sidebar-eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--steel);
-      margin-bottom: 10px;
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--steel); margin-bottom: 10px;
     }
-
     .social-sidebar-eyebrow .dot-mark {
-      width: 6px;
-      height: 6px;
-      background: var(--black);
-      border-radius: 50%;
-      box-shadow: 0 0 0 3px rgba(10,10,10,0.1);
+      width: 6px; height: 6px; background: var(--black);
+      border-radius: 50%; box-shadow: 0 0 0 3px rgba(10,10,10,0.1);
     }
-
     .social-sidebar-header h2 {
       font-family: 'Playfair Display', serif;
-      font-size: 27px;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      line-height: 1.15;
+      font-size: 27px; font-weight: 700;
+      letter-spacing: -0.02em; line-height: 1.15;
       color: var(--black);
     }
-
-    .social-sidebar-header h2 em {
-      font-style: italic;
-      font-weight: 500;
-      color: var(--steel);
-    }
-
+    .social-sidebar-header h2 em { font-style: italic; font-weight: 500; color: var(--steel); }
     .social-sidebar-close {
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
+      width: 42px; height: 42px; border-radius: 50%;
       border: 1.5px solid var(--pearl);
-      background: var(--white);
-      color: var(--black);
-      font-size: 21px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: var(--white); color: var(--black);
+      font-size: 21px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
       transition: all 0.3s var(--ease-out);
       -webkit-tap-highlight-color: transparent;
       flex-shrink: 0;
     }
-
     .social-sidebar-close:hover {
-      background: var(--black);
-      color: var(--white);
-      border-color: var(--black);
-      transform: rotate(90deg);
+      background: var(--black); color: var(--white);
+      border-color: var(--black); transform: rotate(90deg);
     }
-
     .social-sidebar-links {
       padding: 22px 24px 6px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      display: flex; flex-direction: column; gap: 10px;
       flex-shrink: 0;
     }
-
     .social-sidebar-link {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px 16px;
-      border-radius: 16px;
-      text-decoration: none;
-      color: var(--ink);
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px; border-radius: 16px;
+      text-decoration: none; color: var(--ink);
       transition: all 0.3s var(--ease-out);
       -webkit-tap-highlight-color: transparent;
       border: 1.5px solid var(--pearl);
       background: var(--white);
-      position: relative;
-      overflow: hidden;
-      opacity: 0;
-      transform: translateY(10px);
+      position: relative; overflow: hidden;
+      opacity: 0; transform: translateY(10px);
       animation: sidebarLinkIn 0.5s var(--ease-out) forwards;
     }
-
     .social-sidebar-link:nth-child(1) { animation-delay: 0.05s; }
     .social-sidebar-link:nth-child(2) { animation-delay: 0.12s; }
     .social-sidebar-link:nth-child(3) { animation-delay: 0.19s; }
-
-    @keyframes sidebarLinkIn {
-      to { opacity: 1; transform: translateY(0); }
-    }
-
+    @keyframes sidebarLinkIn { to { opacity: 1; transform: translateY(0); } }
     .social-sidebar-link:hover {
-      border-color: var(--black);
-      transform: translateX(4px);
+      border-color: var(--black); transform: translateX(4px);
       box-shadow: 0 10px 26px -10px rgba(0,0,0,0.18);
     }
-
     .social-sidebar-link .sidebar-icon {
-      width: 46px;
-      height: 46px;
-      border-radius: 13px;
-      background: var(--black);
-      color: var(--white);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 46px; height: 46px; border-radius: 13px;
+      background: var(--black); color: var(--white);
+      display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
       transition: transform 0.35s var(--ease-out), border-radius 0.35s var(--ease-out), background 0.35s var(--ease-out);
     }
-
-    .social-sidebar-link .sidebar-icon svg {
-      width: 21px;
-      height: 21px;
-    }
-
-    .social-sidebar-link:hover .sidebar-icon {
-      transform: scale(1.08) rotate(-4deg);
-      border-radius: 11px;
-    }
-
+    .social-sidebar-link .sidebar-icon svg { width: 21px; height: 21px; }
+    .social-sidebar-link:hover .sidebar-icon { transform: scale(1.08) rotate(-4deg); border-radius: 11px; }
     .social-sidebar-link:hover .sidebar-icon-fb { background: #1877F2; }
     .social-sidebar-link:hover .sidebar-icon-ig { background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af); }
     .social-sidebar-link:hover .sidebar-icon-tt { background: #010101; }
-
-    .social-sidebar-link-meta {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .social-sidebar-link-title {
-      font-size: 14.5px;
-      font-weight: 700;
-      color: var(--black);
-    }
-
-    .social-sidebar-link-sub {
-      font-size: 11.5px;
-      color: var(--steel);
-    }
-
+    .social-sidebar-link-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .social-sidebar-link-title { font-size: 14.5px; font-weight: 700; color: var(--black); }
+    .social-sidebar-link-sub { font-size: 11.5px; color: var(--steel); }
     .social-sidebar-link .sidebar-arrow {
-      color: var(--silver);
-      font-size: 16px;
+      color: var(--silver); font-size: 16px;
       flex-shrink: 0;
       transition: transform 0.35s var(--ease-out), color 0.3s ease;
     }
-
-    .social-sidebar-link:hover .sidebar-arrow {
-      transform: translate(3px, -3px);
-      color: var(--black);
-    }
-
+    .social-sidebar-link:hover .sidebar-arrow { transform: translate(3px, -3px); color: var(--black); }
     .social-sidebar-divider {
-      height: 1px;
-      background: rgba(0, 0, 0, 0.06);
-      margin: 20px 28px 4px;
-      flex-shrink: 0;
+      height: 1px; background: rgba(0, 0, 0, 0.06);
+      margin: 20px 28px 4px; flex-shrink: 0;
     }
-
     .social-sidebar-gift {
-      padding: 24px 24px 32px;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
+      padding: 24px 24px 32px; flex: 1;
+      display: flex; flex-direction: column;
       background: linear-gradient(180deg, #fdf8ec, #fbf3dd 60%, #fbf3dd);
       border-top: 1px solid #f0e0ae;
     }
-
     .social-sidebar-gift-head {
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
+      display: flex; align-items: flex-start; gap: 14px;
       margin-bottom: 20px;
     }
-
     .social-sidebar-gift-icon {
-      width: 46px;
-      height: 46px;
-      flex-shrink: 0;
+      width: 46px; height: 46px; flex-shrink: 0;
       border-radius: 13px;
       background: var(--fog);
       border: 1.5px solid var(--pearl);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       color: var(--black);
     }
-
-    .social-sidebar-gift-icon svg {
-      width: 21px;
-      height: 21px;
-    }
-
+    .social-sidebar-gift-icon svg { width: 21px; height: 21px; }
     .social-sidebar-gift h3 {
       font-family: 'Playfair Display', serif;
-      font-size: 19px;
-      font-weight: 700;
-      margin-bottom: 4px;
-      color: var(--black);
+      font-size: 19px; font-weight: 700;
+      margin-bottom: 4px; color: var(--black);
     }
-
-    .social-sidebar-gift p {
-      font-size: 12.5px;
-      color: var(--steel);
-      line-height: 1.55;
-    }
-
-    /* PAYMENT METHOD TABS */
-    .gift-method-tabs {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 14px;
-      flex-wrap: wrap;
-    }
+    .social-sidebar-gift p { font-size: 12.5px; color: var(--steel); line-height: 1.55; }
+    .gift-method-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
     .gift-method-tab {
-      flex: 1;
-      min-width: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 9px 12px;
-      border-radius: 10px;
+      flex: 1; min-width: 0;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 9px 12px; border-radius: 10px;
       border: 1.5px solid var(--pearl);
-      background: var(--white);
-      color: var(--steel);
-      font-family: inherit;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      cursor: pointer;
+      background: var(--white); color: var(--steel);
+      font-family: inherit; font-size: 12px; font-weight: 700;
+      letter-spacing: 0.02em; cursor: pointer;
       transition: all 0.25s var(--ease-out);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       -webkit-tap-highlight-color: transparent;
     }
     .gift-method-tab:hover { border-color: var(--silver); color: var(--ink); }
-    .gift-method-tab.active {
-      background: var(--black);
-      border-color: var(--black);
-      color: var(--white);
-    }
-
+    .gift-method-tab.active { background: var(--black); border-color: var(--black); color: var(--white); }
     .social-sidebar-qr {
       background: linear-gradient(160deg, #fffdf7, var(--white));
       border: 1.5px solid #f0dfb0;
       border-radius: 22px;
-      padding: 22px;
-      text-align: center;
+      padding: 22px; text-align: center;
       box-shadow: 0 4px 20px -8px rgba(0, 0, 0, 0.1);
       transition: transform 0.35s var(--ease-out), box-shadow 0.35s var(--ease-out);
     }
-
     .social-sidebar-qr:hover {
       transform: translateY(-3px);
       box-shadow: 0 14px 34px -10px rgba(0, 0, 0, 0.2);
     }
-
     .social-sidebar-qr-frame {
-      background: var(--white);
-      border-radius: 16px;
-      padding: 12px;
-      border: 1px solid var(--pearl);
-      margin-bottom: 16px;
+      background: var(--white); border-radius: 16px; padding: 12px;
+      border: 1px solid var(--pearl); margin-bottom: 16px;
     }
-
     .social-sidebar-qr-frame img {
-      display: block;
-      width: 100%;
-      max-width: 230px;
-      height: auto;
-      margin: 0 auto;
-      border-radius: 8px;
-      background: #0b0b0b;
-      transition: opacity 0.2s ease;
+      display: block; width: 100%; max-width: 230px;
+      height: auto; margin: 0 auto; border-radius: 8px;
+      background: #0b0b0b; transition: opacity 0.2s ease;
     }
-
-    .social-sidebar-qr-actions {
-      display: flex;
-      gap: 8px;
-    }
-
+    .social-sidebar-qr-actions { display: flex; gap: 8px; }
     .social-sidebar-qr-actions .btn {
-      min-height: 46px;
-      font-size: 12.5px;
-      padding: 12px 14px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
+      min-height: 46px; font-size: 12.5px; padding: 12px 14px;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     }
-
-    .social-sidebar-qr-actions .btn svg {
-      width: 15px;
-      height: 15px;
-      flex-shrink: 0;
-    }
-
+    .social-sidebar-qr-actions .btn svg { width: 15px; height: 15px; flex-shrink: 0; }
     .social-sidebar-hint {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      font-size: 11.5px;
-      color: var(--steel);
-      line-height: 1.55;
-      margin-top: 16px;
-      text-align: left;
-      padding: 12px 14px;
-      background: #fdf8ec;
-      border-radius: 12px;
-      border: 1px solid #f0dfb0;
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 11.5px; color: var(--steel); line-height: 1.55;
+      margin-top: 16px; text-align: left;
+      padding: 12px 14px; background: #fdf8ec;
+      border-radius: 12px; border: 1px solid #f0dfb0;
     }
-
     .social-sidebar-hint .hint-dot {
-      width: 6px;
-      height: 6px;
-      margin-top: 5px;
-      flex-shrink: 0;
-      border-radius: 50%;
+      width: 6px; height: 6px; margin-top: 5px;
+      flex-shrink: 0; border-radius: 50%;
       background: #f59e0b;
       box-shadow: 0 0 0 3px rgba(245,158,11,0.18);
     }
-
-    /* ⭐ DEDICATED GIFT TRIGGER — warm accent, separate from the plain Follow tab ⭐ */
     .gift-sidebar-trigger {
       position: fixed;
       right: 24px;
       bottom: calc(24px + env(safe-area-inset-bottom));
       z-index: 1000;
-      display: none;
-      align-items: center;
-      gap: 10px;
-      border: 0;
-      border-radius: 100px;
+      display: none; align-items: center; gap: 10px;
+      border: 0; border-radius: 100px;
       background: linear-gradient(135deg, #f5c95a, #e0a52c);
       color: #2a1c02;
       padding: 15px 22px;
-      font: inherit;
-      font-size: 13.5px;
-      font-weight: 700;
-      letter-spacing: 0.03em;
-      cursor: pointer;
+      font: inherit; font-size: 13.5px; font-weight: 700;
+      letter-spacing: 0.03em; cursor: pointer;
       box-shadow: 0 14px 34px -8px rgba(212, 154, 30, 0.55);
       transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
       -webkit-tap-highlight-color: transparent;
@@ -2115,57 +1948,29 @@
       .gift-sidebar-trigger {
         right: 16px;
         bottom: calc(88px + env(safe-area-inset-bottom));
-        padding: 13px 18px;
-        font-size: 13px;
+        padding: 13px 18px; font-size: 13px;
       }
     }
     @media (prefers-reduced-motion: reduce) {
       .gift-sidebar-trigger { animation: none; }
     }
-
-    /* Mobile adjustments */
     @media (max-width: 640px) {
       :root { --sidebar-width: 380px; }
-
-      .social-sidebar {
-        width: 100%;
-        max-width: 400px;
-      }
-
-      .social-sidebar-header {
-        padding: 24px 22px 18px;
-      }
-
-      .social-sidebar-header h2 {
-        font-size: 22px;
-      }
-
-      .social-sidebar-links {
-        padding: 20px 22px;
-      }
-
-      .social-sidebar-gift {
-        padding: 20px 22px 28px;
-      }
-
-      .social-sidebar-qr-frame img {
-        max-width: 220px;
-      }
+      .social-sidebar { width: 100%; max-width: 400px; }
+      .social-sidebar-header { padding: 24px 22px 18px; }
+      .social-sidebar-header h2 { font-size: 22px; }
+      .social-sidebar-links { padding: 20px 22px; }
+      .social-sidebar-gift { padding: 20px 22px 28px; }
+      .social-sidebar-qr-frame img { max-width: 220px; }
     }
-
     @media (max-width: 360px) {
-      .social-sidebar {
-        max-width: 100%;
-      }
-
+      .social-sidebar { max-width: 100%; }
       .gift-sidebar-trigger {
         right: 10px;
         bottom: calc(14px + env(safe-area-inset-bottom));
-        padding: 14px 20px;
-        font-size: 13px;
+        padding: 14px 20px; font-size: 13px;
       }
     }
-
     @media (max-width: 640px) {
       body { overflow-x: hidden; }
       .view { max-width: 100%; }
@@ -2221,25 +2026,18 @@
     }
 
     .qr-modal {
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       z-index: 9999;
-      display: grid;
-      place-items: center;
+      display: grid; place-items: center;
       padding: 18px;
       background: rgba(0, 0, 0, 0.85);
-      opacity: 0;
-      visibility: hidden;
+      opacity: 0; visibility: hidden;
       pointer-events: none;
       transition: opacity 0.25s ease, visibility 0.25s ease;
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
     }
-    .qr-modal.open {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-    }
+    .qr-modal.open { opacity: 1; visibility: visible; pointer-events: auto; }
     .qr-modal-card {
       position: relative;
       width: min(92vw, 620px);
@@ -2254,10 +2052,7 @@
       opacity: 0;
       transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
     }
-    .qr-modal.open .qr-modal-card {
-      transform: scale(1) translateY(0);
-      opacity: 1;
-    }
+    .qr-modal.open .qr-modal-card { transform: scale(1) translateY(0); opacity: 1; }
     .qr-modal-title {
       margin: 0 42px 12px 4px;
       color: #fff;
@@ -2273,40 +2068,23 @@
       background: #0b0b0b;
     }
     .qr-modal-close {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      width: 38px;
-      height: 38px;
+      position: absolute; top: 10px; right: 10px;
+      width: 38px; height: 38px;
       border: 1px solid rgba(255, 255, 255, 0.35);
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.12);
-      color: #fff;
-      font-size: 24px;
-      line-height: 1;
+      color: #fff; font-size: 24px; line-height: 1;
       cursor: pointer;
       transition: background 0.2s ease, transform 0.2s ease;
       z-index: 2;
     }
-    .qr-modal-close:hover {
-      background: rgba(255, 255, 255, 0.25);
-      transform: rotate(90deg);
-    }
-    .qr-modal-actions {
-      display: flex;
-      justify-content: center;
-      margin: 14px 4px 0;
-    }
-    .qr-modal-actions .btn {
-      min-height: 46px;
-      padding: 12px 28px;
-      width: auto;
-    }
+    .qr-modal-close:hover { background: rgba(255, 255, 255, 0.25); transform: rotate(90deg); }
+    .qr-modal-actions { display: flex; justify-content: center; margin: 14px 4px 0; }
+    .qr-modal-actions .btn { min-height: 46px; padding: 12px 28px; width: auto; }
     .qr-modal-help {
       margin: 10px 4px 0;
       color: rgba(255, 255, 255, 0.72);
-      font-size: 12px;
-      line-height: 1.45;
+      font-size: 12px; line-height: 1.45;
       text-align: center;
     }
     @media (max-width: 640px) {
@@ -2321,13 +2099,8 @@
       .qr-modal-close { width: 42px; height: 42px; }
     }
 
-    .video-section {
-      display: none;
-      margin-bottom: 18px;
-    }
-    .video-section.show {
-      display: block;
-    }
+    .video-section { display: none; margin-bottom: 18px; }
+    .video-section.show { display: block; }
     .video-record-box {
       background: var(--fog);
       border: 1.5px dashed var(--mist);
@@ -2363,9 +2136,7 @@
       min-height: 44px; touch-action: manipulation;
     }
     .btn-video:active { transform: scale(0.97); }
-    .video-preview {
-      display: flex; flex-direction: column; align-items: center; gap: 14px;
-    }
+    .video-preview { display: flex; flex-direction: column; align-items: center; gap: 14px; }
     .video-frame {
       background: var(--white); padding: 10px;
       border-radius: 12px; border: 1.5px solid var(--pearl);
@@ -2401,27 +2172,19 @@
       min-height: 40px; touch-action: manipulation;
     }
 
-    /* DOWNLOAD SUCCESS FLASH */
     .download-flash {
       position: fixed;
-      left: 50%;
-      top: 50%;
+      left: 50%; top: 50%;
       transform: translate(-50%, -50%) scale(0.6);
       z-index: 10500;
-      width: 72px;
-      height: 72px;
+      width: 72px; height: 72px;
       border-radius: 50%;
       background: var(--black);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      pointer-events: none;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
       box-shadow: 0 20px 50px -12px rgba(0,0,0,0.5);
     }
-    .download-flash.show {
-      animation: downloadFlashPop 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
+    .download-flash.show { animation: downloadFlashPop 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes downloadFlashPop {
       0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
       18%  { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
@@ -2429,17 +2192,11 @@
       78%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
       100% { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
     }
-    .download-flash-check {
-      width: 34px; height: 34px;
-    }
+    .download-flash-check { width: 34px; height: 34px; }
     .download-flash-check path {
-      fill: none;
-      stroke: #fff;
-      stroke-width: 5;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-dasharray: 48;
-      stroke-dashoffset: 48;
+      fill: none; stroke: #fff; stroke-width: 5;
+      stroke-linecap: round; stroke-linejoin: round;
+      stroke-dasharray: 48; stroke-dashoffset: 48;
     }
     .download-flash.show .download-flash-check path {
       animation: checkDraw 0.4s cubic-bezier(0.65, 0, 0.45, 1) 0.22s forwards;
@@ -2567,6 +2324,28 @@
               </button>
             </div>
           </form>
+
+          <!-- ===== FAQ SECTION (for AEO — helps AI answer engines cite your site) ===== -->
+          <div class="faq-section">
+            <h3>Frequently Asked Questions</h3>
+            <div class="faq-item">
+              <h4>What is this website for?</h4>
+              <p>This is the official invitation and RSVP page for Saira, Sivy, and Simon's joint birthday celebration on October 31, 2026.</p>
+            </div>
+            <div class="faq-item">
+              <h4>How do I confirm my attendance?</h4>
+              <p>Sign in with your name and mobile number, then complete the RSVP form to receive your entrance ticket with QR code.</p>
+            </div>
+            <div class="faq-item">
+              <h4>Is there a deadline to RSVP?</h4>
+              <p>Yes, please confirm your attendance as soon as possible. The confirmation period may close closer to the event date.</p>
+            </div>
+            <div class="faq-item">
+              <h4>Do I need to bring anything?</h4>
+              <p>Just your entrance ticket (QR code) and yourself! Your presence is the gift.</p>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>
@@ -2814,12 +2593,7 @@
               <h2 class="success-caption" id="successCaption" aria-label="Shanghai secured"></h2>
               <p class="success-sub" id="successSub">You're officially on the list. See you there!</p>
 
-              <img
-                class="success-image"
-                id="successImage"
-                src=""
-                alt="Celebration"
-              >
+              <img class="success-image" id="successImage" src="" alt="Celebration">
 
               <div class="ticket-card">
                 <div class="ticket-qr"><img id="ticketQrImg" src="" alt="QR"></div>
@@ -2855,13 +2629,11 @@
     </section>
   </div>
 
-  <!-- DEDICATED GIFT TRIGGER -->
   <button type="button" class="gift-sidebar-trigger" id="giftSidebarTrigger" aria-expanded="false" aria-controls="socialSidebar">
     <span class="gift-trigger-icon">🎁</span>
     <span>Send a Gift</span>
   </button>
 
-  <!-- MODERN SIDEBAR -->
   <div class="social-sidebar-overlay" id="socialSidebarOverlay"></div>
   <aside class="social-sidebar" id="socialSidebar" aria-hidden="true" role="dialog" aria-label="Social links and gifts">
     <div class="social-sidebar-fade social-sidebar-fade-top" id="socialSidebarFadeTop" aria-hidden="true"></div>
@@ -3315,7 +3087,7 @@
       toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
     }
 
-    /* DOWNLOAD SUCCESS FLASH — echoes the ticket confetti moment on every QR download */
+    /* DOWNLOAD SUCCESS FLASH */
     let downloadFlashTimer = null;
     function flashDownloadSuccess() {
       const el = $('downloadFlash');
@@ -3540,7 +3312,6 @@
       setTimeout(() => mascot.classList.remove('login-success'), 1600);
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      // ⭐ SHOW THE GIFT SIDEBAR TRIGGER AFTER LOGIN ⭐
       $('giftSidebarTrigger').classList.add('visible');
 
       try {
@@ -3623,7 +3394,6 @@
 
     $('welcomeSignoutBtn').addEventListener('click', logout);
 
-    /* GIFT ENTRY POINTS — welcome card + ticket card both open the same sidebar panel */
     $('openGiftFromWelcomeBtn').addEventListener('click', function() {
       setSocialSidebar(true);
       setTimeout(function() {
@@ -3640,7 +3410,6 @@
       }, 350);
     });
 
-    /* MODERN SIDEBAR */
     function setSocialSidebar(open) {
       const sidebar = $('socialSidebar');
       const overlay = $('socialSidebarOverlay');
@@ -3651,7 +3420,6 @@
       if (giftTrigger) giftTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
       document.body.style.overflow = open ? 'hidden' : '';
       if (open) {
-        // Give the panel a frame to lay out before measuring scroll state
         requestAnimationFrame(function() {
           requestAnimationFrame(updateSidebarScrollFade);
         });
@@ -3671,7 +3439,6 @@
       if (event.key === 'Escape') setSocialSidebar(false);
     });
 
-    /* SCROLL FADE INDICATORS FOR SIDEBAR */
     function updateSidebarScrollFade() {
       const inner = $('socialSidebarInner');
       const fadeTop = $('socialSidebarFadeTop');
@@ -3691,13 +3458,11 @@
     const gcashQrImageEl = $('gcashQrImage');
     if (gcashQrImageEl) gcashQrImageEl.addEventListener('load', updateSidebarScrollFade);
 
-    /* Keep the compact ticket-screen gift QR in sync with the sidebar's QR */
     if (gcashQrImageEl) {
       const ticketGiftQrImgEl = $('ticketGiftQrImg');
       if (ticketGiftQrImgEl) ticketGiftQrImgEl.src = gcashQrImageEl.src;
     }
 
-    /* UNIVERSAL QR DOWNLOAD — works on desktop + Android + iOS Safari */
     function triggerAnchorDownload(href, filename) {
       const link = document.createElement('a');
       link.href = href;
@@ -3730,8 +3495,6 @@
       }
     }
 
-    /* GIFT PAYMENT METHODS — add more entries here (e.g. Maya, bank transfer)
-       and the tab switcher below will render them automatically. */
     const GIFT_PAYMENT_METHODS = [
       {
         id: 'gcash',
@@ -3740,14 +3503,6 @@
         qrUrl: 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/sairasivyqr.png',
         filename: 'birthday-gift-qr-gcash.png'
       }
-      // Example of a second method once it's ready:
-      // {
-      //   id: 'maya',
-      //   label: 'Maya',
-      //   modalTitle: 'Maya QR Code',
-      //   qrUrl: 'https://.../maya-qr.png',
-      //   filename: 'birthday-gift-qr-maya.png'
-      // }
     ];
     let activeGiftMethodId = GIFT_PAYMENT_METHODS[0] ? GIFT_PAYMENT_METHODS[0].id : null;
 
@@ -3794,7 +3549,6 @@
       };
     }
 
-    /* QR MODAL */
     let qrAudioContext = null;
     function playModernPop() {
       try {
@@ -4033,7 +3787,6 @@
       $('viewTicketBtn').style.display = 'none';
       $('viewTicketBtn').onclick = null;
       setSocialSidebar(false);
-      // ⭐ HIDE THE GIFT SIDEBAR TRIGGER ON LOGOUT ⭐
       $('giftSidebarTrigger').classList.remove('visible');
       showToast('Signed out.');
     }
@@ -4132,7 +3885,6 @@
       });
     })();
 
-    /* TOGGLE SELFIE / VIDEO BASED ON ATTENDANCE */
     function toggleSelfieVideoFields() {
       const selfieSection = $('selfieSection');
       const videoSection = $('videoSection');
@@ -4146,7 +3898,6 @@
       updateProgress();
     }
 
-    /* PROGRESS */
     function updateProgress() {
       const name = $('name').value.trim();
       const mobile = $('mobile').value.trim();
