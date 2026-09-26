@@ -502,7 +502,7 @@
       background: #d89554; z-index: 2;
     }
     .dog-model-merle .dog-tan-mask { background: #e8c398; }
-    .dog-nose {
+    .dog-model .dog-nose {
       position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%);
       width: 11px; height: 8px; border-radius: 50%; background: #211916; z-index: 3;
     }
@@ -1915,15 +1915,15 @@
       background: #0a0a0a;
       border-radius: 50%;
     }
-    .dog-nose {
-      position: absolute;
-      right: -1px;
-      top: 11px;
-      width: 5px;
-      height: 4px;
-      background: #0a0a0a;
-      border-radius: 50%;
-    }
+    .dog-model .dog-nose {
+        position: absolute;
+        left: 50%;
+        right: auto;
+        top: auto;
+        bottom: 12px;
+        transform: translateX(-50%);
+        width: 11px; height: 8px; border-radius: 50%; background: #211916; z-index: 3;
+      }
     .dog-tail {
       position: absolute;
       left: 6px;
