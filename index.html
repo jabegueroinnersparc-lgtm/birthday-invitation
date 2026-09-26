@@ -607,6 +607,7 @@
     }
     @keyframes msgIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
     .message.success { background: #f0fdf4; color: #14532d; border: 1px solid #bbf7d0; display: block; }
+    .message.warning { background: #fff7ed; color: #9a5b00; border: 1px solid #fed7aa; display: block; }
     .message.error { background: #fef2f2; color: #7f1d1d; border: 1px solid #fecaca; display: block; }
 
     .recovery-panel {
@@ -3601,7 +3602,8 @@
           showPwMessage((res && res.message) || 'Something went wrong. Please try again.', 'error');
         }
       } catch (err) {
-        showPwMessage('Error: ' + err.message, 'error');
+        const timeoutLike = /timed out|taking longer than expected|slow|AbortError/i.test(err && err.message ? err.message : String(err));
+        showPwMessage(timeoutLike ? 'The server is taking longer than expected. Please wait a moment and try again.' : 'Error: ' + err.message, timeoutLike ? 'warning' : 'error');
       }
       btn.disabled = false;
       btn.innerHTML = 'Continue <span class="btn-arrow">→</span>';
@@ -3653,8 +3655,9 @@
           message.className = 'message error';
         }
       } catch (err) {
-        message.textContent = 'Error: ' + err.message;
-        message.className = 'message error';
+        const timeoutLike = /timed out|taking longer than expected|slow|AbortError/i.test(err && err.message ? err.message : String(err));
+        message.textContent = timeoutLike ? 'The server is taking longer than expected. Please wait a moment and try again.' : 'Error: ' + err.message;
+        message.className = 'message ' + (timeoutLike ? 'warning' : 'error');
       }
       btn.disabled = false;
       btn.innerHTML = 'Find My Account';
@@ -5018,7 +5021,8 @@
           showMessage((res && res.message) || 'Failed to submit.', 'error');
         }
       } catch (err) {
-        showMessage('Error: ' + err.message, 'error');
+        const timeoutLike = /timed out|taking longer than expected|slow|AbortError/i.test(err && err.message ? err.message : String(err));
+        showMessage(timeoutLike ? 'The server is taking longer than expected. Please wait a moment and try again.' : 'Error: ' + err.message, timeoutLike ? 'warning' : 'error');
       } finally {
         $('submittingOverlay').classList.remove('show');
         $('submittingOverlay').setAttribute('aria-hidden', 'true');
