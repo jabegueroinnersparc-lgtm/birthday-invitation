@@ -2141,6 +2141,8 @@
       background: #f59e0b;
       box-shadow: 0 0 0 3px rgba(245,158,11,0.18);
     }
+
+    /* ===== DRAGGABLE GIFT TRIGGER ===== */
     .gift-sidebar-trigger {
       position: fixed;
       right: 24px;
@@ -2157,15 +2159,32 @@
       transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
       -webkit-tap-highlight-color: transparent;
       animation: giftTriggerPulse 2.6s ease-in-out infinite;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: grab;
+      will-change: transform, left, top;
     }
     .gift-sidebar-trigger.visible { display: inline-flex; }
-    .gift-sidebar-trigger .gift-trigger-icon { font-size: 17px; line-height: 1; }
+    .gift-sidebar-trigger .gift-trigger-icon { font-size: 17px; line-height: 1; pointer-events: none; }
+    .gift-sidebar-trigger span { pointer-events: none; }
     .gift-sidebar-trigger:hover {
       transform: translateY(-2px) scale(1.02);
       box-shadow: 0 18px 40px -8px rgba(212, 154, 30, 0.65);
       animation: none;
     }
-    .gift-sidebar-trigger:active { transform: scale(0.97); }
+    .gift-sidebar-trigger:active { cursor: grabbing; }
+    .gift-sidebar-trigger.dragging {
+      animation: none;
+      transform: scale(1.08);
+      box-shadow: 0 22px 48px -8px rgba(212, 154, 30, 0.75);
+      cursor: grabbing;
+      transition: none;
+    }
+    .gift-sidebar-trigger.snap-back {
+      transition: left 0.35s var(--ease-out), top 0.35s var(--ease-out),
+                  transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
+    }
     @keyframes giftTriggerPulse {
       0%, 100% { box-shadow: 0 14px 34px -8px rgba(212, 154, 30, 0.55), 0 0 0 0 rgba(224, 165, 44, 0.45); }
       50%      { box-shadow: 0 14px 34px -8px rgba(212, 154, 30, 0.55), 0 0 0 12px rgba(224, 165, 44, 0); }
@@ -2862,7 +2881,7 @@
     </section>
   </div>
 
-  <button type="button" class="gift-sidebar-trigger" id="giftSidebarTrigger" aria-expanded="false" aria-controls="socialSidebar">
+  <button type="button" class="gift-sidebar-trigger" id="giftSidebarTrigger" aria-expanded="false" aria-controls="socialSidebar" title="Drag to move · Tap to open">
     <span class="gift-trigger-icon">🎁</span>
     <span>Send a Gift</span>
   </button>
@@ -2990,6 +3009,7 @@
     /* CONFIG */
     const APPS_SCRIPT_URL = '/api/proxy';
     const GIFT_QR_IMAGE_URL = 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/sairasivyqr.png';
+    const GIFT_TRIGGER_POS_KEY = 'birthdayGiftTriggerPos';
 
     /* BUTTON CLICK SOUND */
     let clickSoundAudio = null;
@@ -3588,6 +3608,7 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
       $('giftSidebarTrigger').classList.add('visible');
+      restoreGiftTriggerPosition();
 
       try {
         let ticket = loginTicket || null;
@@ -3701,13 +3722,6 @@
       }
     }
 
-    $('giftSidebarTrigger').addEventListener('click', function() {
-      setSocialSidebar(!$('socialSidebar').classList.contains('open'));
-      setTimeout(function() {
-        const giftSection = $('socialSidebarGift');
-        if (giftSection) giftSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 350);
-    });
     $('socialSidebarClose').addEventListener('click', function() { setSocialSidebar(false); });
     $('socialSidebarOverlay').addEventListener('click', function() { setSocialSidebar(false); });
     document.addEventListener('keydown', function(event) {
@@ -3931,6 +3945,222 @@
 
     renderGiftMethodTabs();
 
+    /* ===== DRAGGABLE GIFT TRIGGER ===== */
+    (function initDraggableGiftTrigger() {
+      const trigger = $('giftSidebarTrigger');
+      if (!trigger) return;
+
+      let isDragging = false;
+      let hasDragged = false;
+      let startX = 0, startY = 0;
+      let startLeft = 0, startTop = 0;
+      let pointerId = null;
+      let movedThreshold = 6;
+      let pendingOpen = false;
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function getViewportPadding() {
+        return window.innerWidth <= 640 ? 10 : 16;
+      }
+
+      function savePosition(left, top) {
+        try {
+          localStorage.setItem(GIFT_TRIGGER_POS_KEY, JSON.stringify({ left, top }));
+        } catch (e) {}
+      }
+
+      function clearStoredPosition() {
+        try { localStorage.removeItem(GIFT_TRIGGER_POS_KEY); } catch (e) {}
+      }
+
+      function applyStoredPosition() {
+        let stored = null;
+        try {
+          const raw = localStorage.getItem(GIFT_TRIGGER_POS_KEY);
+          if (raw) stored = JSON.parse(raw);
+        } catch (e) { stored = null; }
+        if (!stored || typeof stored.left !== 'number' || typeof stored.top !== 'number') return false;
+
+        const rect = trigger.getBoundingClientRect();
+        const w = rect.width || trigger.offsetWidth;
+        const h = rect.height || trigger.offsetHeight;
+        const pad = getViewportPadding();
+        const maxLeft = Math.max(pad, window.innerWidth - w - pad);
+        const maxTop = Math.max(pad, window.innerHeight - h - pad);
+        const left = clamp(stored.left, pad, maxLeft);
+        const top = clamp(stored.top, pad, maxTop);
+
+        trigger.style.left = left + 'px';
+        trigger.style.top = top + 'px';
+        trigger.style.right = 'auto';
+        trigger.style.bottom = 'auto';
+        return true;
+      }
+
+      function resetToDefaultCorner() {
+        trigger.style.left = '';
+        trigger.style.top = '';
+        trigger.style.right = '';
+        trigger.style.bottom = '';
+      }
+
+      function currentLeftTop() {
+        const rect = trigger.getBoundingClientRect();
+        return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+      }
+
+      function onPointerDown(e) {
+        if (e.button !== undefined && e.button !== 0) return;
+        const target = e.target;
+        // Don't start drag on the trigger if the user only wants the click, we still track movement.
+        isDragging = true;
+        hasDragged = false;
+        pointerId = e.pointerId;
+
+        const rect = trigger.getBoundingClientRect();
+        startLeft = rect.left;
+        startTop = rect.top;
+        startX = e.clientX;
+        startY = e.clientY;
+
+        trigger.setPointerCapture && trigger.setPointerCapture(pointerId);
+      }
+
+      function onPointerMove(e) {
+        if (!isDragging || e.pointerId !== pointerId) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+
+        if (!hasDragged && (Math.abs(dx) > movedThreshold || Math.abs(dy) > movedThreshold)) {
+          hasDragged = true;
+          trigger.classList.add('dragging');
+          trigger.classList.remove('snap-back');
+        }
+
+        if (!hasDragged) return;
+
+        const rect = trigger.getBoundingClientRect();
+        const w = rect.width;
+        const h = rect.height;
+        const pad = getViewportPadding();
+        const maxLeft = Math.max(pad, window.innerWidth - w - pad);
+        const maxTop = Math.max(pad, window.innerHeight - h - pad);
+
+        const newLeft = clamp(startLeft + dx, pad, maxLeft);
+        const newTop = clamp(startTop + dy, pad, maxTop);
+
+        trigger.style.left = newLeft + 'px';
+        trigger.style.top = newTop + 'px';
+        trigger.style.right = 'auto';
+        trigger.style.bottom = 'auto';
+
+        e.preventDefault();
+      }
+
+      function onPointerUp(e) {
+        if (!isDragging || (pointerId !== null && e.pointerId !== pointerId)) return;
+        trigger.releasePointerCapture && trigger.releasePointerCapture(pointerId);
+        isDragging = false;
+        pointerId = null;
+
+        if (hasDragged) {
+          trigger.classList.remove('dragging');
+          trigger.classList.add('snap-back');
+
+          const rect = trigger.getBoundingClientRect();
+          const w = rect.width;
+          const h = rect.height;
+          const pad = getViewportPadding();
+          const maxLeft = Math.max(pad, window.innerWidth - w - pad);
+          const maxTop = Math.max(pad, window.innerHeight - h - pad);
+
+          // Snap to nearest horizontal edge
+          const centerX = rect.left + w / 2;
+          const centerY = rect.top + h / 2;
+          const snapLeft = centerX < window.innerWidth / 2 ? pad : (maxLeft);
+          const snapTop = clamp(rect.top, pad, maxTop);
+
+          trigger.style.left = snapLeft + 'px';
+          trigger.style.top = snapTop + 'px';
+
+          savePosition(snapLeft, snapTop);
+          showToast('Gift button moved. Tap to open.');
+
+          setTimeout(function() { trigger.classList.remove('snap-back'); }, 380);
+        } else {
+          pendingOpen = true;
+        }
+      }
+
+      function onPointerCancel(e) {
+        if (pointerId !== null && e.pointerId !== pointerId) return;
+        isDragging = false;
+        pointerId = null;
+        trigger.classList.remove('dragging');
+      }
+
+      function onClickCapture(e) {
+        if (hasDragged) {
+          e.preventDefault();
+          e.stopPropagation();
+          hasDragged = false;
+          pendingOpen = false;
+        }
+      }
+
+      trigger.addEventListener('pointerdown', onPointerDown);
+      trigger.addEventListener('pointermove', onPointerMove);
+      trigger.addEventListener('pointerup', onPointerUp);
+      trigger.addEventListener('pointercancel', onPointerCancel);
+      trigger.addEventListener('click', onClickCapture, true);
+
+      trigger.addEventListener('click', function(e) {
+        if (isDragging || hasDragged) return;
+        // Guard against click triggered right after a drag
+        setSocialSidebar(!$('socialSidebar').classList.contains('open'));
+        setTimeout(function() {
+          const giftSection = $('socialSidebarGift');
+          if (giftSection) giftSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 350);
+      });
+
+      // Restore position on load
+      window.addEventListener('load', function() {
+        if (trigger.classList.contains('visible')) {
+          if (!applyStoredPosition()) resetToDefaultCorner();
+        }
+      });
+
+      // Reposition on resize/scroll to keep it inside viewport
+      let repositionRaf = null;
+      window.addEventListener('resize', function() {
+        if (repositionRaf) cancelAnimationFrame(repositionRaf);
+        repositionRaf = requestAnimationFrame(function() {
+          if (!localStorage.getItem(GIFT_TRIGGER_POS_KEY)) return;
+          applyStoredPosition();
+        });
+      });
+
+      // Expose for restore function
+      window.restoreGiftTriggerPosition = function() {
+        if (!applyStoredPosition()) resetToDefaultCorner();
+      };
+
+      window.resetGiftTriggerPosition = function() {
+        clearStoredPosition();
+        resetToDefaultCorner();
+      };
+    })();
+
+    function restoreGiftTriggerPosition() {
+      if (typeof window.restoreGiftTriggerPosition === 'function') {
+        window.restoreGiftTriggerPosition();
+      }
+    }
+
     /* ATTENDEES */
     let attendeesCache = null;
     let attendeesCacheTime = 0;
@@ -4063,6 +4293,9 @@
       $('viewTicketBtn').onclick = null;
       setSocialSidebar(false);
       $('giftSidebarTrigger').classList.remove('visible');
+      if (typeof window.resetGiftTriggerPosition === 'function') {
+        window.resetGiftTriggerPosition();
+      }
       showToast('Signed out.');
     }
 
