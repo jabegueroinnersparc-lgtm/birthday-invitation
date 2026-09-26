@@ -776,6 +776,9 @@
   /* ============================================================
      LOGIN
      ============================================================ */
+  function hasAppsScriptBridge() {
+    return !!(window.google && google.script && google.script.run);
+  }
   $('adminLoginForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const password = $('adminPassword').value;
@@ -786,25 +789,39 @@
     btn.innerHTML = '<span class="spinner"></span>Verifying...';
     hideLoginError();
 
+    if (!hasAppsScriptBridge()) {
+      btn.disabled = false;
+      btn.textContent = 'Unlock Scanner';
+      showLoginError('This admin panel must be opened from the deployed Google Apps Script web app.');
+      return;
+    }
+
+    let settled = false;
+    const finish = () => { settled = true; clearTimeout(loginTimeout); btn.disabled = false; btn.textContent = 'Unlock Scanner'; };
+    const loginTimeout = setTimeout(() => {
+      if (settled) return;
+      finish();
+      showLoginError('The server did not respond. Confirm that Code.gs is deployed as the current web-app version and try again.');
+    }, 12000);
+
     google.script.run
       .withSuccessHandler(function(res) {
+        if (settled) return;
+        finish();
         if (res && res.success) {
           setAdminAuthed(true);
           $('adminPassword').value = '';
           showAdminApp();
           showToast('Welcome, admin.');
-          // Auto-detect device and choose camera mode
           setupCameraUI();
         } else {
           showLoginError((res && res.message) || 'Login failed.');
         }
-        btn.disabled = false;
-        btn.textContent = 'Unlock Scanner';
       })
       .withFailureHandler(function(err) {
-        showLoginError('Error: ' + err.message);
-        btn.disabled = false;
-        btn.textContent = 'Unlock Scanner';
+        if (settled) return;
+        finish();
+        showLoginError('Server error: ' + ((err && err.message) || 'Unable to contact Apps Script.'));
       })
       .adminLogin(password);
   });
