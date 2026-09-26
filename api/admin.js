@@ -8,25 +8,29 @@ function normalizeBody(body) {
 }
 
 async function postToAppsScript(target, body) {
-  let url = target;
-  for (let attempt = 0; attempt < 4; attempt += 1) {
-    const upstream = await fetch(url, {
-      method: 'POST',
-      redirect: 'manual',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-        'User-Agent': 'Vercel-Apps-Script-Proxy/1.0'
-      },
-      body
-    });
+  const initial = await fetch(target, {
+    method: 'POST',
+    redirect: 'manual',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+      'User-Agent': 'Vercel-Apps-Script-Proxy/1.0'
+    },
+    body
+  });
 
-    if (![301, 302, 303, 307, 308].includes(upstream.status)) return upstream;
+  if (![301, 302, 303, 307, 308].includes(initial.status)) return initial;
 
-    const location = upstream.headers.get('location');
-    if (!location) return upstream;
-    url = new URL(location, url).toString();
-  }
-  throw new Error('Too many redirects from Apps Script.');
+  const location = initial.headers.get('location');
+  if (!location) return initial;
+  const redirectedUrl = new URL(location, target).toString();
+
+  // Apps Script ContentService processes the POST first, then redirects
+  // the generated response to a temporary URL. Retrieve that response with GET.
+  return fetch(redirectedUrl, {
+    method: 'GET',
+    redirect: 'follow',
+    headers: { 'User-Agent': 'Vercel-Apps-Script-Proxy/1.0' }
+  });
 }
 
 export default async function handler(req, res) {
@@ -39,10 +43,7 @@ export default async function handler(req, res) {
 
   const target = process.env.APPS_SCRIPT_URL;
   if (!target) {
-    return res.status(500).json({
-      success: false,
-      message: 'APPS_SCRIPT_URL is not configured in Vercel.'
-    });
+    return res.status(500).json({ success: false, message: 'APPS_SCRIPT_URL is not configured in Vercel.' });
   }
 
   try {
@@ -55,11 +56,11 @@ export default async function handler(req, res) {
     try {
       payload = JSON.parse(text);
     } catch (e) {
-      console.error('Unexpected Apps Script response:', upstream.status, text.slice(0, 500));
-      payload = {
+      console.error('Unexpected Apps Script response:', upstream.status, text.slice(0, 1000));
+      return res.status(502).json({
         success: false,
-        message: 'Apps Script returned a non-JSON response. Confirm APPS_SCRIPT_URL is the deployed /exec URL and that the web app is accessible.'
-      };
+        message: 'Apps Script returned HTML instead of JSON. Confirm APPS_SCRIPT_URL is the deployed /exec URL, the deployment is accessible, and the latest Code.gs version is deployed.'
+      });
     }
 
     return res.status(upstream.ok ? 200 : upstream.status).json(payload);
