@@ -1748,58 +1748,93 @@
     .location-address { font-size: 14px; line-height: 1.5; font-weight: 700; color: var(--ink); margin-top: 6px; word-break: break-word; }
     .location-mini-map {
       width: 100%;
-      height: 106px;
+      height: 110px;
       margin-top: 12px;
       border-radius: 14px;
-      overflow: hidden;
+      overflow: auto;
       border: 1px solid rgba(148, 163, 184, 0.18);
-      background:
-        linear-gradient(180deg, rgba(236, 253, 245, 0.6), rgba(224, 242, 254, 0.72)),
-        linear-gradient(90deg, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
-        linear-gradient(rgba(15, 23, 42, 0.04) 1px, transparent 1px),
-        #edf6ff;
-      background-size: auto, 22px 22px, 22px 22px, auto;
+      background: linear-gradient(180deg, rgba(236, 253, 245, 0.6), rgba(224, 242, 254, 0.72));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 10px 18px -14px rgba(15, 23, 42, 0.35);
+      cursor: grab;
+      touch-action: pan-x pan-y;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .location-mini-map:active { cursor: grabbing; }
+    .location-mini-map::-webkit-scrollbar { display: none; }
+    .location-mini-map .map-surface {
       position: relative;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.75), 0 10px 18px -14px rgba(15, 23, 42, 0.35);
+      width: 160%;
+      height: 160%;
+      min-width: 300px;
+      min-height: 180px;
+      background:
+        linear-gradient(90deg, rgba(15, 23, 42, 0.03) 1px, transparent 1px),
+        linear-gradient(rgba(15, 23, 42, 0.03) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.04)),
+        #edf6ff;
+      background-size: 24px 24px, 24px 24px, auto, auto;
+      transform: translate(-18%, -10%) rotate(-5deg);
     }
-    .location-mini-map::before {
+    .location-mini-map .map-surface::before {
       content: "";
       position: absolute;
-      left: 13%;
+      left: 10%;
       right: 10%;
-      top: 18%;
-      bottom: 15%;
+      top: 16%;
+      bottom: 18%;
       border-radius: 22px;
-      background: linear-gradient(135deg, rgba(52, 211, 153, 0.17), rgba(96, 165, 250, 0.12));
-      transform: rotate(-9deg);
-      border: 1px solid rgba(52, 211, 153, 0.12);
+      background: linear-gradient(135deg, rgba(52, 211, 153, 0.18), rgba(96, 165, 250, 0.12));
+      border: 1px solid rgba(52, 211, 153, 0.14);
     }
-    .location-mini-map::after {
+    .location-mini-map .map-surface::after {
       content: "";
       position: absolute;
-      left: 39.5%;
-      top: 44%;
-      width: 20px;
-      height: 20px;
-      background: #ef4444;
-      border-radius: 50%;
-      border: 4px solid rgba(255,255,255,0.96);
-      box-shadow: 0 0 0 7px rgba(239, 68, 68, 0.14), 0 14px 22px rgba(239,68,68,0.24);
-      transform: translate(-50%, -50%);
-      z-index: 4;
+      right: 17%;
+      bottom: 16%;
+      width: 78px;
+      height: 54px;
+      border-radius: 16px 18px 20px 12px;
+      background: rgba(125, 211, 252, 0.18);
+      border: 1px solid rgba(14, 116, 144, 0.14);
+      transform: rotate(18deg);
     }
     .location-mini-map .road {
       position: absolute;
+      display: block;
       background: rgba(255,255,255,0.96);
       border-radius: 999px;
-      box-shadow: inset 0 0 0 1px rgba(148,163,184,0.2), 0 4px 12px rgba(148,163,184,0.09);
-      z-index: 1;
+      box-shadow: inset 0 0 0 1px rgba(148,163,184,0.2), 0 5px 14px rgba(148,163,184,0.12);
+      z-index: 2;
     }
-    .location-mini-map .road.r1 { width: 130px; height: 12px; left: 16px; top: 28px; transform: rotate(22deg); }
-    .location-mini-map .road.r2 { width: 150px; height: 12px; right: 10px; bottom: 22px; transform: rotate(-18deg); }
-    .location-mini-map .road.r3 { width: 12px; height: 84px; left: 61%; top: 10px; transform: rotate(-7deg); }
-    .location-mini-map .road.r4 { width: 88px; height: 10px; left: 25%; bottom: 18px; transform: rotate(-40deg); }
-    .location-mini-map .road.r5 { width: 68px; height: 10px; left: 52%; top: 62px; transform: rotate(24deg); }
+    .location-mini-map .road.r1 { width: 140px; height: 12px; left: 28px; top: 42px; transform: rotate(22deg); }
+    .location-mini-map .road.r2 { width: 156px; height: 12px; right: 22px; bottom: 38px; transform: rotate(-18deg); }
+    .location-mini-map .road.r3 { width: 12px; height: 88px; left: 58%; top: 18px; transform: rotate(-8deg); }
+    .location-mini-map .road.r4 { width: 92px; height: 10px; left: 24%; bottom: 26px; transform: rotate(-40deg); }
+    .location-mini-map .road.r5 { width: 70px; height: 10px; left: 52%; top: 76px; transform: rotate(24deg); }
+    .location-mini-map .road.r6 { width: 104px; height: 10px; left: 18%; top: 96px; transform: rotate(7deg); }
+    .location-mini-map .pin {
+      position: absolute;
+      left: 44%;
+      top: 47%;
+      width: 22px;
+      height: 22px;
+      background: #ef4444;
+      border-radius: 50%;
+      border: 5px solid rgba(255,255,255,0.96);
+      box-shadow: 0 0 0 8px rgba(239, 68, 68, 0.14), 0 14px 24px rgba(239,68,68,0.26);
+      z-index: 4;
+    }
+    .location-mini-map .pin::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 8px; height: 8px;
+      background: rgba(255,255,255,0.8);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
     .location-directions {
       display: inline-flex;
       align-items: center;
@@ -3036,10 +3071,16 @@
                     <div class="location-address">14°21'18.2"N 120°54'36.7"E</div>
                   </div>
                 </div>
-                <div class="location-mini-map" aria-hidden="true">
-                  <span class="road r1"></span>
-                  <span class="road r2"></span>
-                  <span class="road r3"></span>
+                <div class="location-mini-map" aria-label="Map preview of the event location">
+                  <div class="map-surface" aria-hidden="true">
+                    <span class="road r1"></span>
+                    <span class="road r2"></span>
+                    <span class="road r3"></span>
+                    <span class="road r4"></span>
+                    <span class="road r5"></span>
+                    <span class="road r6"></span>
+                    <span class="pin"></span>
+                  </div>
                 </div>
                 <div class="location-directions">Get directions</div>
                 <a class="btn btn-primary location-map-btn" href="https://www.google.com/maps?q=14.3550556,120.9101944" target="_blank" rel="noopener noreferrer">Open in Maps</a>
