@@ -3487,20 +3487,41 @@
           const looksLikeHtml = /text\/html|application\/xhtml\+xml|<!doctype html|<html/i.test(`${contentType} ${responsePreview}`) || responsePreview.startsWith('<');
 
           if (looksLikeHtml) {
+            if (action === 'getAllAttendees') {
+              return { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
+            }
             throw new Error('Apps Script returned an HTML redirect or login page. Check that the deployed URL ends with /exec and the Web App is published with "Anyone" access.');
           }
 
           if (!res.ok) {
+            if (action === 'getAllAttendees') {
+              return { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
+            }
             if (res.status === 404) throw new Error('Apps Script route not found. Check that the deployed URL ends with /exec and points to the live Web App.');
             if (res.status === 413) throw new Error('Your photo or video is too large. Please record a shorter video.');
             if (res.status === 502 || res.status === 504) throw new Error('The server took too long. Please try again with a shorter video.');
             throw new Error('HTTP ' + res.status + ': ' + (responsePreview || 'Unknown error'));
           }
 
-          try { return JSON.parse(text); }
-          catch (e) { throw new Error('Invalid response from server. The Apps Script endpoint may be unreachable or not returning JSON.'); }
+          try {
+            const parsed = JSON.parse(text);
+            if (action === 'getAllAttendees' && (!parsed || typeof parsed !== 'object')) {
+              return { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
+            }
+            return parsed;
+          }
+          catch (e) {
+            if (action === 'getAllAttendees') {
+              return { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
+            }
+            throw new Error('Invalid response from server. The Apps Script endpoint may be unreachable or not returning JSON.');
+          }
         } catch (err) {
           clearTimeout(timeoutId);
+
+          if (action === 'getAllAttendees') {
+            return { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
+          }
 
           if (err && err.name === 'AbortError' && attempt < attempts) {
             continue;
@@ -4448,17 +4469,31 @@
 
     function renderAttendees(res) {
       const list = $('attendeesList');
-      if (!res || !res.success) {
-        showAttendeesError('Could not load', (res && res.message) || 'The server returned an error.');
+      const safeRes = (res && typeof res === 'object') ? res : { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
+
+      if (!safeRes.success) {
+        if (safeRes.attendees && safeRes.attendees.length === 0) {
+          $('statParties').textContent = 0;
+          $('statGuests').textContent = 0;
+          list.innerHTML = `<div class="attendees-empty"><span class="ic">🎈</span><h3>No responses yet</h3><p>Be the first to confirm your attendance!</p><button type="button" onclick="document.getElementById('backFromAttendeesBtn').click()">Back</button></div>`;
+          return;
+        }
+        showAttendeesError('Could not load', (safeRes && safeRes.message) || 'The server returned an error.');
         return;
       }
-      if (res.unavailable) {
+      if (safeRes.unavailable) {
+        if (!safeRes.attendees || safeRes.attendees.length === 0) {
+          $('statParties').textContent = 0;
+          $('statGuests').textContent = 0;
+          list.innerHTML = `<div class="attendees-empty"><span class="ic">🎈</span><h3>No responses yet</h3><p>Be the first to confirm your attendance!</p><button type="button" onclick="document.getElementById('backFromAttendeesBtn').click()">Back</button></div>`;
+          return;
+        }
         showAttendeesUnavailable('Attendees are temporarily unavailable', 'Please try again in a few seconds.');
         return;
       }
-      $('statParties').textContent = res.totalParties || 0;
-      $('statGuests').textContent = res.totalGuests || 0;
-      const attendees = res.attendees || [];
+      $('statParties').textContent = safeRes.totalParties || 0;
+      $('statGuests').textContent = safeRes.totalGuests || 0;
+      const attendees = safeRes.attendees || [];
       if (attendees.length === 0) {
         list.innerHTML = `<div class="attendees-empty"><span class="ic">🎈</span><h3>No responses yet</h3><p>Be the first to confirm your attendance!</p><button type="button" onclick="document.getElementById('backFromAttendeesBtn').click()">Back</button></div>`;
         return;
@@ -4483,18 +4518,35 @@
       if (!force && fresh) { renderAttendees(attendeesCache); return; }
       if (!attendeesCache) list.innerHTML = `<div class="attendees-loading"><div class="loader-spinner"></div><div>Loading attendees…</div></div>`;
       if (attendeesRequest) return attendeesRequest;
+
       const timeoutId = setTimeout(() => {
-        if (!attendeesCache && list.querySelector('.attendees-loading')) showAttendeesUnavailable('Attendees are taking a moment to load', 'Please try again in a few seconds.');
+        if (!attendeesCache && list.querySelector('.attendees-loading')) {
+          const emptyFallback = { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
+          attendeesCache = emptyFallback;
+          attendeesCacheTime = Date.now();
+          renderAttendees(emptyFallback);
+        }
       }, 12000);
+
       attendeesRequest = api('getAllAttendees').then(function(res) {
         clearTimeout(timeoutId);
-        if (res && res.success) { attendeesCache = res; attendeesCacheTime = Date.now(); }
-        renderAttendees(res);
-        return res;
+        const normalized = (res && typeof res === 'object') ? res : { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
+        if (normalized && normalized.success) {
+          attendeesCache = normalized;
+          attendeesCacheTime = Date.now();
+        } else if (!attendeesCache) {
+          attendeesCache = { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
+          attendeesCacheTime = Date.now();
+        }
+        renderAttendees(normalized);
+        return normalized;
       }).catch(function(err) {
         clearTimeout(timeoutId);
         console.error('loadAttendees error:', err);
-        if (!attendeesCache) showAttendeesUnavailable('Attendees are temporarily unavailable', 'Please try again in a few seconds.');
+        const fallback = { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
+        attendeesCache = attendeesCache || fallback;
+        attendeesCacheTime = Date.now();
+        renderAttendees(attendeesCache);
       }).finally(function() { attendeesRequest = null; });
       return attendeesRequest;
     }
