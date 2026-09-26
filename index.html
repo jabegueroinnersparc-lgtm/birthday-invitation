@@ -3270,45 +3270,57 @@
       }
 
       const payload = Object.assign({ action: action }, params || {});
-      const controller = new AbortController();
-      const timeoutMs = action === 'submitForm' ? 120000 : 30000;
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      const attempts = action === 'submitForm' ? 2 : 2;
+      const timeoutMs = action === 'submitForm' ? 180000 : 60000;
 
-      let res;
-      try {
-              res = await fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        redirect: 'follow',
-        body: JSON.stringify(payload),
-        signal: controller.signal
-      });
-      } catch (err) {
-        clearTimeout(timeoutId);
-        if (err.name === 'AbortError') {
-          throw new Error('Request timed out. Please check your connection and try again.');
+      for (let attempt = 1; attempt <= attempts; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), attempt === 1 ? timeoutMs : timeoutMs * 2);
+
+        try {
+          const res = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            redirect: 'follow',
+            headers: { 'Content-Type': 'application/json;charset=utf-8' },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+
+          const text = await res.text();
+          const responsePreview = text.slice(0, 400).replace(/\s+/g, ' ').trim();
+          const contentType = res.headers.get('content-type') || '';
+          const looksLikeHtml = /text\/html|application\/xhtml\+xml|<!doctype html|<html/i.test(`${contentType} ${responsePreview}`) || responsePreview.startsWith('<');
+
+          if (looksLikeHtml) {
+            throw new Error('Apps Script returned an HTML redirect or login page. Check that the deployed URL ends with /exec and the Web App is published with "Anyone" access.');
+          }
+
+          if (!res.ok) {
+            if (res.status === 404) throw new Error('Apps Script route not found. Check that the deployed URL ends with /exec and points to the live Web App.');
+            if (res.status === 413) throw new Error('Your photo or video is too large. Please record a shorter video.');
+            if (res.status === 502 || res.status === 504) throw new Error('The server took too long. Please try again with a shorter video.');
+            throw new Error('HTTP ' + res.status + ': ' + (responsePreview || 'Unknown error'));
+          }
+
+          try { return JSON.parse(text); }
+          catch (e) { throw new Error('Invalid response from server. The Apps Script endpoint may be unreachable or not returning JSON.'); }
+        } catch (err) {
+          clearTimeout(timeoutId);
+
+          if (err && err.name === 'AbortError' && attempt < attempts) {
+            continue;
+          }
+
+          if (err && err.name === 'AbortError') {
+            throw new Error('The server is taking longer than expected. Please wait a moment and try again.');
+          }
+
+          throw err;
         }
-        throw err;
-      }
-      clearTimeout(timeoutId);
-
-      const text = await res.text();
-      const responsePreview = text.slice(0, 400).replace(/\s+/g, ' ').trim();
-      const contentType = res.headers.get('content-type') || '';
-      const looksLikeHtml = /text\/html|application\/xhtml\+xml|<!doctype html|<html/i.test(`${contentType} ${responsePreview}`) || responsePreview.startsWith('<');
-
-      if (looksLikeHtml) {
-        throw new Error('Apps Script returned an HTML redirect or login page. Check that the deployed URL ends with /exec and the Web App is published with "Anyone" access.');
       }
 
-      if (!res.ok) {
-        if (res.status === 404) throw new Error('Apps Script route not found. Check that the deployed URL ends with /exec and points to the live Web App.');
-        if (res.status === 413) throw new Error('Your photo or video is too large. Please record a shorter video.');
-        if (res.status === 502 || res.status === 504) throw new Error('The server took too long. Please try again with a shorter video.');
-        throw new Error('HTTP ' + res.status + ': ' + responsePreview.slice(0, 180) || 'Unknown error');
-      }
-
-      try { return JSON.parse(text); }
-      catch (e) { throw new Error('Invalid response from server. The Apps Script endpoint may be unreachable or not returning JSON.'); }
+      throw new Error('The server is taking longer than expected. Please wait a moment and try again.');
     }
 
     /* STATE */
