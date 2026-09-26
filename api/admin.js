@@ -1,6 +1,34 @@
 // Vercel Serverless Function
 // Set APPS_SCRIPT_URL in Vercel Project Settings to the deployed Apps Script /exec URL.
 
+function normalizeBody(body) {
+  if (typeof body === 'string') return body;
+  if (body && typeof body === 'object') return new URLSearchParams(body).toString();
+  return '';
+}
+
+async function postToAppsScript(target, body) {
+  let url = target;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const upstream = await fetch(url, {
+      method: 'POST',
+      redirect: 'manual',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+        'User-Agent': 'Vercel-Apps-Script-Proxy/1.0'
+      },
+      body
+    });
+
+    if (![301, 302, 303, 307, 308].includes(upstream.status)) return upstream;
+
+    const location = upstream.headers.get('location');
+    if (!location) return upstream;
+    url = new URL(location, url).toString();
+  }
+  throw new Error('Too many redirects from Apps Script.');
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -18,27 +46,28 @@ export default async function handler(req, res) {
   }
 
   try {
-    const body = typeof req.body === 'string'
-      ? req.body
-      : new URLSearchParams(req.body || {}).toString();
+    const body = normalizeBody(req.body);
+    if (!body) return res.status(400).json({ success: false, message: 'Request body is empty.' });
 
-    const upstream = await fetch(target, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-      body
-    });
-
+    const upstream = await postToAppsScript(target, body);
     const text = await upstream.text();
     let payload;
-    try { payload = JSON.parse(text); }
-    catch (e) { payload = { success: false, message: 'Invalid response from Apps Script.' }; }
+    try {
+      payload = JSON.parse(text);
+    } catch (e) {
+      console.error('Unexpected Apps Script response:', upstream.status, text.slice(0, 500));
+      payload = {
+        success: false,
+        message: 'Apps Script returned a non-JSON response. Confirm APPS_SCRIPT_URL is the deployed /exec URL and that the web app is accessible.'
+      };
+    }
 
     return res.status(upstream.ok ? 200 : upstream.status).json(payload);
   } catch (error) {
     console.error('Apps Script proxy error:', error);
     return res.status(502).json({
       success: false,
-      message: 'Could not reach the Google Apps Script backend.'
+      message: 'Could not reach the Google Apps Script backend: ' + error.message
     });
   }
 }
