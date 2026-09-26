@@ -4139,33 +4139,9 @@
     .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
     .flash.fire { animation: flashAnim 0.4s ease; }
     @keyframes flashAnim { 0% { opacity: 0.9; } 100% { opacity: 0; } }
-    /* SCREEN FLASH — bright white fill to light up the user's face in dark rooms */
-    .screen-flash { position: absolute; inset: 0; background: #ffffff; opacity: 0;
-      pointer-events: none; z-index: 6; transition: opacity 0.15s ease; }
-    .screen-flash.on { opacity: 1; }
-    .torch-btn { position: absolute; top: 16px; right: 16px; width: 48px; height: 48px;
-      border-radius: 50%; background: rgba(0,0,0,0.55); border: 1.5px solid rgba(255,255,255,0.3);
-      color: #fff; font-size: 22px; display: flex; align-items: center; justify-content: center;
-      cursor: pointer; padding: 0; min-height: 0; z-index: 5;
-      -webkit-tap-highlight-color: transparent; touch-action: manipulation;
-      transition: background 0.25s, border-color 0.25s, transform 0.15s; }
-    .torch-btn:active { transform: scale(0.92); }
-    .torch-btn.on { background: #fbbf24; border-color: #fbbf24; color: #0a0a0a;
-      box-shadow: 0 0 0 4px rgba(251,191,36,0.25); }
-    .torch-btn.unsupported { display: none; }
-    /* SCREEN FLASH TOGGLE — always visible */
-    .screen-flash-btn { position: absolute; top: 16px; left: 16px; width: 48px; height: 48px;
-      border-radius: 50%; background: rgba(0,0,0,0.55); border: 1.5px solid rgba(255,255,255,0.3);
-      color: #fff; font-size: 22px; display: flex; align-items: center; justify-content: center;
-      cursor: pointer; padding: 0; min-height: 0; z-index: 5;
-      -webkit-tap-highlight-color: transparent; touch-action: manipulation;
-      transition: background 0.25s, border-color 0.25s, transform 0.15s; }
-    .screen-flash-btn:active { transform: scale(0.92); }
-    .screen-flash-btn.on { background: #fbbf24; border-color: #fbbf24; color: #0a0a0a;
-      box-shadow: 0 0 0 4px rgba(251,191,36,0.25); }
     .countdown { position: absolute; inset: 0; background: rgba(10,10,10,0.7);
       display: none; align-items: center; justify-content: center; color: #fff;
-      font-size: clamp(72px, 25vw, 120px); font-weight: 800; letter-spacing: -0.05em; z-index: 7; }
+      font-size: clamp(72px, 25vw, 120px); font-weight: 800; letter-spacing: -0.05em; }
     .countdown.show { display: flex; }
     .bottom { padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
       background: #0a0a0a; border-top: 1px solid #1c1c1c;
@@ -4187,10 +4163,7 @@
   <div class="video-container">
     <video id="v" autoplay playsinline muted webkit-playsinline></video>
     <div class="flash" id="flash"></div>
-    <div class="screen-flash" id="screenFlash"></div>
     <div class="countdown" id="countdown">3</div>
-    <button id="screenFlashBtn" class="screen-flash-btn" aria-label="Toggle screen flash" title="Toggle screen flash">💡</button>
-    <button id="torchBtn" class="torch-btn unsupported" aria-label="Toggle hardware flash" title="Toggle hardware flash">🔦</button>
   </div>
   <div class="bottom">
     <div class="status" id="status">Starting camera...</div>
@@ -4205,56 +4178,8 @@
     const snapBtn = document.getElementById('snap');
     const closeBtn = document.getElementById('close');
     const flash = document.getElementById('flash');
-    const screenFlash = document.getElementById('screenFlash');
     const countdownEl = document.getElementById('countdown');
     let stream = null, countdownTimer = null;
-    let torchOn = false, torchTrack = null, torchSupported = false;
-    let screenFlashOn = false;
-
-    /* SCREEN FLASH TOGGLE — always available, works on any device */
-    const screenFlashBtn = document.getElementById('screenFlashBtn');
-    screenFlashBtn.addEventListener('click', function() {
-      screenFlashOn = !screenFlashOn;
-      this.classList.toggle('on', screenFlashOn);
-      this.setAttribute('aria-label', screenFlashOn ? 'Turn screen flash off' : 'Turn screen flash on');
-      if (screenFlashOn) {
-        screenFlash.classList.add('on');
-      } else {
-        screenFlash.classList.remove('on');
-      }
-    });
-
-    function setupTorch(st) {
-      try {
-        torchTrack = st.getVideoTracks()[0];
-        const caps = torchTrack && torchTrack.getCapabilities ? torchTrack.getCapabilities() : {};
-        torchSupported = !!(caps && caps.torch);
-      } catch (e) { torchSupported = false; }
-      const btn = document.getElementById('torchBtn');
-      if (!btn) return;
-      if (torchSupported) {
-        btn.classList.remove('unsupported');
-      } else {
-        btn.classList.add('unsupported');
-      }
-    }
-
-    async function toggleTorch() {
-      if (!torchSupported || !torchTrack) return;
-      const btn = document.getElementById('torchBtn');
-      try {
-        torchOn = !torchOn;
-        await torchTrack.applyConstraints({ advanced: [{ torch: torchOn }] });
-        btn.classList.toggle('on', torchOn);
-        btn.setAttribute('aria-label', torchOn ? 'Turn hardware flash off' : 'Turn hardware flash on');
-      } catch (e) {
-        torchOn = false;
-        btn.classList.remove('on');
-        console.warn('Torch toggle failed:', e);
-      }
-    }
-
-    document.getElementById('torchBtn').addEventListener('click', toggleTorch);
 
     navigator.mediaDevices.getUserMedia({
       video: { facingMode: 'user', width: { ideal: 640, max: 640 }, height: { ideal: 480, max: 480 } },
@@ -4262,7 +4187,6 @@
     }).then(st => {
       stream = st;
       v.srcObject = st;
-      setupTorch(st);
       status.textContent = 'Center your face and tap Capture';
       snapBtn.disabled = false;
     }).catch(err => {
@@ -4279,8 +4203,6 @@
       countdownEl.textContent = count;
       countdownEl.classList.add('show');
       snapBtn.disabled = true;
-      /* If screen flash is on, ensure it stays bright during countdown */
-      if (screenFlashOn) screenFlash.classList.add('on');
       countdownTimer = setInterval(() => {
         count--;
         if (count > 0) { countdownEl.textContent = count; }
@@ -4292,14 +4214,8 @@
     };
 
     function doCapture() {
-      /* White capture flash animation */
       flash.classList.add('fire');
       setTimeout(() => flash.classList.remove('fire'), 400);
-      /* Turn off torch after capture */
-      if (torchOn && torchTrack) {
-        try { torchTrack.applyConstraints({ advanced: [{ torch: false }] }); } catch (e) {}
-        torchOn = false;
-      }
       const w = v.videoWidth, h = v.videoHeight;
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
@@ -4323,19 +4239,12 @@
     }
 
     closeBtn.onclick = () => {
-      if (torchOn && torchTrack) {
-        try { torchTrack.applyConstraints({ advanced: [{ torch: false }] }); } catch (e) {}
-        torchOn = false;
-      }
       if (stream) stream.getTracks().forEach(t => t.stop());
       if (countdownTimer) clearInterval(countdownTimer);
       window.close();
     };
 
     window.addEventListener('beforeunload', () => {
-      if (torchOn && torchTrack) {
-        try { torchTrack.applyConstraints({ advanced: [{ torch: false }] }); } catch (e) {}
-      }
       if (stream) stream.getTracks().forEach(t => t.stop());
     });
   <\/script>
@@ -4433,37 +4342,13 @@
     video { width: 100%; height: 100%; object-fit: cover; display: block; }
     video.preview { transform: none; }
     .recording-indicator { position: absolute; top: 16px; left: 16px; display: none; align-items: center; gap: 8px;
-      background: rgba(220,38,38,0.9); padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 600; z-index: 8; }
+      background: rgba(220,38,38,0.9); padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 600; }
     .recording-indicator.show { display: flex; }
     .recording-indicator .dot { width: 8px; height: 8px; background: #fff; border-radius: 50%; animation: recPulse 1s infinite; }
     @keyframes recPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-    .timer { position: absolute; top: 16px; right: 76px; background: rgba(0,0,0,0.7); padding: 6px 14px;
-      border-radius: 100px; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; display: none; z-index: 8; }
+    .timer { position: absolute; top: 16px; right: 16px; background: rgba(0,0,0,0.7); padding: 6px 14px;
+      border-radius: 100px; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; display: none; }
     .timer.show { display: block; }
-    .torch-btn { position: absolute; top: 16px; right: 16px; width: 48px; height: 48px;
-      border-radius: 50%; background: rgba(0,0,0,0.55); border: 1.5px solid rgba(255,255,255,0.3);
-      color: #fff; font-size: 22px; display: flex; align-items: center; justify-content: center;
-      cursor: pointer; padding: 0; min-height: 0; z-index: 5;
-      -webkit-tap-highlight-color: transparent; touch-action: manipulation;
-      transition: background 0.25s, border-color 0.25s, transform 0.15s; }
-    .torch-btn:active { transform: scale(0.92); }
-    .torch-btn.on { background: #fbbf24; border-color: #fbbf24; color: #0a0a0a;
-      box-shadow: 0 0 0 4px rgba(251,191,36,0.25); }
-    .torch-btn.unsupported { display: none; }
-    /* SCREEN FLASH — bright white fill to light up the user's face in dark rooms */
-    .screen-flash { position: absolute; inset: 0; background: #ffffff; opacity: 0;
-      pointer-events: none; z-index: 6; transition: opacity 0.15s ease; }
-    .screen-flash.on { opacity: 1; }
-    /* SCREEN FLASH TOGGLE — always visible */
-    .screen-flash-btn { position: absolute; top: 16px; left: 16px; width: 48px; height: 48px;
-      border-radius: 50%; background: rgba(0,0,0,0.55); border: 1.5px solid rgba(255,255,255,0.3);
-      color: #fff; font-size: 22px; display: flex; align-items: center; justify-content: center;
-      cursor: pointer; padding: 0; min-height: 0; z-index: 5;
-      -webkit-tap-highlight-color: transparent; touch-action: manipulation;
-      transition: background 0.25s, border-color 0.25s, transform 0.15s; }
-    .screen-flash-btn:active { transform: scale(0.92); }
-    .screen-flash-btn.on { background: #fbbf24; border-color: #fbbf24; color: #0a0a0a;
-      box-shadow: 0 0 0 4px rgba(251,191,36,0.25); }
     .bottom { padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
       background: #0a0a0a; border-top: 1px solid #1c1c1c;
       display: flex; flex-direction: column; align-items: center; gap: 12px; flex-shrink: 0; }
@@ -4484,11 +4369,8 @@
   <div class="topbar">Video Greeting</div>
   <div class="video-container">
     <video id="v" autoplay playsinline muted webkit-playsinline></video>
-    <div class="screen-flash" id="screenFlash"></div>
     <div class="recording-indicator" id="recIndicator"><span class="dot"></span>Recording</div>
     <div class="timer" id="timer">00:00</div>
-    <button id="screenFlashBtn" class="screen-flash-btn" aria-label="Toggle screen flash" title="Toggle screen flash">💡</button>
-    <button id="torchBtn" class="torch-btn unsupported" aria-label="Toggle hardware flash" title="Toggle hardware flash">🔦</button>
   </div>
   <div class="bottom">
     <div class="status" id="status">Starting camera...</div>
@@ -4512,54 +4394,9 @@
     const previewRow = document.getElementById('previewRow');
     const useBtn = document.getElementById('useBtn');
     const retakeBtn = document.getElementById('retakeBtn');
-    const screenFlash = document.getElementById('screenFlash');
     
     let stream = null, mediaRecorder = null, recordedChunks = [], timerInterval = null;
     let seconds = 0, isRecording = false;
-    let torchOn = false, torchTrack = null, torchSupported = false;
-    let screenFlashOn = false;
-
-    /* SCREEN FLASH TOGGLE — always available */
-    const screenFlashBtn = document.getElementById('screenFlashBtn');
-    screenFlashBtn.addEventListener('click', function() {
-      screenFlashOn = !screenFlashOn;
-      this.classList.toggle('on', screenFlashOn);
-      this.setAttribute('aria-label', screenFlashOn ? 'Turn screen flash off' : 'Turn screen flash on');
-      if (screenFlashOn) {
-        screenFlash.classList.add('on');
-      } else {
-        screenFlash.classList.remove('on');
-      }
-    });
-
-    function setupTorch(st) {
-      try {
-        torchTrack = st.getVideoTracks()[0];
-        const caps = torchTrack && torchTrack.getCapabilities ? torchTrack.getCapabilities() : {};
-        torchSupported = !!(caps && caps.torch);
-      } catch (e) { torchSupported = false; }
-      const btn = document.getElementById('torchBtn');
-      if (!btn) return;
-      if (torchSupported) btn.classList.remove('unsupported');
-      else btn.classList.add('unsupported');
-    }
-
-    async function toggleTorch() {
-      if (!torchSupported || !torchTrack) return;
-      const btn = document.getElementById('torchBtn');
-      try {
-        torchOn = !torchOn;
-        await torchTrack.applyConstraints({ advanced: [{ torch: torchOn }] });
-        btn.classList.toggle('on', torchOn);
-        btn.setAttribute('aria-label', torchOn ? 'Turn hardware flash off' : 'Turn hardware flash on');
-      } catch (e) {
-        torchOn = false;
-        btn.classList.remove('on');
-        console.warn('Torch toggle failed:', e);
-      }
-    }
-
-    document.getElementById('torchBtn').addEventListener('click', toggleTorch);
 
     navigator.mediaDevices.getUserMedia({
       video: { facingMode: 'user', width: { ideal: 480, max: 480 }, height: { ideal: 360, max: 360 }, frameRate: { ideal: 15, max: 20 } },
@@ -4567,7 +4404,6 @@
     }).then(st => {
       stream = st;
       v.srcObject = st;
-      setupTorch(st);
       status.textContent = 'Ready. Tap Start Recording. Max 20 seconds.';
       recordBtn.disabled = false;
     }).catch(err => {
@@ -4603,11 +4439,6 @@
       mediaRecorder.onstop = () => {
         clearInterval(timerInterval); timerInterval = null; isRecording = false;
         recIndicator.classList.remove('show'); timerEl.classList.remove('show');
-        const tb = document.getElementById('torchBtn');
-        if (tb) tb.style.display = '';
-        const sfb = document.getElementById('screenFlashBtn');
-        if (sfb) sfb.style.display = '';
-        if (screenFlashOn) { screenFlash.classList.remove('on'); screenFlashOn = false; if (sfb) sfb.classList.remove('on'); }
         if (recordedChunks.length === 0) { status.textContent = 'No recording data. Try again.'; return; }
         const blob = new Blob(recordedChunks, { type: 'video/webm' });
         const reader = new FileReader();
@@ -4626,10 +4457,6 @@
       recIndicator.classList.add('show'); timerEl.classList.add('show');
       status.textContent = 'Recording... Tap Stop when done.';
       recordBtn.textContent = 'Stop Recording';
-      const tb = document.getElementById('torchBtn');
-      if (tb) tb.style.display = 'none';
-      const sfb = document.getElementById('screenFlashBtn');
-      if (sfb) sfb.style.display = 'none';
       
       timerInterval = setInterval(() => {
         seconds++;
@@ -4652,10 +4479,6 @@
       if (window.opener && !window.opener.closed) {
         window.opener.postMessage({ type: 'VIDEO_CAPTURED', data: v.src }, '*');
       }
-      if (torchOn && torchTrack) {
-        try { torchTrack.applyConstraints({ advanced: [{ torch: false }] }); } catch (e) {}
-        torchOn = false;
-      }
       if (stream) stream.getTracks().forEach(t => t.stop());
       window.close();
     };
@@ -4666,19 +4489,10 @@
       status.textContent = 'Ready. Tap Start Recording. Max 20 seconds.';
       recordBtn.textContent = 'Start Recording';
       controlsRow.style.display = 'flex'; previewRow.style.display = 'none'; recordBtn.disabled = false;
-      const tb = document.getElementById('torchBtn');
-      if (tb) tb.style.display = '';
-      const sfb = document.getElementById('screenFlashBtn');
-      if (sfb) sfb.style.display = '';
-      if (screenFlashOn) screenFlash.classList.add('on');
     };
 
     closeBtn.onclick = () => {
       if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
-      if (torchOn && torchTrack) {
-        try { torchTrack.applyConstraints({ advanced: [{ torch: false }] }); } catch (e) {}
-        torchOn = false;
-      }
       if (stream) stream.getTracks().forEach(t => t.stop());
       if (timerInterval) clearInterval(timerInterval);
       window.close();
@@ -4686,9 +4500,6 @@
 
     window.addEventListener('beforeunload', () => {
       if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
-      if (torchOn && torchTrack) {
-        try { torchTrack.applyConstraints({ advanced: [{ torch: false }] }); } catch (e) {}
-      }
       if (stream) stream.getTracks().forEach(t => t.stop());
       if (timerInterval) clearInterval(timerInterval);
     });
