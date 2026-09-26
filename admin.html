@@ -484,6 +484,9 @@
     .attendee-stat strong { display: block; color: #111; font-size: 22px; }
     .attendee-stat span { color: #777; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
     .attendee-toolbar { max-width: 1180px; margin: 0 auto 14px; }
+    .attendee-load-status { margin-bottom: 8px; color: #777; font-size: 12px; }
+    .attendee-load-status.error { color: #a52d2d; font-weight: 700; }
+    .attendee-load-status.ok { color: #236333; }
     .attendee-search { width: 100%; border: 1px solid #ddd; border-radius: 10px; background: #fff; padding: 13px 14px; color: #111; font: 14px Inter, sans-serif; }
     .attendee-list { max-width: 1180px; margin: 0 auto; display: grid; gap: 10px; }
     .attendee-row { display: grid; grid-template-columns: minmax(170px, 1.3fr) minmax(130px, 1fr) 90px 100px auto; gap: 14px; align-items: center; background: #fff; border: 1px solid #e4e4df; border-radius: 12px; padding: 14px 16px; }
@@ -662,7 +665,7 @@
   <section class="attendee-panel hidden" id="attendeePanel" aria-labelledby="attendeePanelTitle">
     <div class="attendee-head"><div><div class="attendee-kicker">Google Sheets records</div><h1 id="attendeePanelTitle">Attendees</h1></div><button type="button" class="attendee-refresh" id="refreshAttendeesBtn">Refresh list</button></div>
     <div class="attendee-stats"><div class="attendee-stat"><strong id="attendeePartyTotal">0</strong><span>Parties</span></div><div class="attendee-stat"><strong id="attendeeGuestTotal">0</strong><span>Going guests</span></div><div class="attendee-stat"><strong id="attendeeCheckedTotal">0</strong><span>Checked in</span></div></div>
-    <div class="attendee-toolbar"><input class="attendee-search" id="attendeeSearch" type="search" placeholder="Search name, mobile, email, or ticket code" autocomplete="off"></div>
+    <div class="attendee-toolbar"><div id="attendeeLoadStatus" class="attendee-load-status" role="status">Ready to load attendee records.</div><input class="attendee-search" id="attendeeSearch" type="search" placeholder="Search name, mobile, email, or ticket code" autocomplete="off"></div>
     <div class="attendee-list" id="attendeeList"><div class="attendee-empty">Loading attendees…</div></div>
   </section>
   <div class="attendee-editor" id="attendeeEditor" aria-hidden="true"><div class="attendee-editor-card" role="dialog" aria-modal="true" aria-labelledby="attendeeEditorTitle"><div class="attendee-editor-head"><h2 id="attendeeEditorTitle">Edit attendee</h2><button type="button" class="attendee-editor-close" id="closeAttendeeEditor" aria-label="Close">×</button></div><form id="attendeeForm"><input type="hidden" id="editRowIndex"><div class="attendee-form-grid"><label>Name<input id="editName" required></label><label>Mobile<input id="editMobile" required inputmode="tel"></label><label>Email<input id="editEmail" type="email"></label><label>Guests<input id="editGuests" type="number" min="1" max="20" required></label><label>Attendance<select id="editAttendance"><option value="going">Going</option><option value="planning">Planning</option><option value="not_going">Not going</option></select></label><label>Ticket code<input id="editTicketCode" disabled></label><label class="full">Address<input id="editAddress"></label><label class="full">Greetings<textarea id="editGreetings"></textarea></label></div><div class="attendee-editor-actions"><button type="button" class="cancel" id="cancelAttendeeEdit">Cancel</button><button type="submit" class="save" id="saveAttendeeBtn">Save changes</button></div></form></div></div>
@@ -751,10 +754,29 @@
   $('attendeeForm').addEventListener('submit', saveEditedAttendee);
   function loadAdminAttendees() {
     $('attendeeList').innerHTML = '<div class="attendee-empty">Loading attendees…</div>';
+    const status = $('attendeeLoadStatus');
+    if (status) { status.className = 'attendee-load-status'; status.textContent = 'Contacting Google Sheets backend…'; }
+    if (!hasAppsScriptBridge()) {
+      const message = 'API bridge is unavailable on this deployment.';
+      $('attendeeList').innerHTML = '<div class="attendee-empty">' + message + '</div>';
+      if (status) { status.className = 'attendee-load-status error'; status.textContent = message; }
+      return;
+    }
     google.script.run.withSuccessHandler(res => {
-      if (!res || !res.success) { $('attendeeList').innerHTML = '<div class="attendee-empty">' + escapeHtml((res && res.message) || 'Could not load attendees.') + '</div>'; return; }
-      adminAttendees = res.attendees || []; renderAdminAttendees();
-    }).withFailureHandler(err => { $('attendeeList').innerHTML = '<div class="attendee-empty">' + escapeHtml(err.message || 'Could not load attendees.') + '</div>'; }).getAdminAttendees();
+      if (!res || !res.success) {
+        const message = (res && res.message) || 'Backend returned no attendee data.';
+        $('attendeeList').innerHTML = '<div class="attendee-empty">' + escapeHtml(message) + '</div>';
+        if (status) { status.className = 'attendee-load-status error'; status.textContent = 'Load failed: ' + message; }
+        return;
+      }
+      adminAttendees = Array.isArray(res.attendees) ? res.attendees : [];
+      renderAdminAttendees();
+      if (status) { status.className = 'attendee-load-status ok'; status.textContent = 'Connected — ' + adminAttendees.length + ' attendee record(s) loaded.'; }
+    }).withFailureHandler(err => {
+      const message = (err && err.message) || 'Could not contact the backend.';
+      $('attendeeList').innerHTML = '<div class="attendee-empty">' + escapeHtml(message) + '</div>';
+      if (status) { status.className = 'attendee-load-status error'; status.textContent = 'Connection failed: ' + message; }
+    }).getAdminAttendees();
   }
   function renderAdminAttendees() {
     const list = $('attendeeList');
