@@ -4630,6 +4630,8 @@
     button:active:not(:disabled) { transform: scale(0.97); }
     button:disabled { opacity: 0.4; cursor: not-allowed; }
     button.secondary { background: transparent; border: 1px solid #2a2a2a; color: #a8a8a8; padding: 12px 22px; font-size: 12px; }
+    button.flash-btn { min-width: 110px; }
+    button.flash-btn.on { background: #facc15; color: #111; border-color: #facc15; }
     .row { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; }
   </style>
 </head>
@@ -4643,6 +4645,7 @@
   <div class="bottom">
     <div class="status" id="status">Starting camera...</div>
     <div class="row">
+      <button id="flashBtn" class="secondary flash-btn" type="button" aria-pressed="false" disabled>Flash: Off</button>
       <button id="snap" disabled>Capture</button>
       <button id="close" class="secondary">Cancel</button>
     </div>
@@ -4652,23 +4655,69 @@
     const status = document.getElementById('status');
     const snapBtn = document.getElementById('snap');
     const closeBtn = document.getElementById('close');
+    const flashBtn = document.getElementById('flashBtn');
     const flash = document.getElementById('flash');
     const countdownEl = document.getElementById('countdown');
-    let stream = null, countdownTimer = null;
+    let stream = null, countdownTimer = null, flashEnabled = false, videoTrack = null;
+
+    function updateFlashButton() {
+      flashBtn.textContent = flashEnabled ? 'Flash: On' : 'Flash: Off';
+      flashBtn.classList.toggle('on', flashEnabled);
+      flashBtn.setAttribute('aria-pressed', String(flashEnabled));
+    }
+
+    async function setFlashMode(enabled) {
+      if (!videoTrack || typeof videoTrack.applyConstraints !== 'function') return false;
+      try {
+        const capabilities = videoTrack.getCapabilities ? videoTrack.getCapabilities() : {};
+        if (!capabilities.torch && !(Object.prototype.hasOwnProperty.call(capabilities, 'torch'))) {
+          return false;
+        }
+        await videoTrack.applyConstraints({
+          advanced: [{ torch: !!enabled }]
+        });
+        flashEnabled = !!enabled;
+        updateFlashButton();
+        return true;
+      } catch (err) {
+        return false;
+      }
+    }
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       status.classList.add('error');
       status.textContent = 'Camera access is not available in this browser. Please use a standard browser tab and allow camera permissions.';
       snapBtn.disabled = true;
+      flashBtn.disabled = true;
     } else {
       navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: { ideal: 640, max: 640 }, height: { ideal: 480, max: 480 } },
         audio: false
       }).then(st => {
       stream = st;
+      videoTrack = stream.getVideoTracks()[0] || null;
       v.srcObject = st;
       status.textContent = 'Center your face and tap Capture';
       snapBtn.disabled = false;
+
+      if (videoTrack && videoTrack.getCapabilities) {
+        const caps = videoTrack.getCapabilities();
+        if (caps && Object.prototype.hasOwnProperty.call(caps, 'torch')) {
+          flashBtn.disabled = false;
+          flashBtn.addEventListener('click', async function() {
+            const next = !flashEnabled;
+            const ok = await setFlashMode(next);
+            if (!ok) {
+              flashEnabled = false;
+              updateFlashButton();
+              status.textContent = 'Flash is not available on this camera.';
+            } else {
+              status.textContent = next ? 'Flash is on for a brighter shot.' : 'Flash is off.';
+            }
+          });
+          updateFlashButton();
+        }
+      }
       }).catch(err => {
         status.classList.add('error');
         let msg = 'Cannot access camera: ' + err.name;
