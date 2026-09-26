@@ -11,10 +11,11 @@ const APPS_SCRIPT_URL =
   'https://script.google.com/macros/s/AKfycbzzoNUCRIwXKbndf9QWsalqq5jn026zRc3DUfzCW6dihq8p4fol6GyX2MWp2FkGQz_0/exec';
 
 export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization');
+
   if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     return res.status(204).end();
   }
 
@@ -26,21 +27,19 @@ export default async function handler(req, res) {
     const outgoingBody =
       typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
 
-    // ✅ Use text/plain — Apps Script accepts this without redirect issues.
     const upstream = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      headers: {
+        Accept: req.headers.accept || 'application/json, text/plain, */*',
+        'Content-Type': 'text/plain;charset=utf-8'
+      },
       body: outgoingBody,
       redirect: 'follow'
     });
 
     const text = await upstream.text();
 
-    console.log('Upstream status:', upstream.status);
-    console.log('Upstream body (first 300 chars):', text.slice(0, 300));
-
-    res.setHeader('Content-Type', 'application/json;charset=utf-8');
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Content-Type', upstream.headers.get('content-type') || 'application/json;charset=utf-8');
     return res.status(upstream.status).send(text);
   } catch (err) {
     console.error('Proxy error:', err);
