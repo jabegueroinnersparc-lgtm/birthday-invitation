@@ -799,6 +799,8 @@
   function showAdminApp() {
     $('loginGate').classList.add('hidden');
     $('adminApp').classList.add('active');
+    // Preload the attendee data so the Attendees view is ready immediately.
+    if (typeof loadAdminAttendees === 'function') loadAdminAttendees();
   }
   function showLoginGate() {
     $('loginGate').classList.remove('hidden');
@@ -845,8 +847,8 @@
     const loginTimeout = setTimeout(() => {
       if (settled) return;
       finish();
-      showLoginError('The server did not respond. Confirm APPS_SCRIPT_URL points to the current Apps Script /exec deployment and try again.');
-    }, 12000);
+      showLoginError('The backend did not respond within 30 seconds. Check the Vercel function logs and confirm the Apps Script /exec deployment is accessible.');
+    }, 30000);
 
     google.script.run
       .withSuccessHandler(function(res) {
