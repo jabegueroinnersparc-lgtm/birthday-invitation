@@ -501,6 +501,51 @@
     .black-paw-right { left: 99px; transform: translateY(0) rotate(16deg); }
     .privacy-mascot:not(.privacy-on) .privacy-paw { transform: translateY(35px) rotate(28deg); opacity: 0; }
 
+    /* ===== DOG MOUTH (NEW) ===== */
+    .dog-mouth {
+      position: absolute;
+      left: 50%;
+      bottom: 8px;
+      transform: translateX(-50%);
+      width: 16px;
+      height: 8px;
+      z-index: 3;
+      pointer-events: none;
+    }
+    .dog-mouth::before {
+      /* the smile line */
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      border-bottom: 2.4px solid #2a1510;
+      border-left: 2.4px solid transparent;
+      border-right: 2.4px solid transparent;
+      border-radius: 0 0 60% 60%;
+      transform: translateY(-1px);
+    }
+    .dog-mouth::after {
+      /* the tongue */
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 4px;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 5px;
+      background: #ef6c6c;
+      border-radius: 0 0 60% 60%;
+      box-shadow: inset 0 -1px 0 rgba(0,0,0,0.15);
+    }
+    .dog-model-black .dog-mouth::before {
+      border-bottom-color: #2a1510;
+    }
+    .dog-model-black .dog-mouth::after {
+      background: #e85d5d;
+    }
+
     .btn {
       position: relative; width: 100%; min-height: 52px;
       padding: 15px 24px; border: none;
@@ -2526,6 +2571,7 @@
                   <span class="dog-brow dog-brow-left"></span><span class="dog-brow dog-brow-right"></span>
                   <span class="dog-eye-model dog-eye-model-left"></span><span class="dog-eye-model dog-eye-model-right"></span>
                   <span class="dog-tan-mask"></span><span class="dog-nose"></span>
+                  <span class="dog-mouth"></span>
                 </div>
                 <div class="dog-model dog-model-black">
                   <span class="dog-ear-flap dog-ear-flap-left"></span><span class="dog-ear-flap dog-ear-flap-right"></span>
@@ -2533,6 +2579,7 @@
                   <span class="dog-brow dog-brow-left"></span><span class="dog-brow dog-brow-right"></span>
                   <span class="dog-eye-model dog-eye-model-left"></span><span class="dog-eye-model dog-eye-model-right"></span>
                   <span class="dog-tan-mask"></span><span class="dog-nose"></span>
+                  <span class="dog-mouth"></span>
                 </div>
                 <span class="privacy-paw merle-paw-left"></span>
                 <span class="privacy-paw merle-paw-right"></span>
