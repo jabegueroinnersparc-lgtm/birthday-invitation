@@ -11,6 +11,7 @@ const APPS_SCRIPT_URL =
   'https://script.google.com/macros/s/AKfycbzzoNUCRIwXKbndf9QWsalqq5jn026zRc3DUfzCW6dihq8p4fol6GyX2MWp2FkGQz_0/exec';
 
 export default async function handler(req, res) {
+  // CORS preflight from the browser
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -26,14 +27,21 @@ export default async function handler(req, res) {
     const outgoingBody =
       typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
 
+    // ✅ text/plain avoids Apps Script's redirect/404 issue.
+    //    The backend's parseParams() reads e.postData.contents and
+    //    JSON-parses it, so the content-type doesn't matter to it.
     const upstream = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json;charset=utf-8' },
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: outgoingBody,
       redirect: 'follow'
     });
 
     const text = await upstream.text();
+
+    // Debug logging — remove once everything works
+    console.log('Upstream status:', upstream.status);
+    console.log('Upstream body (first 300 chars):', text.slice(0, 300));
 
     res.setHeader('Content-Type', 'application/json;charset=utf-8');
     res.setHeader('Access-Control-Allow-Origin', '*');
