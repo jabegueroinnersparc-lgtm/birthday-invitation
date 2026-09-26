@@ -623,6 +623,22 @@
       border-color: var(--ink);
     }
 
+    .action-btn.gift {
+      background: linear-gradient(160deg, #fdf6e8, #fbf0d9);
+      border-color: #f0dfb0;
+    }
+    .action-btn.gift .action-icon {
+      background: #f7e6b8;
+    }
+    .action-btn.gift:hover {
+      border-color: #d4a94a;
+      box-shadow: 0 16px 40px -12px rgba(180, 130, 20, 0.22);
+    }
+    .action-btn.gift .action-arrow {
+      background: rgba(180, 130, 20, 0.12);
+      color: #8a6414;
+    }
+
     .action-title {
       font-family: 'Playfair Display', serif;
       font-size: 20px;
@@ -1490,6 +1506,66 @@
     .ticket-actions { display: flex; gap: 10px; max-width: 340px; margin: 0 auto; }
     .ticket-actions .btn { flex: 1; min-height: 48px; padding: 13px 16px; font-size: 14px; }
 
+    /* COMPACT GIFT CARD — shown right under the ticket, peak-goodwill moment */
+    .ticket-gift-card {
+      max-width: 340px;
+      margin: 24px auto 0;
+      padding: 22px 20px 20px;
+      border-radius: 18px;
+      background: linear-gradient(165deg, #fdf6e8, #fbeecb);
+      border: 1.5px solid #f0dfb0;
+      box-shadow: 0 10px 28px -14px rgba(180, 130, 20, 0.28);
+      text-align: center;
+    }
+    .ticket-gift-icon {
+      font-size: 26px;
+      margin-bottom: 8px;
+      line-height: 1;
+    }
+    .ticket-gift-copy {
+      font-size: 12.5px;
+      color: #7a5c1e;
+      line-height: 1.55;
+      margin-bottom: 16px;
+    }
+    .ticket-gift-qr-frame {
+      display: inline-block;
+      background: var(--white);
+      border: 1px solid #f0dfb0;
+      border-radius: 12px;
+      padding: 10px;
+      margin-bottom: 14px;
+    }
+    .ticket-gift-qr-frame img {
+      display: block;
+      width: 120px;
+      height: 120px;
+      border-radius: 6px;
+    }
+    .btn-gift {
+      display: block;
+      width: 100%;
+      min-height: 46px;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #f5c95a, #e0a52c);
+      color: #2a1c02;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: all 0.25s var(--ease-out);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-gift:hover { transform: translateY(-1px); box-shadow: 0 10px 22px -8px rgba(212,154,30,0.5); }
+    .btn-gift:active { transform: scale(0.98); }
+    @media (max-width: 480px) {
+      .ticket-gift-card { padding: 18px 16px 16px; }
+      .ticket-gift-qr-frame img { width: 100px; height: 100px; }
+    }
+
     @media (max-width: 480px) {
       .success-check-wrap { width: 84px; height: 84px; margin-bottom: 20px; }
       .success-check-svg { width: 50px; height: 50px; }
@@ -1799,10 +1875,12 @@
     }
 
     .social-sidebar-gift {
-      padding: 20px 24px 32px;
+      padding: 24px 24px 32px;
       flex: 1;
       display: flex;
       flex-direction: column;
+      background: linear-gradient(180deg, #fdf8ec, #fbf3dd 60%, #fbf3dd);
+      border-top: 1px solid #f0e0ae;
     }
 
     .social-sidebar-gift-head {
@@ -1882,8 +1960,8 @@
     }
 
     .social-sidebar-qr {
-      background: linear-gradient(160deg, var(--fog), var(--white));
-      border: 1.5px solid var(--pearl);
+      background: linear-gradient(160deg, #fffdf7, var(--white));
+      border: 1.5px solid #f0dfb0;
       border-radius: 22px;
       padding: 22px;
       text-align: center;
@@ -1946,9 +2024,9 @@
       margin-top: 16px;
       text-align: left;
       padding: 12px 14px;
-      background: var(--fog);
+      background: #fdf8ec;
       border-radius: 12px;
-      border: 1px solid var(--pearl);
+      border: 1px solid #f0dfb0;
     }
 
     .social-sidebar-hint .hint-dot {
@@ -2034,6 +2112,54 @@
     @keyframes livePulse {
       0%, 100% { box-shadow: 0 0 0 5px rgba(34,197,94,0.35); }
       50%      { box-shadow: 0 0 0 12px rgba(34,197,94,0); }
+    }
+
+    /* ⭐ DEDICATED GIFT TRIGGER — warm accent, separate from the plain Follow tab ⭐ */
+    .gift-sidebar-trigger {
+      position: fixed;
+      right: 24px;
+      bottom: calc(24px + env(safe-area-inset-bottom));
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      border: 0;
+      border-radius: 100px;
+      background: linear-gradient(135deg, #f5c95a, #e0a52c);
+      color: #2a1c02;
+      padding: 15px 22px;
+      font: inherit;
+      font-size: 13.5px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      box-shadow: 0 14px 34px -8px rgba(212, 154, 30, 0.55);
+      transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
+      -webkit-tap-highlight-color: transparent;
+      animation: giftTriggerPulse 2.6s ease-in-out infinite;
+    }
+    .gift-sidebar-trigger.visible { display: inline-flex; }
+    .gift-sidebar-trigger .gift-trigger-icon { font-size: 17px; line-height: 1; }
+    .gift-sidebar-trigger:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 18px 40px -8px rgba(212, 154, 30, 0.65);
+      animation: none;
+    }
+    .gift-sidebar-trigger:active { transform: scale(0.97); }
+    @keyframes giftTriggerPulse {
+      0%, 100% { box-shadow: 0 14px 34px -8px rgba(212, 154, 30, 0.55), 0 0 0 0 rgba(224, 165, 44, 0.45); }
+      50%      { box-shadow: 0 14px 34px -8px rgba(212, 154, 30, 0.55), 0 0 0 12px rgba(224, 165, 44, 0); }
+    }
+    @media (max-width: 640px) {
+      .gift-sidebar-trigger {
+        right: 16px;
+        bottom: calc(88px + env(safe-area-inset-bottom));
+        padding: 13px 18px;
+        font-size: 13px;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .gift-sidebar-trigger { animation: none; }
     }
 
     /* Mobile adjustments */
@@ -2551,6 +2677,13 @@
             <div class="action-desc">Check out everyone who has confirmed their attendance.</div>
             <span class="action-arrow">→</span>
           </button>
+
+          <button type="button" class="action-btn gift" id="openGiftFromWelcomeBtn">
+            <div class="action-icon">🎁</div>
+            <div class="action-title">Send a Gift</div>
+            <div class="action-desc">Scan a QR to send a birthday gift via GCash or InstaPay.</div>
+            <span class="action-arrow">→</span>
+          </button>
         </div>
 
         <div class="welcome-footer">
@@ -2770,6 +2903,15 @@
                 <button type="button" class="btn btn-outline" id="downloadQrBtn">Download QR</button>
                 <button type="button" class="btn btn-primary" id="newRsvpBtn">Back to Home</button>
               </div>
+
+              <div class="ticket-gift-card" id="ticketGiftCard">
+                <div class="ticket-gift-icon">🎁</div>
+                <div class="ticket-gift-copy">No pressure — your presence is the gift 💛<br>But if you'd like, you can send one here.</div>
+                <div class="ticket-gift-qr-frame">
+                  <img id="ticketGiftQrImg" src="" alt="Gift QR code">
+                </div>
+                <button type="button" class="btn btn-gift" id="ticketSendGiftBtn">Send a Gift</button>
+              </div>
             </div>
           </div>
         </div>
@@ -2780,7 +2922,12 @@
   <!-- MODERN SIDEBAR TRIGGER (Hidden on login, shown after) -->
   <button type="button" class="social-sidebar-trigger" id="socialSidebarTrigger" aria-expanded="false" aria-controls="socialSidebar">
     <span class="trigger-dot"></span>
-    Socials & Gifts
+    Follow
+  </button>
+
+  <button type="button" class="gift-sidebar-trigger" id="giftSidebarTrigger" aria-expanded="false" aria-controls="socialSidebar">
+    <span class="gift-trigger-icon">🎁</span>
+    <span>Send a Gift</span>
   </button>
 
   <!-- MODERN SIDEBAR -->
@@ -2832,14 +2979,14 @@
 
       <div class="social-sidebar-divider"></div>
 
-      <section class="social-sidebar-gift" aria-labelledby="sidebarGiftTitle">
+      <section class="social-sidebar-gift" id="socialSidebarGift" aria-labelledby="sidebarGiftTitle">
         <div class="social-sidebar-gift-head">
           <span class="social-sidebar-gift-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
           </span>
           <div>
             <h3 id="sidebarGiftTitle">Send a birthday gift</h3>
-            <p>Scan with GCash or your banking app — always confirm the recipient's name first.</p>
+            <p>No pressure — your presence is the gift 💛 But if you'd like, scan with GCash or your banking app and always confirm the recipient's name first.</p>
           </div>
         </div>
 
@@ -2887,6 +3034,7 @@
   <script>
     /* CONFIG */
     const APPS_SCRIPT_URL = '/api/proxy';
+    const GIFT_QR_IMAGE_URL = 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/sairasivyqr.png';
 
     /* BUTTON CLICK SOUND */
     let clickSoundAudio = null;
@@ -3461,8 +3609,9 @@
       setTimeout(() => mascot.classList.remove('login-success'), 1600);
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      // ⭐ SHOW THE SIDEBAR TRIGGER AFTER LOGIN ⭐
+      // ⭐ SHOW THE SIDEBAR TRIGGERS AFTER LOGIN ⭐
       $('socialSidebarTrigger').classList.add('visible');
+      $('giftSidebarTrigger').classList.add('visible');
 
       try {
         let ticket = loginTicket || null;
@@ -3544,15 +3693,34 @@
 
     $('welcomeSignoutBtn').addEventListener('click', logout);
 
+    /* GIFT ENTRY POINTS — welcome card + ticket card both open the same sidebar panel */
+    $('openGiftFromWelcomeBtn').addEventListener('click', function() {
+      setSocialSidebar(true);
+      setTimeout(function() {
+        const giftSection = $('socialSidebarGift');
+        if (giftSection) giftSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 350);
+    });
+
+    $('ticketSendGiftBtn').addEventListener('click', function() {
+      setSocialSidebar(true);
+      setTimeout(function() {
+        const giftSection = $('socialSidebarGift');
+        if (giftSection) giftSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 350);
+    });
+
     /* MODERN SIDEBAR */
     function setSocialSidebar(open) {
       const sidebar = $('socialSidebar');
       const overlay = $('socialSidebarOverlay');
       const trigger = $('socialSidebarTrigger');
+      const giftTrigger = $('giftSidebarTrigger');
       sidebar.classList.toggle('open', open);
       overlay.classList.toggle('open', open);
       sidebar.setAttribute('aria-hidden', open ? 'false' : 'true');
       trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (giftTrigger) giftTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
       document.body.style.overflow = open ? 'hidden' : '';
       if (open) {
         // Give the panel a frame to lay out before measuring scroll state
@@ -3564,6 +3732,13 @@
 
     $('socialSidebarTrigger').addEventListener('click', function() {
       setSocialSidebar(!$('socialSidebar').classList.contains('open'));
+    });
+    $('giftSidebarTrigger').addEventListener('click', function() {
+      setSocialSidebar(!$('socialSidebar').classList.contains('open'));
+      setTimeout(function() {
+        const giftSection = $('socialSidebarGift');
+        if (giftSection) giftSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 350);
     });
     $('socialSidebarClose').addEventListener('click', function() { setSocialSidebar(false); });
     $('socialSidebarOverlay').addEventListener('click', function() { setSocialSidebar(false); });
@@ -3590,6 +3765,12 @@
     window.addEventListener('resize', updateSidebarScrollFade);
     const gcashQrImageEl = $('gcashQrImage');
     if (gcashQrImageEl) gcashQrImageEl.addEventListener('load', updateSidebarScrollFade);
+
+    /* Keep the compact ticket-screen gift QR in sync with the sidebar's QR */
+    if (gcashQrImageEl) {
+      const ticketGiftQrImgEl = $('ticketGiftQrImg');
+      if (ticketGiftQrImgEl) ticketGiftQrImgEl.src = gcashQrImageEl.src;
+    }
 
     /* UNIVERSAL QR DOWNLOAD — works on desktop + Android + iOS Safari */
     function triggerAnchorDownload(href, filename) {
@@ -3680,7 +3861,12 @@
       img.style.opacity = '0.35';
       img.src = method.qrUrl;
       img.alt = method.label + ' QR code';
-      img.onload = function() { img.style.opacity = '1'; updateSidebarScrollFade(); };
+      img.onload = function() {
+        img.style.opacity = '1';
+        updateSidebarScrollFade();
+        const ticketGiftQrImgEl = $('ticketGiftQrImg');
+        if (ticketGiftQrImgEl) ticketGiftQrImgEl.src = img.src;
+      };
     }
 
     /* QR MODAL */
@@ -3922,8 +4108,9 @@
       $('viewTicketBtn').style.display = 'none';
       $('viewTicketBtn').onclick = null;
       setSocialSidebar(false);
-      // ⭐ HIDE THE SIDEBAR TRIGGER ON LOGOUT ⭐
+      // ⭐ HIDE THE SIDEBAR TRIGGERS ON LOGOUT ⭐
       $('socialSidebarTrigger').classList.remove('visible');
+      $('giftSidebarTrigger').classList.remove('visible');
       showToast('Signed out.');
     }
 
@@ -4590,6 +4777,9 @@
       $('ticketCode').textContent = ticket.code;
       $('ticketName').textContent = ticket.name;
       $('ticketGuests').textContent = ticket.guests + (ticket.guests === 1 ? ' person' : ' people');
+
+      const giftImgEl = $('ticketGiftQrImg');
+      if (giftImgEl && !giftImgEl.src) giftImgEl.src = GIFT_QR_IMAGE_URL;
 
       $('rsvpForm').style.display = 'none';
       document.querySelector('.form-head').style.display = 'none';
