@@ -834,16 +834,36 @@
       loadCompatibilityList((err && err.message) || 'The admin attendee action failed.');
     }).getAdminAttendees();
   }
+  function driveFileId(url) {
+    if (!url) return null;
+    let m = String(url).match(/\/d\/([a-zA-Z0-9_-]{10,})/);
+    if (m) return m[1];
+    m = String(url).match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
+    return m ? m[1] : null;
+  }
+  function driveThumbSrc(url) {
+    const id = driveFileId(url);
+    return id ? ('https://drive.google.com/thumbnail?id=' + id + '&sz=w300') : url;
+  }
+  window.__attendeeThumbFallback = function(imgEl, initial) {
+    const div = document.createElement('div');
+    div.className = 'attendee-thumb-placeholder';
+    div.textContent = initial;
+    if (imgEl && imgEl.parentNode) imgEl.parentNode.replaceWith(div);
+  };
   function mediaCellHtml(a) {
+    const initial = escapeHtml((a.name || 'G').charAt(0).toUpperCase());
     if (a.selfieUrl) {
+      const thumbSrc = driveThumbSrc(a.selfieUrl);
       return '<a class="attendee-thumb-link" href="' + escapeHtml(a.selfieUrl) + '" target="_blank" rel="noopener" title="View photo">' +
-             '<img src="' + escapeHtml(a.selfieUrl) + '" alt="" loading="lazy">' +
+             '<img src="' + escapeHtml(thumbSrc) + '" alt="" loading="lazy" referrerpolicy="no-referrer" ' +
+             'onerror="window.__attendeeThumbFallback(this, \'' + initial + '\')">' +
              '</a>';
     }
     if (a.videoUrl) {
       return '<a class="attendee-thumb-link attendee-video-thumb" href="' + escapeHtml(a.videoUrl) + '" target="_blank" rel="noopener" title="View video greeting">▶</a>';
     }
-    return '<div class="attendee-thumb-placeholder">' + escapeHtml((a.name || 'G').charAt(0).toUpperCase()) + '</div>';
+    return '<div class="attendee-thumb-placeholder">' + initial + '</div>';
   }
   function renderAdminAttendees() {
     const list = $('attendeeList');
