@@ -659,9 +659,9 @@
     </div>
 
   </div>
-</div>
 
-
+  <!-- ATTENDEES PANEL (now inside #adminApp so it isn't pushed below
+       the full-viewport-height admin-app block) -->
   <section class="attendee-panel hidden" id="attendeePanel" aria-labelledby="attendeePanelTitle">
     <div class="attendee-head"><div><div class="attendee-kicker">Google Sheets records</div><h1 id="attendeePanelTitle">Attendees</h1></div><button type="button" class="attendee-refresh" id="refreshAttendeesBtn">Refresh list</button></div>
     <div class="attendee-stats"><div class="attendee-stat"><strong id="attendeePartyTotal">0</strong><span>Parties</span></div><div class="attendee-stat"><strong id="attendeeGuestTotal">0</strong><span>Going guests</span></div><div class="attendee-stat"><strong id="attendeeCheckedTotal">0</strong><span>Checked in</span></div></div>
@@ -669,6 +669,9 @@
     <div class="attendee-list" id="attendeeList"><div class="attendee-empty">Loading attendees…</div></div>
   </section>
   <div class="attendee-editor" id="attendeeEditor" aria-hidden="true"><div class="attendee-editor-card" role="dialog" aria-modal="true" aria-labelledby="attendeeEditorTitle"><div class="attendee-editor-head"><h2 id="attendeeEditorTitle">Edit attendee</h2><button type="button" class="attendee-editor-close" id="closeAttendeeEditor" aria-label="Close">×</button></div><form id="attendeeForm"><input type="hidden" id="editRowIndex"><div class="attendee-form-grid"><label>Name<input id="editName" required></label><label>Mobile<input id="editMobile" required inputmode="tel"></label><label>Email<input id="editEmail" type="email"></label><label>Guests<input id="editGuests" type="number" min="1" max="20" required></label><label>Attendance<select id="editAttendance"><option value="going">Going</option><option value="planning">Planning</option><option value="not_going">Not going</option></select></label><label>Ticket code<input id="editTicketCode" disabled></label><label class="full">Address<input id="editAddress"></label><label class="full">Greetings<textarea id="editGreetings"></textarea></label></div><div class="attendee-editor-actions"><button type="button" class="cancel" id="cancelAttendeeEdit">Cancel</button><button type="submit" class="save" id="saveAttendeeBtn">Save changes</button></div></form></div></div>
+
+</div>
+<!-- #adminApp closes here now, after the attendee panel/editor -->
 
 <div class="toast" id="toast"></div>
 
