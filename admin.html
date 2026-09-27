@@ -752,6 +752,26 @@
   $('cancelAttendeeEdit').addEventListener('click', closeAttendeeEditor);
   $('attendeeEditor').addEventListener('click', e => { if (e.target === $('attendeeEditor')) closeAttendeeEditor(); });
   $('attendeeForm').addEventListener('submit', saveEditedAttendee);
+  function normalizeAdminAttendees(payload) {
+    const list = Array.isArray(payload) ? payload : (Array.isArray(payload && payload.attendees) ? payload.attendees : []);
+    return list.map((item, idx) => ({
+      rowIndex: Number(item && (item.rowIndex ?? item.row_index ?? (idx + 2))) || null,
+      timestamp: item && item.timestamp ? item.timestamp : '',
+      name: item && item.name ? String(item.name) : '',
+      mobile: item && item.mobile ? String(item.mobile) : '',
+      email: item && item.email ? String(item.email) : '',
+      address: item && item.address ? String(item.address) : '',
+      greetings: item && item.greetings ? String(item.greetings) : '',
+      selfieUrl: item && item.selfieUrl ? String(item.selfieUrl) : '',
+      guests: Number(item && item.guests !== undefined ? item.guests : 1) || 1,
+      loginMethod: item && item.loginMethod ? String(item.loginMethod) : '',
+      ticketCode: item && item.ticketCode ? String(item.ticketCode) : '',
+      checkedIn: !!(item && (item.checkedIn || item.checked_in)),
+      attendance: String((item && item.attendance) || 'going').toLowerCase(),
+      videoUrl: item && item.videoUrl ? String(item.videoUrl) : ''
+    }));
+  }
+
   function loadAdminAttendees() {
     $('attendeeList').innerHTML = '<div class="attendee-empty">Loading attendees…</div>';
     const status = $('attendeeLoadStatus');
@@ -763,9 +783,13 @@
       return;
     }
     const applyRows = (res, fallback) => {
-      if (!res || !res.success) return false;
-      adminAttendees = Array.isArray(res.attendees) ? res.attendees : [];
-      if (fallback) adminAttendees = adminAttendees.map(a => ({ ...a, rowIndex: null, email: a.email || '', mobile: a.mobile || '' }));
+      const payload = res && (res.success === false ? res : res);
+      if (!payload || payload.success === false) return false;
+      const attendeeList = normalizeAdminAttendees(payload);
+      adminAttendees = attendeeList;
+      if (fallback) {
+        adminAttendees = adminAttendees.map(a => ({ ...a, rowIndex: null, email: a.email || '', mobile: a.mobile || '' }));
+      }
       renderAdminAttendees();
       if (status) { status.className = 'attendee-load-status ok'; status.textContent = 'Connected — ' + adminAttendees.length + ' attendee record(s) loaded' + (fallback ? ' using compatibility mode.' : '.'); }
       return true;
@@ -783,8 +807,10 @@
       }).getAllAttendees();
     };
     google.script.run.withSuccessHandler(res => {
+      console.log('Admin attendees payload:', res);
       if (!applyRows(res, false)) loadCompatibilityList((res && res.message) || 'The admin attendee action is not available in the deployed Code.gs.');
     }).withFailureHandler(err => {
+      console.error('Admin attendee load failed:', err);
       loadCompatibilityList((err && err.message) || 'The admin attendee action failed.');
     }).getAdminAttendees();
   }

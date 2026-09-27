@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Page Not Found</title>
+    <style>
+      :root {
+        --bg: #fffaf5;
+        --card: #ffffff;
+        --text: #1f2937;
+        --muted: #4b5563;
+        --accent: #d97706;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      .card {
+        width: min(90vw, 560px);
+        padding: 2.5rem 2rem;
+        background: var(--card);
+        border-radius: 18px;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+        text-align: center;
+      }
+      h1 {
+        margin: 0 0 0.75rem;
+        font-size: clamp(3rem, 10vw, 5rem);
+        color: var(--accent);
+      }
+      p {
+        margin: 0 0 1.5rem;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+      a {
+        display: inline-block;
+        text-decoration: none;
+        background: var(--accent);
+        color: white;
+        font-weight: 700;
+        padding: 0.9rem 1.3rem;
+        border-radius: 999px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card" role="main">
+      <h1>404</h1>
+      <p>The page you requested could not be found. Please return to the home page and try again.</p>
+      <a href="/">Back to Home</a>
+    </main>
+  </body>
+</html>

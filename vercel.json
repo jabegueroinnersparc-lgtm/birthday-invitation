@@ -4,5 +4,10 @@
       "memory": 1024,
       "maxDuration": 60
     }
-  }
+  },
+  "routes": [
+    { "src": "/admin", "dest": "/admin.html" },
+    { "src": "/admin/", "dest": "/admin.html" },
+    { "src": "/.*", "status": 404, "dest": "/404.html" }
+  ]
 }
