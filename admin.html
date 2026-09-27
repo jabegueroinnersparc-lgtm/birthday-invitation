@@ -489,9 +489,23 @@
     .attendee-load-status.ok { color: #236333; }
     .attendee-search { width: 100%; border: 1px solid #ddd; border-radius: 10px; background: #fff; padding: 13px 14px; color: #111; font: 14px Inter, sans-serif; }
     .attendee-list { max-width: 1180px; margin: 0 auto; display: grid; gap: 10px; }
-    .attendee-row { display: grid; grid-template-columns: minmax(170px, 1.3fr) minmax(130px, 1fr) 90px 100px auto; gap: 14px; align-items: center; background: #fff; border: 1px solid #e4e4df; border-radius: 12px; padding: 14px 16px; }
+    .attendee-row {
+      display: grid;
+      grid-template-columns: 56px minmax(170px, 1.3fr) minmax(150px, 1fr) auto;
+      grid-template-areas: "media info meta actions";
+      gap: 14px; align-items: start;
+      background: #fff; border: 1px solid #e4e4df; border-radius: 12px; padding: 14px 16px;
+    }
+    .attendee-media { grid-area: media; }
+    .attendee-info { grid-area: info; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .attendee-meta { grid-area: meta; display: flex; flex-direction: column; gap: 6px; min-width: 0; align-items: flex-start; }
+    .attendee-actions { grid-area: actions; }
+    .attendee-thumb-link { display: block; width: 56px; height: 56px; border-radius: 10px; overflow: hidden; background: #f0f0ee; border: 1px solid #e4e4df; }
+    .attendee-thumb-link img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .attendee-thumb-link.attendee-video-thumb { display: flex; align-items: center; justify-content: center; font-size: 18px; color: #555; text-decoration: none; background: #ececea; }
+    .attendee-thumb-placeholder { width: 56px; height: 56px; border-radius: 10px; background: #ececea; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: #999; }
     .attendee-name { font-weight: 700; color: #111; }
-    .attendee-muted { color: #777; font-size: 12px; margin-top: 3px; overflow-wrap: anywhere; }
+    .attendee-muted { color: #777; font-size: 12px; overflow-wrap: anywhere; }
     .attendee-status { display: inline-flex; justify-content: center; border-radius: 999px; padding: 6px 9px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
     .attendee-status.going { background: #e4f4e6; color: #236333; }
     .attendee-status.planning { background: #fff3d8; color: #875c11; }
@@ -527,10 +541,13 @@
       .attendee-stat { padding: 11px 10px; }
       .attendee-stat strong { font-size: 18px; }
       .attendee-stat span { font-size: 9px; }
-      .attendee-row { grid-template-columns: 1fr auto; gap: 9px; padding: 13px; }
-      .attendee-row > :nth-child(2) { grid-column: 1; }
-      .attendee-row > :nth-child(3), .attendee-row > :nth-child(4) { grid-column: 2; }
-      .attendee-actions { grid-column: 1 / -1; justify-content: stretch; }
+      .attendee-row {
+        grid-template-columns: 56px 1fr;
+        grid-template-areas: "media info" "meta meta" "actions actions";
+        gap: 9px; padding: 13px;
+      }
+      .attendee-meta { flex-direction: row; flex-wrap: wrap; gap: 6px 12px; }
+      .attendee-actions { display: flex; justify-content: stretch; gap: 6px; }
       .attendee-actions button { flex: 1; }
       .attendee-form-grid { grid-template-columns: 1fr; }
       .attendee-form-grid .full { grid-column: auto; }
@@ -817,6 +834,17 @@
       loadCompatibilityList((err && err.message) || 'The admin attendee action failed.');
     }).getAdminAttendees();
   }
+  function mediaCellHtml(a) {
+    if (a.selfieUrl) {
+      return '<a class="attendee-thumb-link" href="' + escapeHtml(a.selfieUrl) + '" target="_blank" rel="noopener" title="View photo">' +
+             '<img src="' + escapeHtml(a.selfieUrl) + '" alt="" loading="lazy">' +
+             '</a>';
+    }
+    if (a.videoUrl) {
+      return '<a class="attendee-thumb-link attendee-video-thumb" href="' + escapeHtml(a.videoUrl) + '" target="_blank" rel="noopener" title="View video greeting">▶</a>';
+    }
+    return '<div class="attendee-thumb-placeholder">' + escapeHtml((a.name || 'G').charAt(0).toUpperCase()) + '</div>';
+  }
   function renderAdminAttendees() {
     const list = $('attendeeList');
     const rows = adminAttendees.filter(a => [a.name,a.mobile,a.email,a.ticketCode,a.attendance].join(' ').toLowerCase().includes(attendeeFilter));
@@ -824,7 +852,26 @@
     $('attendeeGuestTotal').textContent = adminAttendees.filter(a => a.attendance === 'going').reduce((sum, a) => sum + (Number(a.guests) || 0), 0);
     $('attendeeCheckedTotal').textContent = adminAttendees.filter(a => a.checkedIn).length;
     if (!rows.length) { list.innerHTML = '<div class="attendee-empty">No matching attendees.</div>'; return; }
-    list.innerHTML = rows.map(a => '<article class="attendee-row"><div><div class="attendee-name">' + escapeHtml(a.name) + '</div><div class="attendee-muted">' + escapeHtml(a.email || a.mobile || 'No contact details') + '</div></div><div><div class="attendee-muted">Ticket: ' + escapeHtml(a.ticketCode || '—') + '</div><div class="attendee-muted">' + (a.checkedIn ? 'Checked in' : 'Not checked in') + '</div></div><div><span class="attendee-status ' + escapeHtml(a.attendance || 'going') + '">' + escapeHtml((a.attendance || 'going').replace('_', ' ')) + '</span></div><div class="attendee-muted">' + escapeHtml(String(a.guests || 1)) + ' guest' + (Number(a.guests) === 1 ? '' : 's') + '</div><div class="attendee-actions">' + (a.rowIndex ? '<button type="button" data-edit-row="' + a.rowIndex + '">Edit</button><button type="button" class="danger" data-delete-row="' + a.rowIndex + '">Remove</button>' : '<span class="attendee-muted">View only</span>') + '</div></article>').join('');
+    list.innerHTML = rows.map(a => {
+      const media = mediaCellHtml(a);
+      const mobileLine = a.mobile ? '<div class="attendee-muted">📱 ' + escapeHtml(a.mobile) + '</div>' : '';
+      const addressLine = a.address ? '<div class="attendee-muted">📍 ' + escapeHtml(a.address) + '</div>' : '';
+      return '<article class="attendee-row">' +
+        '<div class="attendee-media">' + media + '</div>' +
+        '<div class="attendee-info">' +
+          '<div class="attendee-name">' + escapeHtml(a.name) + '</div>' +
+          '<div class="attendee-muted">' + escapeHtml(a.email || 'No email') + '</div>' +
+          mobileLine + addressLine +
+        '</div>' +
+        '<div class="attendee-meta">' +
+          '<div class="attendee-muted">Ticket: ' + escapeHtml(a.ticketCode || '—') + '</div>' +
+          '<div class="attendee-muted">' + (a.checkedIn ? 'Checked in' : 'Not checked in') + '</div>' +
+          '<span class="attendee-status ' + escapeHtml(a.attendance || 'going') + '">' + escapeHtml((a.attendance || 'going').replace('_', ' ')) + '</span>' +
+          '<div class="attendee-muted">' + escapeHtml(String(a.guests || 1)) + ' guest' + (Number(a.guests) === 1 ? '' : 's') + '</div>' +
+        '</div>' +
+        '<div class="attendee-actions">' + (a.rowIndex ? '<button type="button" data-edit-row="' + a.rowIndex + '">Edit</button><button type="button" class="danger" data-delete-row="' + a.rowIndex + '">Remove</button>' : '<span class="attendee-muted">View only</span>') + '</div>' +
+      '</article>';
+    }).join('');
     list.querySelectorAll('[data-edit-row]').forEach(btn => btn.addEventListener('click', () => openAttendeeEditor(Number(btn.dataset.editRow))));
     list.querySelectorAll('[data-delete-row]').forEach(btn => btn.addEventListener('click', () => removeAttendee(Number(btn.dataset.deleteRow))));
   }
