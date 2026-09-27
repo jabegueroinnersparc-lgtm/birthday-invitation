@@ -11,6 +11,7 @@ test('vercel config includes the admin route and custom 404 fallback', () => {
 
   assert.ok(Array.isArray(config.routes), 'Expected routes array in vercel.json');
   assert.ok(config.routes.some((route) => route.src === '/admin' && route.dest === '/admin.html'), 'Missing /admin rewrite');
+  assert.ok(config.routes.some((route) => route.handle === 'filesystem'), 'Missing filesystem handler before custom 404');
   assert.ok(config.routes.some((route) => route.src === '/.*' && route.status === 404 && route.dest === '/404.html'), 'Missing custom 404 route');
 });
 

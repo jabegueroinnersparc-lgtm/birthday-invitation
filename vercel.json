@@ -8,6 +8,7 @@
   "routes": [
     { "src": "/admin", "dest": "/admin.html" },
     { "src": "/admin/", "dest": "/admin.html" },
+    { "handle": "filesystem" },
     { "src": "/.*", "status": 404, "dest": "/404.html" }
   ]
 }
