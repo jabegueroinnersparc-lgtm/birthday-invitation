@@ -30,8 +30,6 @@ const ADMIN_SESSION_PREFIX = 'birthday_admin_session_';
 const WHITELIST_CACHE_KEY = 'birthday_whitelist_v1';
 const ATTENDEES_CACHE_KEY = 'birthday_attendees_v1';
 const SETTINGS_CACHE_KEY = 'birthday_settings_v1';
-const SELFIE_FOLDER_ID_KEY = 'birthday_selfie_folder_id';
-const VIDEO_FOLDER_ID_KEY = 'birthday_video_folder_id';
 
 // ⭐ CHANGED: Added "Video Greeting URL" column.
 const RESPONSES_HEADERS = [
@@ -279,29 +277,13 @@ function getWhitelistValues() {
 }
 
 function getOrCreateFolder() {
-  const properties = PropertiesService.getScriptProperties();
-  const savedId = properties.getProperty(SELFIE_FOLDER_ID_KEY);
-  if (savedId) {
-    try { return DriveApp.getFolderById(savedId); }
-    catch (e) { properties.deleteProperty(SELFIE_FOLDER_ID_KEY); }
-  }
   const folders = DriveApp.getFoldersByName(FOLDER_NAME);
-  const folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(FOLDER_NAME);
-  properties.setProperty(SELFIE_FOLDER_ID_KEY, folder.getId());
-  return folder;
+  return folders.hasNext() ? folders.next() : DriveApp.createFolder(FOLDER_NAME);
 }
 
 function getOrCreateVideoFolder() {
-  const properties = PropertiesService.getScriptProperties();
-  const savedId = properties.getProperty(VIDEO_FOLDER_ID_KEY);
-  if (savedId) {
-    try { return DriveApp.getFolderById(savedId); }
-    catch (e) { properties.deleteProperty(VIDEO_FOLDER_ID_KEY); }
-  }
   const folders = DriveApp.getFoldersByName(VIDEO_FOLDER_NAME);
-  const folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(VIDEO_FOLDER_NAME);
-  properties.setProperty(VIDEO_FOLDER_ID_KEY, folder.getId());
-  return folder;
+  return folders.hasNext() ? folders.next() : DriveApp.createFolder(VIDEO_FOLDER_NAME);
 }
 
 function normalizeName(value) {
@@ -867,73 +849,145 @@ function deleteAttendee(rowIndexValue, token) {
    ============================================================ */
 function submitForm(formData) {
   const lock = LockService.getScriptLock();
+
   try {
     Logger.log('=== submitForm called ===');
+
     const settings = getSettings();
     const deadlineStr = settings['RSVP_DEADLINE'] || '';
-    if (deadlineStr && new Date() > new Date(deadlineStr)) {
-      return { success: false, message: 'Confirmations are closed — the deadline has passed.' };
+    if (deadlineStr) {
+      const deadline = new Date(deadlineStr);
+      if (new Date() > deadline) {
+        return { success: false, message: 'Confirmations are closed — the deadline has passed.' };
+      }
     }
+
     if (!formData) return { success: false, message: 'No data received.' };
 
     const submittedName = String(formData.name || '').replace(/\s+/g, ' ').trim();
     if (!submittedName) return { success: false, message: 'Name is required.' };
     if (submittedName.length < 2) return { success: false, message: 'Please enter a valid name.' };
+
     const mobile = String(formData.mobile || '').trim();
     if (!mobile) return { success: false, message: 'Mobile is required.' };
-    if (!/^\d{7,15}$/.test(mobile)) return { success: false, message: 'Please enter a valid mobile number using numbers only.' };
+    if (!/^\d{7,15}$/.test(mobile)) {
+      return { success: false, message: 'Please enter a valid mobile number using numbers only.' };
+    }
+
     if (!formData.address || !String(formData.address).trim()) return { success: false, message: 'Address is required.' };
     if (!formData.greetings || !String(formData.greetings).trim()) return { success: false, message: 'Greetings are required.' };
 
     const attendance = String(formData.attendance || 'going').trim().toLowerCase();
-    if (!['going', 'planning', 'not_going'].includes(attendance)) return { success: false, message: 'Please choose an attendance option.' };
+    const validAttendance = ['going', 'planning', 'not_going'];
+    if (!validAttendance.includes(attendance)) {
+      return { success: false, message: 'Please choose an attendance option.' };
+    }
+
     const hasSelfie = !!(formData.selfie && formData.selfie.data);
-    const hasVideo = !!(formData.videoGreeting && formData.videoGreeting.data);
-    if (attendance === 'not_going' && !hasVideo) return { success: false, message: 'Please record a video greeting before submitting.' };
-    if (attendance !== 'not_going' && !hasSelfie) return { success: false, message: 'Selfie is required.' };
+    const hasVideo  = !!(formData.videoGreeting && formData.videoGreeting.data);
+
+    if (attendance === 'not_going') {
+      if (!hasVideo) {
+        return { success: false, message: 'Please record a video greeting before submitting.' };
+      }
+    } else {
+      if (!hasSelfie) {
+        return { success: false, message: 'Selfie is required.' };
+      }
+    }
 
     const guestsText = String(formData.guests == null ? '' : formData.guests).trim();
-    if (!/^\d+$/.test(guestsText)) return { success: false, message: 'Please enter a valid number of guests.' };
+    if (!/^\d+$/.test(guestsText)) {
+      return { success: false, message: 'Please enter a valid number of guests.' };
+    }
     const guests = Number(guestsText);
-    if (!Number.isInteger(guests) || guests < 1 || guests > 20) return { success: false, message: 'Please enter a whole number of guests from 1 to 20.' };
-
-    // Validate the guest before doing any potentially slow Drive work.
-    if (!findWhitelistAccount(submittedName, mobile)) {
-      return { success: false, message: 'Your name or mobile number does not match your existing account. Please enter the same name and mobile number you used during sign-up.' };
-    }
-    if (findResponseByName(submittedName)) {
-      return { success: false, duplicate: true, message: 'This name has already submitted an RSVP. Each player may submit only once.' };
+    if (!Number.isInteger(guests) || guests < 1 || guests > 20) {
+      return { success: false, message: 'Please enter a whole number of guests from 1 to 20.' };
     }
 
-    if (hasSelfie) validateMediaDataUrl(formData.selfie.data, 'Selfie', 2 * 1024 * 1024);
-    if (hasVideo) validateMediaDataUrl(formData.videoGreeting.data, 'Video greeting', 2.5 * 1024 * 1024);
-
-    // Do not hold the spreadsheet lock while uploading to Drive.
-    let selfieUrl = '';
-    let videoUrl = '';
-    if (hasSelfie) selfieUrl = uploadDataUrlToDrive(formData.selfie.data, formData.selfie.name || 'selfie.jpg', getOrCreateFolder());
-    if (hasVideo) videoUrl = uploadDataUrlToDrive(formData.videoGreeting.data, formData.videoGreeting.name || 'video_greeting.webm', getOrCreateVideoFolder());
-
-    // Lock only the final duplicate check and spreadsheet append.
-    lock.waitLock(10000);
+    lock.waitLock(30000);
     try {
-      if (findResponseByName(submittedName)) {
-        return { success: false, duplicate: true, message: 'This name has already submitted an RSVP. Each player may submit only once.' };
+      const authorizedGuest = findWhitelistAccount(submittedName, mobile);
+      if (!authorizedGuest) {
+        return {
+          success: false,
+          message: 'Your name or mobile number does not match your existing account. Please enter the same name and mobile number you used during sign-up.'
+        };
       }
+
+      const duplicate = findResponseByName(submittedName);
+      if (duplicate) {
+        return {
+          success: false,
+          duplicate: true,
+          message: 'This name has already submitted an RSVP. Each player may submit only once.'
+        };
+      }
+
       const sheet = getResponsesSheet();
+
+      let selfieUrl = '';
+      let videoUrl = '';
+
+      if (hasSelfie) {
+        const folder = getOrCreateFolder();
+        selfieUrl = uploadDataUrlToDrive(
+          formData.selfie.data,
+          formData.selfie.name || 'selfie.jpg',
+          folder
+        );
+      }
+
+      if (hasVideo) {
+        const videoFolder = getOrCreateVideoFolder();
+        videoUrl = uploadDataUrlToDrive(
+          formData.videoGreeting.data,
+          formData.videoGreeting.name || 'video_greeting.webm',
+          videoFolder
+        );
+      }
+
       const ticketCode = generateTicketCode();
       const identifier = String(formData.email || submittedName).trim();
+
       sheet.appendRow([
-        new Date(), submittedName, mobile, String(formData.address).trim(), String(formData.greetings).trim(),
-        selfieUrl, identifier, guests, formData.loginMethod || 'name', ticketCode, '', attendance, videoUrl
+        new Date(),
+        submittedName,
+        mobile,
+        String(formData.address).trim(),
+        String(formData.greetings).trim(),
+        selfieUrl,
+        identifier,
+        guests,
+        formData.loginMethod || 'name',
+        ticketCode,
+        '',
+        attendance,
+        videoUrl
       ]);
+
       const scriptUrl = ScriptApp.getService().getUrl() || '';
-      const qrData = scriptUrl ? scriptUrl + '?page=scan&code=' + encodeURIComponent(ticketCode) : ticketCode;
+      const qrData = scriptUrl
+        ? scriptUrl + '?page=scan&code=' + encodeURIComponent(ticketCode)
+        : ticketCode;
+      const qrCodeUrl = getQrCodeUrl(qrData, 400);
       clearBirthdayCaches();
+
+      const successMessage = attendance === 'not_going'
+        ? 'Thank you! We received your video greeting. 💌'
+        : 'Thank you! Your attendance is confirmed. 🎉';
+
       return {
         success: true,
-        message: attendance === 'not_going' ? 'Thank you! We received your video greeting.' : 'Thank you! Your attendance is confirmed.',
-        ticket: { code: ticketCode, qrCodeUrl: getQrCodeUrl(qrData, 400), name: submittedName, guests: guests, qrData: qrData, attendance: attendance }
+        message: successMessage,
+        ticket: {
+          code: ticketCode,
+          qrCodeUrl: qrCodeUrl,
+          name: submittedName,
+          guests: guests,
+          qrData: qrData,
+          attendance: attendance
+        }
       };
     } finally {
       lock.releaseLock();
@@ -947,31 +1001,23 @@ function submitForm(formData) {
 /* ============================================================
    Upload a data URL (image or video) to a Drive folder.
    ============================================================ */
-function validateMediaDataUrl(dataUrl, label, maxBytes) {
-  if (!dataUrl) return;
-  const value = String(dataUrl);
-  const commaIndex = value.indexOf(',');
-  if (commaIndex === -1) throw new Error('Invalid ' + label + ' data.');
-  const base64 = value.substring(commaIndex + 1);
-  const estimatedBytes = Math.floor((base64.length * 3) / 4);
-  if (estimatedBytes > maxBytes) {
-    throw new Error(label + ' is too large. Please keep it below ' + (maxBytes / 1024 / 1024).toFixed(1) + ' MB.');
-  }
-}
-
 function uploadDataUrlToDrive(dataUrl, filename, folder) {
-  const parts = String(dataUrl || '').split(',');
-  if (parts.length < 2) throw new Error('Invalid media data.');
+  const parts = String(dataUrl).split(',');
+  if (parts.length < 2) throw new Error('Invalid media data (missing comma separator).');
+
   const meta = parts[0];
-  const base64Data = parts.slice(1).join(',');
-  const contentTypeMatch = meta.match(/data:([^;]+);base64/i);
+  const base64Data = parts[1];
+  const contentTypeMatch = meta.match(/:(.*?);/);
   const contentType = contentTypeMatch ? contentTypeMatch[1] : 'application/octet-stream';
-  if (!base64Data) throw new Error('Media data is empty.');
+
   const bytes = Utilities.base64Decode(base64Data);
   const blob = Utilities.newBlob(bytes, contentType, filename);
   const file = folder.createFile(blob);
-  try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); }
-  catch (sharingError) { Logger.log('Sharing warning: ' + sharingError.toString()); }
+  try {
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (e) {
+    Logger.log('Sharing warning: ' + e.toString());
+  }
   return file.getUrl();
 }
 
@@ -1402,3 +1448,4 @@ function resetAllData() {
 
   return 'Reset complete.';
 }
+
