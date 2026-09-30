@@ -1,7 +1,13 @@
 // Vercel Serverless Function
 // Set APPS_SCRIPT_URL in Vercel Project Settings to the deployed Apps Script /exec URL.
 
-const UPSTREAM_TIMEOUT_MS = 25000;
+export const config = {
+  maxDuration: 60
+};
+
+// Leave a small margin below Vercel's 60-second function limit so slower
+// Google Sheets reads and Apps Script cold starts can finish.
+const UPSTREAM_TIMEOUT_MS = 59000;
 
 function normalizeBody(body) {
   if (typeof body === 'string') return body;
@@ -78,7 +84,7 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('Apps Script proxy error:', error);
     const message = error && error.name === 'AbortError'
-      ? 'Apps Script timed out after 25 seconds. Check that the web app is deployed and accessible.'
+      ? 'Apps Script timed out after 59 seconds. Check that the web app is deployed and accessible.'
       : 'Could not reach the Google Apps Script backend: ' + (error.message || error);
     return res.status(502).json({ success: false, message });
   }
