@@ -506,6 +506,11 @@
     .admin-attendee-media-item { min-width: 0; display: grid; gap: 7px; }
     .admin-attendee-media-item img, .admin-attendee-media-item video, .admin-attendee-media-empty { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border: 1px solid #e7e7e3; border-radius: 8px; background: #f4f4f1; }
     .admin-attendee-media-empty { display: grid; place-items: center; color: #888; font-size: 12px; }
+    .attendee-thumb-link { display: block; width: 56px; height: 56px; border-radius: 10px; overflow: hidden; background: #f0f0ee; border: 1px solid #e4e4df; }
+    .attendee-thumb-link img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .attendee-thumb-link.attendee-video-thumb { display: flex; align-items: center; justify-content: center; font-size: 18px; color: #555; text-decoration: none; background: #ececea; }
+    .attendee-thumb-placeholder { width: 56px; height: 56px; border-radius: 10px; background: #ececea; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: #999; }
+    .admin-attendee-media-item .attendee-thumb-link, .admin-attendee-media-item .attendee-thumb-placeholder { width: 100%; height: auto; aspect-ratio: 16 / 9; }
     .admin-attendee-footer { align-items: center; padding-top: 12px; border-top: 1px solid #eee; }
     .attendee-muted { color: #777; font-size: 12px; margin-top: 3px; overflow-wrap: anywhere; }
     .attendee-status { display: inline-flex; justify-content: center; border-radius: 999px; padding: 6px 9px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
@@ -676,9 +681,9 @@
     </div>
 
   </div>
-</div>
 
-
+  <!-- ATTENDEES PANEL (now inside #adminApp so it isn't pushed below
+       the full-viewport-height admin-app block) -->
   <section class="attendee-panel hidden" id="attendeePanel" aria-labelledby="attendeePanelTitle">
     <div class="attendee-head"><div><div class="attendee-kicker">Google Sheets records</div><h1 id="attendeePanelTitle">Attendees</h1></div><button type="button" class="attendee-refresh" id="refreshAttendeesBtn">Refresh list</button></div>
     <div class="attendee-stats"><div class="attendee-stat"><strong id="attendeePartyTotal">0</strong><span>Parties</span></div><div class="attendee-stat"><strong id="attendeeGuestTotal">0</strong><span>Going guests</span></div><div class="attendee-stat"><strong id="attendeeCheckedTotal">0</strong><span>Checked in</span></div></div>
@@ -686,6 +691,9 @@
     <div class="attendee-list" id="attendeeList"><div class="attendee-empty">Loading attendees…</div></div>
   </section>
   <div class="attendee-editor" id="attendeeEditor" aria-hidden="true"><div class="attendee-editor-card" role="dialog" aria-modal="true" aria-labelledby="attendeeEditorTitle"><div class="attendee-editor-head"><h2 id="attendeeEditorTitle">Edit attendee</h2><button type="button" class="attendee-editor-close" id="closeAttendeeEditor" aria-label="Close">×</button></div><form id="attendeeForm"><input type="hidden" id="editRowIndex"><div class="attendee-form-grid"><label>Name<input id="editName" required></label><label>Mobile<input id="editMobile" required inputmode="tel"></label><label>Email<input id="editEmail" type="email"></label><label>Guests<input id="editGuests" type="number" min="1" max="20" required></label><label>Attendance<select id="editAttendance"><option value="going">Going</option><option value="planning">Planning</option><option value="not_going">Not going</option></select></label><label>Ticket code<input id="editTicketCode" disabled></label><label class="full">Address<input id="editAddress"></label><label class="full">Greetings<textarea id="editGreetings"></textarea></label></div><div class="attendee-editor-actions"><button type="button" class="cancel" id="cancelAttendeeEdit">Cancel</button><button type="submit" class="save" id="saveAttendeeBtn">Save changes</button></div></form></div></div>
+
+</div>
+<!-- #adminApp closes here now, after the attendee panel/editor -->
 
 <div class="toast" id="toast"></div>
 
@@ -825,6 +833,37 @@
       if (status) { status.className = 'attendee-load-status error'; status.textContent = 'Connection failed: ' + message; }
     }).getAdminAttendees(getAdminSessionToken());
   }
+  function driveFileId(url) {
+    if (!url) return null;
+    let m = String(url).match(/\/d\/([a-zA-Z0-9_-]{10,})/);
+    if (m) return m[1];
+    m = String(url).match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
+    return m ? m[1] : null;
+  }
+  function driveThumbSrc(url) {
+    const id = driveFileId(url);
+    return id ? ('https://drive.google.com/thumbnail?id=' + id + '&sz=w300') : url;
+  }
+  window.__attendeeThumbFallback = function(imgEl, initial) {
+    const div = document.createElement('div');
+    div.className = 'attendee-thumb-placeholder';
+    div.textContent = initial;
+    if (imgEl && imgEl.parentNode) imgEl.parentNode.replaceWith(div);
+  };
+  function mediaCellHtml(a) {
+    const initial = escapeHtml((a.name || 'G').charAt(0).toUpperCase());
+    if (a.selfieUrl) {
+      const thumbSrc = driveThumbSrc(a.selfieUrl);
+      return '<a class="attendee-thumb-link" href="' + escapeHtml(a.selfieUrl) + '" target="_blank" rel="noopener" title="View photo">' +
+             '<img src="' + escapeHtml(thumbSrc) + '" alt="" loading="lazy" referrerpolicy="no-referrer" ' +
+             'onerror="window.__attendeeThumbFallback(this, \'' + initial + '\')">' +
+             '</a>';
+    }
+    if (a.videoUrl) {
+      return '<a class="attendee-thumb-link attendee-video-thumb" href="' + escapeHtml(a.videoUrl) + '" target="_blank" rel="noopener" title="View video greeting">▶</a>';
+    }
+    return '<div class="attendee-thumb-placeholder">' + initial + '</div>';
+  }
   function renderAdminAttendees() {
     const list = $('attendeeList');
     const rows = adminAttendees.filter(a => [a.name, a.mobile, a.email, a.ticketCode, a.attendance, a.address].join(' ').toLowerCase().includes(attendeeFilter));
@@ -838,8 +877,12 @@
       const statusText = attendance === 'planning' ? 'Planning' : attendance === 'not_going' ? "Can't Make It" : 'Going';
       const statusClass = attendance === 'planning' ? 'planning' : attendance === 'not_going' ? 'not_going' : 'going';
       const guestCount = Number(a.guests) || 1;
-      const selfie = a.selfieUrl ? '<img src="' + escapeHtml(a.selfieUrl) + '" alt="Selfie for ' + escapeHtml(a.name || 'attendee') + '" loading="lazy" />' : '<div class="admin-attendee-media-empty">No selfie</div>';
-      const video = a.videoUrl ? '<video controls playsinline preload="metadata"><source src="' + escapeHtml(a.videoUrl) + '" /></video>' : '<div class="admin-attendee-media-empty">No video</div>';
+      const selfie = a.selfieUrl
+        ? mediaCellHtml({ name: a.name, selfieUrl: a.selfieUrl })
+        : '<div class="admin-attendee-media-empty">No selfie</div>';
+      const video = a.videoUrl
+        ? mediaCellHtml({ name: a.name, videoUrl: a.videoUrl })
+        : '<div class="admin-attendee-media-empty">No video</div>';
       const actions = a.rowIndex ? '<div class="attendee-actions"><button type="button" data-edit-row="' + a.rowIndex + '">Edit</button><button type="button" class="danger" data-delete-row="' + a.rowIndex + '">Remove</button></div>' : '<span class="attendee-muted">View only</span>';
 
       return '<article class="admin-attendee-card">' +
