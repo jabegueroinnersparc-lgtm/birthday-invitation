@@ -42,10 +42,17 @@ async function postToAppsScript(target, body) {
   if (!location) return initial;
   const redirectedUrl = new URL(location, target).toString();
 
+  // Apps Script commonly redirects the initial POST to a googleusercontent
+  // URL. Keep it as POST; changing it to GET invokes doGet(), which returns
+  // the Apps Script HTML page instead of the JSON doPost() response.
   return fetchWithTimeout(redirectedUrl, {
-    method: 'GET',
+    method: 'POST',
     redirect: 'follow',
-    headers: { 'User-Agent': 'Vercel-Apps-Script-Proxy/1.0' }
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+      'User-Agent': 'Vercel-Apps-Script-Proxy/1.0'
+    },
+    body
   });
 }
 
