@@ -7,7 +7,10 @@ export const config = {
 };
 
 const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL;
-const UPSTREAM_TIMEOUT_MS = 55000;
+
+// Leave a small margin below Vercel's 60-second function limit.
+// This gives Google Drive media uploads more time to finish.
+const UPSTREAM_TIMEOUT_MS = 59000;
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -19,7 +22,10 @@ export default async function handler(req, res) {
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, message: 'Method Not Allowed' });
+    return res.status(405).json({
+      success: false,
+      message: 'Method Not Allowed'
+    });
   }
 
   if (!APPS_SCRIPT_URL) {
@@ -28,19 +34,25 @@ export default async function handler(req, res) {
       message: 'APPS_SCRIPT_URL is not configured in Vercel. Set it to the current deployed Apps Script Web App URL ending in /exec.'
     });
   }
-  if (!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec(?:\?.*)?$/.test(APPS_SCRIPT_URL)) {
+
+  if (!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec(?:\?.* )?$/.test(APPS_SCRIPT_URL)) {
     return res.status(500).json({
       success: false,
       message: 'APPS_SCRIPT_URL must be the current deployed https://script.google.com/macros/s/.../exec URL.'
-    });
+    } );
   }
 
   try {
     const outgoingBody =
-      typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
+      typeof req.body === 'string'
+        ? req.body
+        : JSON.stringify(req.body || {});
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      UPSTREAM_TIMEOUT_MS
+    );
 
     try {
       const upstream = await fetch(APPS_SCRIPT_URL, {
@@ -55,9 +67,17 @@ export default async function handler(req, res) {
       });
 
       const text = await upstream.text();
-      const responsePreview = text.slice(0, 500).replace(/\s+/g, ' ').trim();
+      const responsePreview = text
+        .slice(0, 500)
+        .replace(/\s+/g, ' ')
+        .trim();
+
       const contentType = upstream.headers.get('content-type') || '';
-      const looksLikeHtml = /text\/html|application\/xhtml\+xml|<!doctype html|<html/i.test(`${contentType} ${responsePreview}`) || responsePreview.startsWith('<');
+
+      const looksLikeHtml =
+        /text\/html|application\/xhtml\+xml|<!doctype html|<html/i.test(
+          `${contentType} ${responsePreview}`
+        ) || responsePreview.startsWith('<');
 
       if ((upstream.status === 404 || upstream.status >= 400) && looksLikeHtml) {
         return res.status(502).json({
@@ -73,11 +93,16 @@ export default async function handler(req, res) {
         });
       }
 
-      if (!upstream.ok && !looksLikeHtml) {
+      if (!upstream.ok) {
         return res.status(upstream.status).send(text);
       }
 
-      res.setHeader('Content-Type', upstream.headers.get('content-type') || 'application/json;charset=utf-8');
+      res.setHeader(
+        'Content-Type',
+        upstream.headers.get('content-type') ||
+          'application/json;charset=utf-8'
+      );
+
       return res.status(upstream.status).send(text);
     } finally {
       clearTimeout(timeoutId);
@@ -91,9 +116,12 @@ export default async function handler(req, res) {
     }
 
     console.error('Proxy error:', err);
+
     return res.status(502).json({
       success: false,
-      message: 'Proxy error: ' + (err && err.message ? err.message : String(err))
+      message:
+        'Proxy error: ' +
+        (err && err.message ? err.message : String(err))
     });
   }
 }
