@@ -980,7 +980,7 @@
     if (!hasAppsScriptBridge()) {
       btn.disabled = false;
       btn.textContent = 'Unlock Scanner';
-      showLoginError('The Vercel API bridge is unavailable. Add /api/admin.js and configure APPS_SCRIPT_URL.');
+      showLoginError('The server API is unavailable. Ensure /api/admin is deployed and APPS_SCRIPT_URL is configured.');
       return;
     }
 
