@@ -167,7 +167,7 @@ export default async function handler(req, res) {
   const timeoutId = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
 
   try {
-    const upstream = await fetch(APPS_SCRIPT_URL, {
+    let upstream = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: {
         Accept: req.headers.accept || 'application/json, text/plain, */*',
@@ -175,9 +175,30 @@ export default async function handler(req, res) {
         'X-Request-ID': requestId
       },
       body: outgoingBody,
-      redirect: 'follow',
+      redirect: 'manual',
       signal: controller.signal
     });
+
+    if ([301, 302, 303, 307, 308].includes(upstream.status)) {
+      const location = upstream.headers.get('location');
+      if (location) {
+        // Preserve POST when following Apps Script's redirect. Following
+        // with GET invokes doGet() and returns HTML instead of JSON.
+        upstream = await fetch(new URL(location, APPS_SCRIPT_URL), {
+          method: 'POST',
+          headers: {
+            Accept:
+              req.headers.accept ||
+              'application/json, text/plain, */*',
+            'Content-Type': 'text/plain;charset=utf-8',
+            'X-Request-ID': requestId
+          },
+          body: outgoingBody,
+          redirect: 'follow',
+          signal: controller.signal
+        });
+      }
+    }
 
     const text = await upstream.text();
     const responsePreview = text.slice(0, 500).replace(/\s+/g, ' ').trim();
