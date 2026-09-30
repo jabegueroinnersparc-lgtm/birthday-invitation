@@ -20,22 +20,6 @@ test('a catch-all API route exists to avoid raw API 404s', () => {
   assert.ok(fs.existsSync(catchAllPath), 'Missing catch-all API route file');
 });
 
-test('Cloudflare Pages has static hosting and API function routes', () => {
-  const config = fs.readFileSync(path.join(projectRoot, 'wrangler.toml'), 'utf8');
-  const functionFiles = [
-    'functions/api/proxy.js',
-    'functions/api/admin.js',
-    'functions/api/[[path]].js',
-    'functions/_shared.js'
-  ];
-
-  assert.match(config, /pages_build_output_dir\s*=\s*"\."/);
-  assert.ok(fs.existsSync(path.join(projectRoot, 'admin.html')), 'Missing admin page for Cloudflare clean URLs');
-  for (const file of functionFiles) {
-    assert.ok(fs.existsSync(path.join(projectRoot, file)), `Missing Cloudflare Pages file: ${file}`);
-  }
-});
-
 test('countdown and event metadata use the same event start instant', () => {
   const page = fs.readFileSync(path.join(projectRoot, 'index.html'), 'utf8');
   const schemaStart = page.match(/"startDate":\s*"([^"]+)"/);
