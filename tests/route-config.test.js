@@ -29,3 +29,10 @@ test('countdown and event metadata use the same event start instant', () => {
   assert.ok(countdownStart, 'Missing countdown start date');
   assert.equal(new Date(countdownStart[1]).toISOString(), new Date(schemaStart[1]).toISOString());
 });
+
+test('API timeout messages do not blame video uploads for unrelated requests', () => {
+  const page = fs.readFileSync(path.join(projectRoot, 'index.html'), 'utf8');
+
+  assert.match(page, /res\.status === 502 \|\| res\.status === 504\) throw new Error\('The server took too long to respond\. Please try again in a moment\.'\)/);
+  assert.doesNotMatch(page, /res\.status === 502 \|\| res\.status === 504\)[^\n]*shorter video/i);
+});

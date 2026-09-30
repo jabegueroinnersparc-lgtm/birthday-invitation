@@ -3495,7 +3495,7 @@
               return { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
             }
             if (res.status === 404) throw new Error('Apps Script route not found. Check that the deployed URL ends with /exec and points to the live Web App.');
-            if (res.status === 502 || res.status === 504) throw new Error('The server took too long. Please try again with a shorter video.');
+            if (res.status === 502 || res.status === 504) throw new Error('The server took too long to respond. Please try again in a moment.');
             throw new Error('HTTP ' + res.status + ': ' + (responsePreview || 'Unknown error'));
           }
 
