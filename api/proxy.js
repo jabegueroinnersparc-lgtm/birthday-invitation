@@ -1,15 +1,13 @@
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '25mb'
+      sizeLimit: '4mb'
     }
   }
 };
 
-const APPS_SCRIPT_URL =
-  process.env.APPS_SCRIPT_URL ||
-  'https://script.google.com/macros/s/AKfycbzzoNUCRIwXKbndf9QWsalqq5jn026zRc3DUfzCW6dihq8p4fol6GyX2MWp2FkGQz_0/exec';
-const UPSTREAM_TIMEOUT_MS = 90000;
+const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL;
+const UPSTREAM_TIMEOUT_MS = 55000;
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -22,6 +20,19 @@ export default async function handler(req, res) {
 
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
+  }
+
+  if (!APPS_SCRIPT_URL) {
+    return res.status(500).json({
+      success: false,
+      message: 'APPS_SCRIPT_URL is not configured in Vercel. Set it to the current deployed Apps Script Web App URL ending in /exec.'
+    });
+  }
+  if (!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec(?:\?.*)?$/.test(APPS_SCRIPT_URL)) {
+    return res.status(500).json({
+      success: false,
+      message: 'APPS_SCRIPT_URL must be the current deployed https://script.google.com/macros/s/.../exec URL.'
+    });
   }
 
   try {
@@ -51,7 +62,14 @@ export default async function handler(req, res) {
       if ((upstream.status === 404 || upstream.status >= 400) && looksLikeHtml) {
         return res.status(502).json({
           success: false,
-          message: 'Apps Script returned an HTML redirect or login page. Check that APPS_SCRIPT_URL ends with /exec and that the Web App is published with "Anyone" access.'
+          message: `Apps Script returned HTTP ${upstream.status} HTML instead of JSON. Confirm APPS_SCRIPT_URL is the current /exec deployment and the Web App access is set to Anyone.`
+        });
+      }
+
+      if (looksLikeHtml) {
+        return res.status(502).json({
+          success: false,
+          message: 'Apps Script returned an HTML login or error page instead of JSON. Confirm the Web App is deployed with access set to Anyone and that APPS_SCRIPT_URL points to the current /exec deployment.'
         });
       }
 

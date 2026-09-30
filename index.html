@@ -87,7 +87,7 @@
           "height": 630
         },
         "datePublished": "2026-01-01T00:00:00+08:00",
-        "dateModified": "2026-09-26T00:00:00+08:00"
+        "dateModified": "2026-09-30T00:00:00+08:00"
       },
       {
         "@type": "WebSite",
@@ -162,20 +162,14 @@
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     }
     .orb {
-      position: fixed; border-radius: 50%; filter: blur(80px);
+      position: fixed; border-radius: 50%;
       opacity: 0.5; z-index: 0; pointer-events: none;
-      animation: drift 22s ease-in-out infinite;
     }
     .orb-a { width: 500px; height: 500px; background: radial-gradient(circle, #d0d0d0, transparent 70%); top: -180px; left: -180px; }
     .orb-b { width: 440px; height: 440px; background: radial-gradient(circle, #e5e5e5, transparent 70%); bottom: -160px; right: -160px; animation-delay: -8s; }
     .orb-c { width: 360px; height: 360px; background: radial-gradient(circle, #c8c8c8, transparent 70%); top: 45%; left: 55%; animation-delay: -15s; }
-    @keyframes drift {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      33%      { transform: translate(50px, -40px) scale(1.1); }
-      66%      { transform: translate(-40px, 50px) scale(0.92); }
-    }
     @media (max-width: 640px) {
-      .orb { filter: blur(60px); opacity: 0.35; }
+      .orb { opacity: 0.35; }
       .orb-a, .orb-b { width: 280px; height: 280px; }
       .orb-c { display: none; }
       .bg-grid { background-size: 32px 32px; }
@@ -3198,7 +3192,7 @@
 
         <div class="social-sidebar-qr">
           <div class="social-sidebar-qr-frame">
-            <img id="gcashQrImage" src="https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/sairasivyqr.png" alt="GCash and InstaPay QR code" loading="lazy">
+            <img id="gcashQrImage" src="/sairasivyqr.png" alt="GCash and InstaPay QR code" loading="lazy">
           </div>
           <div class="social-sidebar-qr-actions">
             <button type="button" class="btn btn-primary" id="downloadGcashQrBtn">
@@ -3257,7 +3251,7 @@
   <script>
     /* CONFIG */
     const APPS_SCRIPT_URL = '/api/proxy';
-    const GIFT_QR_IMAGE_URL = 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/sairasivyqr.png';
+    const GIFT_QR_IMAGE_URL = '/sairasivyqr.png';
     const GIFT_TRIGGER_POS_KEY = 'birthdayGiftTriggerPos';
 
     /* BUTTON CLICK SOUND */
@@ -3290,21 +3284,21 @@
     /* PER-ATTENDANCE MEDIA */
     const ATTENDANCE_MEDIA = {
       going: {
-        soundUrl: 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/shanghai%20salamat%20po.mp3',
+        soundUrl: '/shanghai%20salamat%20po.mp3',
         imageUrl: 'https://lh3.googleusercontent.com/d/156E8il6rCtbGctl1qkAOuiWxBfC4lHef',
         caption: 'Shanghai secured',
         subtitle: "You're officially on the list. See you there!",
         toast: "You're on the list! 🎉"
       },
       planning: {
-        soundUrl: 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/planning.mp3',
+        soundUrl: '/planning.mp3',
         imageUrl: 'https://lh3.googleusercontent.com/d/1lsWjIEeYdixms9Stj2YR-EnqHkQ0jweN',
         caption: 'Still planning',
         subtitle: "No worries — take your time. We'd love to have you!",
         toast: 'Marked as planning 🤔'
       },
       not_going: {
-        soundUrl: 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/walakangshanghai.mp3',
+        soundUrl: '/walakangshanghai.mp3',
         imageUrl: 'https://lh3.googleusercontent.com/d/1VPNxdPi5L_vr3MEAMyg0QP25GBjbquKy',
         caption: "We'll miss you",
         subtitle: 'Thanks for the video greeting — we felt the love! 💌',
@@ -3330,8 +3324,8 @@
     document.addEventListener('touchstart', unlockAudio, { once: true, passive: true });
     document.addEventListener('click', unlockAudio, { once: true });
 
-    const SUCCESS_SOUND_URL = 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/saira%20ingay%202%20(mp3cut.net).mp3';
-    const TICKET_READY_SOUND_URL = 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/shanghai%20salamat%20po.mp3';
+    const SUCCESS_SOUND_URL = '/saira%20ingay%202%20(mp3cut.net).mp3';
+    const TICKET_READY_SOUND_URL = '/shanghai%20salamat%20po.mp3';
     const USE_LOCAL_UI_SOUNDS = false;
 
     let successAudio = null;
@@ -3487,6 +3481,8 @@
           const contentType = res.headers.get('content-type') || '';
           const looksLikeHtml = /text\/html|application\/xhtml\+xml|<!doctype html|<html/i.test(`${contentType} ${responsePreview}`) || responsePreview.startsWith('<');
 
+          if (res.status === 413) throw new Error('Your photo or video is too large. Please record a shorter video.');
+
           if (looksLikeHtml) {
             if (action === 'getAllAttendees') {
               return { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
@@ -3499,7 +3495,6 @@
               return { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
             }
             if (res.status === 404) throw new Error('Apps Script route not found. Check that the deployed URL ends with /exec and points to the live Web App.');
-            if (res.status === 413) throw new Error('Your photo or video is too large. Please record a shorter video.');
             if (res.status === 502 || res.status === 504) throw new Error('The server took too long. Please try again with a shorter video.');
             throw new Error('HTTP ' + res.status + ': ' + (responsePreview || 'Unknown error'));
           }
@@ -3615,7 +3610,7 @@
     });
 
     /* COUNTDOWN */
-    const EVENT_DATE = new Date('2026-10-31T18:00:00');
+    const EVENT_DATE = new Date('2026-10-31T13:00:00+08:00');
     let countdownInterval = null;
     function pad(n) { return String(n).padStart(2, '0'); }
 
@@ -4098,7 +4093,7 @@
         id: 'gcash',
         label: 'GCash / InstaPay',
         modalTitle: 'GCash QR Code',
-        qrUrl: 'https://raw.githubusercontent.com/jabegueroinnersparc-lgtm/birthday-invitation/main/sairasivyqr.png',
+        qrUrl: '/sairasivyqr.png',
         filename: 'birthday-gift-qr-gcash.png'
       }
     ];

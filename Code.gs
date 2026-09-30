@@ -25,6 +25,8 @@ const PAYMENT_HEADERS = [
 // Short-lived caches reduce repeated full-sheet reads while keeping new
 // signups and RSVPs visible quickly after they are written.
 const CACHE_TTL_SECONDS = 30;
+const ADMIN_SESSION_TTL_SECONDS = 21600;
+const ADMIN_SESSION_PREFIX = 'birthday_admin_session_';
 const WHITELIST_CACHE_KEY = 'birthday_whitelist_v1';
 const ATTENDEES_CACHE_KEY = 'birthday_attendees_v1';
 const SETTINGS_CACHE_KEY = 'birthday_settings_v1';
@@ -156,8 +158,8 @@ function handleApiRequest(e) {
     }
 
     if (action === 'adminLogin')      return jsonResponse(adminLogin(params.password || ''));
-    if (action === 'verifyTicket')    return jsonResponse(verifyTicket(params.code || ''));
-    if (action === 'checkInTicket')   return jsonResponse(checkInTicket(params.code || ''));
+    if (action === 'verifyTicket')    return jsonResponse(verifyTicket(params.code || '', params.token || ''));
+    if (action === 'checkInTicket')   return jsonResponse(checkInTicket(params.code || '', params.token || ''));
 
     if (action === 'checkExistingRSVP') {
       return jsonResponse(checkExistingRSVP(
@@ -167,14 +169,14 @@ function handleApiRequest(e) {
     }
 
     if (action === 'getAllAttendees') return jsonResponse(getAllAttendees());
-    if (action === 'getAdminAttendees') return jsonResponse(getAdminAttendees());
+    if (action === 'getAdminAttendees') return jsonResponse(getAdminAttendees(params.token || ''));
     if (action === 'updateAttendee') {
       let attendeeData = {};
       try { attendeeData = JSON.parse(params.data || '{}'); }
       catch (err) { return jsonResponse({ success: false, message: 'Invalid attendee data.' }); }
-      return jsonResponse(updateAttendee(attendeeData));
+      return jsonResponse(updateAttendee(attendeeData, params.token || ''));
     }
-    if (action === 'deleteAttendee') return jsonResponse(deleteAttendee(params.rowIndex || ''));
+    if (action === 'deleteAttendee') return jsonResponse(deleteAttendee(params.rowIndex || '', params.token || ''));
 
     if (action === 'submitPayment') {
       let paymentData = {};
@@ -737,7 +739,11 @@ function adminAttendeeFromRow(row, rowIndex) {
   };
 }
 
-function getAdminAttendees() {
+function getAdminAttendees(token) {
+  if (!isAdminSessionValid(token)) {
+    return { success: false, attendees: [], message: 'Admin session expired. Please sign in again.' };
+  }
+
   try {
     const sh = getSheet(SHEET_RESPONSES, false);
     if (!sh || sh.getLastRow() < 2) {
@@ -767,7 +773,11 @@ function getAdminAttendees() {
   }
 }
 
-function updateAttendee(attendeeData) {
+function updateAttendee(attendeeData, token) {
+  if (!isAdminSessionValid(token)) {
+    return { success: false, message: 'Admin session expired. Please sign in again.' };
+  }
+
   const lock = LockService.getScriptLock();
   try {
     attendeeData = attendeeData || {};
@@ -809,7 +819,11 @@ function updateAttendee(attendeeData) {
   }
 }
 
-function deleteAttendee(rowIndexValue) {
+function deleteAttendee(rowIndexValue, token) {
+  if (!isAdminSessionValid(token)) {
+    return { success: false, message: 'Admin session expired. Please sign in again.' };
+  }
+
   const lock = LockService.getScriptLock();
   try {
     const rowIndex = Number(rowIndexValue);
@@ -1093,8 +1107,10 @@ function adminLogin(password) {
       return { success: false, message: 'Incorrect password.' };
     }
 
+    const token = Utilities.getUuid();
+    CacheService.getScriptCache().put(ADMIN_SESSION_PREFIX + token, '1', ADMIN_SESSION_TTL_SECONDS);
     Logger.log('Admin login succeeded');
-    return { success: true, message: 'Welcome, admin.' };
+    return { success: true, token: token, message: 'Welcome, admin.' };
   } catch (e) {
     return { success: false, message: e.toString() };
   }
@@ -1103,7 +1119,21 @@ function adminLogin(password) {
 /* ============================================================
    TICKET VERIFICATION (SCANNER)
    ============================================================ */
-function verifyTicket(code) {
+function isAdminSessionValid(token) {
+  const sessionToken = String(token || '');
+  if (!sessionToken || sessionToken.length > 64) return false;
+  try {
+    return CacheService.getScriptCache().get(ADMIN_SESSION_PREFIX + sessionToken) === '1';
+  } catch (e) {
+    return false;
+  }
+}
+
+function verifyTicket(code, token) {
+  if (!isAdminSessionValid(token)) {
+    return { success: false, message: 'Admin session expired. Please sign in again.' };
+  }
+
   try {
     code = String(code || '').trim().toUpperCase();
     if (!code) return { success: false, message: 'No code provided.' };
@@ -1149,7 +1179,11 @@ function verifyTicket(code) {
   }
 }
 
-function checkInTicket(code) {
+function checkInTicket(code, token) {
+  if (!isAdminSessionValid(token)) {
+    return { success: false, message: 'Admin session expired. Please sign in again.' };
+  }
+
   try {
     code = String(code || '').trim().toUpperCase();
     if (!code) return { success: false, message: 'No code provided.' };

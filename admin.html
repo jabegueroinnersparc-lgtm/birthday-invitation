@@ -272,7 +272,7 @@
       border: 1.5px solid var(--mist); border-radius: 12px;
       font-size: 16px; font-family: inherit;
       color: var(--black); background: var(--white);
-      -webkit-appearance: none;
+      -webkit-appearance: none; appearance: none;
       text-transform: uppercase; letter-spacing: 0.1em;
       font-weight: 600;
     }
@@ -489,8 +489,24 @@
     .attendee-load-status.ok { color: #236333; }
     .attendee-search { width: 100%; border: 1px solid #ddd; border-radius: 10px; background: #fff; padding: 13px 14px; color: #111; font: 14px Inter, sans-serif; }
     .attendee-list { max-width: 1180px; margin: 0 auto; display: grid; gap: 10px; }
-    .attendee-row { display: grid; grid-template-columns: minmax(170px, 1.3fr) minmax(130px, 1fr) 90px 100px auto; gap: 14px; align-items: center; background: #fff; border: 1px solid #e4e4df; border-radius: 12px; padding: 14px 16px; }
-    .attendee-name { font-weight: 700; color: #111; }
+    .admin-attendee-card { display: grid; gap: 16px; padding: 18px; background: #fff; border: 1px solid #e4e4df; border-radius: 12px; box-shadow: 0 4px 14px rgba(17,17,17,.035); }
+    .admin-attendee-top, .admin-attendee-footer { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+    .admin-attendee-name { color: #111; font-size: 16px; font-weight: 700; overflow-wrap: anywhere; }
+    .admin-attendee-ticket { margin-top: 4px; color: #777; font: 600 11px/1.4 'Inter', sans-serif; }
+    .admin-attendee-badges { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 7px; }
+    .admin-attendee-checkin { display: inline-flex; align-items: center; gap: 6px; color: #777; font-size: 11px; white-space: nowrap; }
+    .admin-attendee-checkin::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #aaa; }
+    .admin-attendee-checkin.checked-in { color: #236333; }
+    .admin-attendee-checkin.checked-in::before { background: #2f8745; }
+    .admin-attendee-details { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .admin-attendee-detail { min-width: 0; display: grid; gap: 4px; }
+    .admin-attendee-detail-label, .admin-attendee-media-label { color: #888; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    .admin-attendee-detail-value { color: #222; font-size: 13px; overflow-wrap: anywhere; }
+    .admin-attendee-media { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .admin-attendee-media-item { min-width: 0; display: grid; gap: 7px; }
+    .admin-attendee-media-item img, .admin-attendee-media-item video, .admin-attendee-media-empty { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border: 1px solid #e7e7e3; border-radius: 8px; background: #f4f4f1; }
+    .admin-attendee-media-empty { display: grid; place-items: center; color: #888; font-size: 12px; }
+    .admin-attendee-footer { align-items: center; padding-top: 12px; border-top: 1px solid #eee; }
     .attendee-muted { color: #777; font-size: 12px; margin-top: 3px; overflow-wrap: anywhere; }
     .attendee-status { display: inline-flex; justify-content: center; border-radius: 999px; padding: 6px 9px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
     .attendee-status.going { background: #e4f4e6; color: #236333; }
@@ -527,10 +543,11 @@
       .attendee-stat { padding: 11px 10px; }
       .attendee-stat strong { font-size: 18px; }
       .attendee-stat span { font-size: 9px; }
-      .attendee-row { grid-template-columns: 1fr auto; gap: 9px; padding: 13px; }
-      .attendee-row > :nth-child(2) { grid-column: 1; }
-      .attendee-row > :nth-child(3), .attendee-row > :nth-child(4) { grid-column: 2; }
-      .attendee-actions { grid-column: 1 / -1; justify-content: stretch; }
+      .admin-attendee-card { padding: 14px; }
+      .admin-attendee-top, .admin-attendee-footer { align-items: flex-start; flex-direction: column; }
+      .admin-attendee-badges { justify-content: flex-start; }
+      .admin-attendee-details { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .attendee-actions { width: 100%; justify-content: stretch; }
       .attendee-actions button { flex: 1; }
       .attendee-form-grid { grid-template-columns: 1fr; }
       .attendee-form-grid .full { grid-column: auto; }
@@ -672,6 +689,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
 <script>
   const $ = id => document.getElementById(id);
 
@@ -694,6 +712,12 @@
           const body = new URLSearchParams();
           body.set('action', String(prop));
           const value = args[0];
+          if (prop !== 'adminLogin') {
+            try {
+              const token = sessionStorage.getItem('adminSessionToken');
+              if (token) body.set('token', token);
+            } catch (e) {}
+          }
           if (prop === 'updateAttendee') body.set('data', JSON.stringify(value || {}));
           else if (prop === 'deleteAttendee') body.set('rowIndex', String(value || ''));
           else if (prop === 'submitForm' || prop === 'submitPayment') body.set('data', JSON.stringify(value || {}));
@@ -782,46 +806,61 @@
       if (status) { status.className = 'attendee-load-status error'; status.textContent = message; }
       return;
     }
-    const applyRows = (res, fallback) => {
-      const payload = res && (res.success === false ? res : res);
-      if (!payload || payload.success === false) return false;
-      const attendeeList = normalizeAdminAttendees(payload);
-      adminAttendees = attendeeList;
-      if (fallback) {
-        adminAttendees = adminAttendees.map(a => ({ ...a, rowIndex: null, email: a.email || '', mobile: a.mobile || '' }));
-      }
-      renderAdminAttendees();
-      if (status) { status.className = 'attendee-load-status ok'; status.textContent = 'Connected — ' + adminAttendees.length + ' attendee record(s) loaded' + (fallback ? ' using compatibility mode.' : '.'); }
-      return true;
-    };
-    const loadCompatibilityList = (reason) => {
-      google.script.run.withSuccessHandler(fallbackRes => {
-        if (applyRows(fallbackRes, true)) return;
-        const message = (fallbackRes && fallbackRes.message) || reason || 'Backend returned no attendee data.';
+
+    google.script.run.withSuccessHandler(res => {
+      if (!res || res.success === false) {
+        const message = (res && res.message) || 'No attendee data was returned by the backend.';
         $('attendeeList').innerHTML = '<div class="attendee-empty">' + escapeHtml(message) + '</div>';
         if (status) { status.className = 'attendee-load-status error'; status.textContent = 'Load failed: ' + message; }
-      }).withFailureHandler(err => {
-        const message = (err && err.message) || reason || 'Could not contact the backend.';
-        $('attendeeList').innerHTML = '<div class="attendee-empty">' + escapeHtml(message) + '</div>';
-        if (status) { status.className = 'attendee-load-status error'; status.textContent = 'Connection failed: ' + message; }
-      }).getAllAttendees();
-    };
-    google.script.run.withSuccessHandler(res => {
-      console.log('Admin attendees payload:', res);
-      if (!applyRows(res, false)) loadCompatibilityList((res && res.message) || 'The admin attendee action is not available in the deployed Code.gs.');
+        return;
+      }
+
+      const attendeeList = normalizeAdminAttendees(res);
+      adminAttendees = attendeeList;
+      renderAdminAttendees();
+      if (status) { status.className = 'attendee-load-status ok'; status.textContent = 'Connected — ' + adminAttendees.length + ' attendee record(s) loaded.'; }
     }).withFailureHandler(err => {
-      console.error('Admin attendee load failed:', err);
-      loadCompatibilityList((err && err.message) || 'The admin attendee action failed.');
-    }).getAdminAttendees();
+      const message = (err && err.message) || 'Could not contact the backend.';
+      $('attendeeList').innerHTML = '<div class="attendee-empty">' + escapeHtml(message) + '</div>';
+      if (status) { status.className = 'attendee-load-status error'; status.textContent = 'Connection failed: ' + message; }
+    }).getAdminAttendees(getAdminSessionToken());
   }
   function renderAdminAttendees() {
     const list = $('attendeeList');
-    const rows = adminAttendees.filter(a => [a.name,a.mobile,a.email,a.ticketCode,a.attendance].join(' ').toLowerCase().includes(attendeeFilter));
+    const rows = adminAttendees.filter(a => [a.name, a.mobile, a.email, a.ticketCode, a.attendance, a.address].join(' ').toLowerCase().includes(attendeeFilter));
     $('attendeePartyTotal').textContent = adminAttendees.length;
-    $('attendeeGuestTotal').textContent = adminAttendees.filter(a => a.attendance === 'going').reduce((sum, a) => sum + (Number(a.guests) || 0), 0);
+    $('attendeeGuestTotal').textContent = adminAttendees.filter(a => String(a.attendance || 'going').toLowerCase() === 'going').reduce((sum, a) => sum + (Number(a.guests) || 0), 0);
     $('attendeeCheckedTotal').textContent = adminAttendees.filter(a => a.checkedIn).length;
     if (!rows.length) { list.innerHTML = '<div class="attendee-empty">No matching attendees.</div>'; return; }
-    list.innerHTML = rows.map(a => '<article class="attendee-row"><div><div class="attendee-name">' + escapeHtml(a.name) + '</div><div class="attendee-muted">' + escapeHtml(a.email || a.mobile || 'No contact details') + '</div></div><div><div class="attendee-muted">Ticket: ' + escapeHtml(a.ticketCode || '—') + '</div><div class="attendee-muted">' + (a.checkedIn ? 'Checked in' : 'Not checked in') + '</div></div><div><span class="attendee-status ' + escapeHtml(a.attendance || 'going') + '">' + escapeHtml((a.attendance || 'going').replace('_', ' ')) + '</span></div><div class="attendee-muted">' + escapeHtml(String(a.guests || 1)) + ' guest' + (Number(a.guests) === 1 ? '' : 's') + '</div><div class="attendee-actions">' + (a.rowIndex ? '<button type="button" data-edit-row="' + a.rowIndex + '">Edit</button><button type="button" class="danger" data-delete-row="' + a.rowIndex + '">Remove</button>' : '<span class="attendee-muted">View only</span>') + '</div></article>').join('');
+
+    list.innerHTML = rows.map(a => {
+      const attendance = String(a.attendance || 'going').toLowerCase();
+      const statusText = attendance === 'planning' ? 'Planning' : attendance === 'not_going' ? "Can't Make It" : 'Going';
+      const statusClass = attendance === 'planning' ? 'planning' : attendance === 'not_going' ? 'not_going' : 'going';
+      const guestCount = Number(a.guests) || 1;
+      const selfie = a.selfieUrl ? '<img src="' + escapeHtml(a.selfieUrl) + '" alt="Selfie for ' + escapeHtml(a.name || 'attendee') + '" loading="lazy" />' : '<div class="admin-attendee-media-empty">No selfie</div>';
+      const video = a.videoUrl ? '<video controls playsinline preload="metadata"><source src="' + escapeHtml(a.videoUrl) + '" /></video>' : '<div class="admin-attendee-media-empty">No video</div>';
+      const actions = a.rowIndex ? '<div class="attendee-actions"><button type="button" data-edit-row="' + a.rowIndex + '">Edit</button><button type="button" class="danger" data-delete-row="' + a.rowIndex + '">Remove</button></div>' : '<span class="attendee-muted">View only</span>';
+
+      return '<article class="admin-attendee-card">' +
+        '<div class="admin-attendee-top"><div><h2 class="admin-attendee-name">' + escapeHtml(a.name || 'Unknown attendee') + '</h2>' +
+        '<div class="admin-attendee-ticket">Ticket ' + escapeHtml(a.ticketCode || '—') + '</div></div>' +
+        '<div class="admin-attendee-badges"><span class="attendee-status ' + escapeHtml(statusClass) + '">' + escapeHtml(statusText) + '</span>' +
+        '<span class="admin-attendee-checkin' + (a.checkedIn ? ' checked-in' : '') + '">' + (a.checkedIn ? 'Checked in' : 'Not checked in') + '</span></div></div>' +
+        '<div class="admin-attendee-details">' +
+        '<div class="admin-attendee-detail"><span class="admin-attendee-detail-label">Email</span><span class="admin-attendee-detail-value">' + escapeHtml(a.email || '—') + '</span></div>' +
+        '<div class="admin-attendee-detail"><span class="admin-attendee-detail-label">Mobile</span><span class="admin-attendee-detail-value">' + escapeHtml(a.mobile || '—') + '</span></div>' +
+        '<div class="admin-attendee-detail"><span class="admin-attendee-detail-label">Party size</span><span class="admin-attendee-detail-value">' + guestCount + (guestCount === 1 ? ' guest' : ' guests') + '</span></div>' +
+        '<div class="admin-attendee-detail"><span class="admin-attendee-detail-label">Address</span><span class="admin-attendee-detail-value">' + escapeHtml(a.address || '—') + '</span></div>' +
+        '</div>' +
+        '<div class="admin-attendee-media"><div class="admin-attendee-media-item"><span class="admin-attendee-media-label">Selfie</span>' + selfie + '</div>' +
+        '<div class="admin-attendee-media-item"><span class="admin-attendee-media-label">Video greeting</span>' + video + '</div></div>' +
+        '<div class="admin-attendee-footer">' +
+        actions +
+        '</div>' +
+        '</article>';
+    }).join('');
+
     list.querySelectorAll('[data-edit-row]').forEach(btn => btn.addEventListener('click', () => openAttendeeEditor(Number(btn.dataset.editRow))));
     list.querySelectorAll('[data-delete-row]').forEach(btn => btn.addEventListener('click', () => removeAttendee(Number(btn.dataset.deleteRow))));
   }
@@ -834,31 +873,33 @@
   function saveEditedAttendee(e) {
     e.preventDefault(); const btn = $('saveAttendeeBtn'); btn.disabled = true; btn.textContent = 'Saving…';
     const data = { rowIndex: Number($('editRowIndex').value), name: $('editName').value.trim(), mobile: $('editMobile').value.trim(), email: $('editEmail').value.trim(), guests: Number($('editGuests').value), attendance: $('editAttendance').value, address: $('editAddress').value.trim(), greetings: $('editGreetings').value.trim() };
-    google.script.run.withSuccessHandler(res => { btn.disabled = false; btn.textContent = 'Save changes'; if (!res || !res.success) { showToast((res && res.message) || 'Could not save attendee.'); return; } closeAttendeeEditor(); showToast('Attendee updated.'); loadAdminAttendees(); }).withFailureHandler(err => { btn.disabled = false; btn.textContent = 'Save changes'; showToast('Error: ' + err.message); }).updateAttendee(data);
+    google.script.run.withSuccessHandler(res => { btn.disabled = false; btn.textContent = 'Save changes'; if (!res || !res.success) { showToast((res && res.message) || 'Could not save attendee.'); return; } closeAttendeeEditor(); showToast('Attendee updated.'); loadAdminAttendees(); }).withFailureHandler(err => { btn.disabled = false; btn.textContent = 'Save changes'; showToast('Error: ' + err.message); }).updateAttendee(data, getAdminSessionToken());
   }
   function removeAttendee(rowIndex) {
     const a = adminAttendees.find(item => Number(item.rowIndex) === rowIndex); if (!a || !confirm('Remove ' + a.name + ' from the Responses sheet? This cannot be undone.')) return;
-    google.script.run.withSuccessHandler(res => { if (!res || !res.success) { showToast((res && res.message) || 'Could not remove attendee.'); return; } showToast('Attendee removed.'); loadAdminAttendees(); }).withFailureHandler(err => showToast('Error: ' + err.message)).deleteAttendee(rowIndex);
+    google.script.run.withSuccessHandler(res => { if (!res || !res.success) { showToast((res && res.message) || 'Could not remove attendee.'); return; } showToast('Attendee removed.'); loadAdminAttendees(); }).withFailureHandler(err => showToast('Error: ' + err.message)).deleteAttendee(rowIndex, getAdminSessionToken());
   }
 
   /* ============================================================
      AUTH
      ============================================================ */
   function isAdminAuthed() {
-    try { return sessionStorage.getItem('adminAuthed') === 'true'; }
+    return !!getAdminSessionToken();
+  }
+  function getAdminSessionToken() {
+    try { return sessionStorage.getItem('adminSessionToken') || ''; }
     catch (e) { return false; }
   }
   function setAdminAuthed(v) {
     try {
-      if (v) sessionStorage.setItem('adminAuthed', 'true');
-      else sessionStorage.removeItem('adminAuthed');
+      if (v) sessionStorage.setItem('adminSessionToken', v);
+      else sessionStorage.removeItem('adminSessionToken');
     } catch (e) {}
   }
   function showAdminApp() {
     $('loginGate').classList.add('hidden');
     $('adminApp').classList.add('active');
-    // Preload the attendee data so the Attendees view is ready immediately.
-    if (typeof loadAdminAttendees === 'function') loadAdminAttendees();
+    setAdminSection('attendees');
   }
   function showLoginGate() {
     $('loginGate').classList.remove('hidden');
@@ -912,14 +953,15 @@
       .withSuccessHandler(function(res) {
         if (settled) return;
         finish();
-        if (res && res.success) {
-          setAdminAuthed(true);
+        if (res && res.success && res.token) {
+          setAdminAuthed(res.token);
           $('adminPassword').value = '';
           showAdminApp();
           showToast('Welcome, admin.');
-          setupCameraUI();
         } else {
-          showLoginError((res && res.message) || 'Login failed.');
+          showLoginError((res && res.message) || (res && res.success
+            ? 'The admin backend must be redeployed before sign-in can continue.'
+            : 'Login failed.'));
         }
       })
       .withFailureHandler(function(err) {
@@ -955,12 +997,18 @@
   function setupCameraUI() {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
+    if (typeof window.Html5Qrcode === 'undefined') {
+      $('cameraPanel').classList.add('hidden');
+      $('reader').classList.add('hidden');
+      $('modeCamera').classList.add('disabled');
+      $('modeCamera').setAttribute('title', 'Camera scanner unavailable');
+      return;
+    }
+
     if (isMobile) {
-      // Mobile: use popup camera
       $('cameraPanel').classList.remove('hidden');
       $('reader').classList.add('hidden');
     } else {
-      // Desktop: use inline camera
       $('cameraPanel').classList.add('hidden');
       $('reader').classList.remove('hidden');
       startInlineScanner();
@@ -996,7 +1044,12 @@
      ============================================================ */
   function startInlineScanner() {
     if (isScanning) return;
-    if (!html5QrCode) html5QrCode = new Html5Qrcode('reader');
+    if (typeof window.Html5Qrcode === 'undefined') {
+      console.warn('Html5Qrcode library is not available on this page.');
+      showToast('Camera scanner is unavailable. Please use manual mode.');
+      return;
+    }
+    if (!html5QrCode) html5QrCode = new window.Html5Qrcode('reader');
 
     const config = {
       fps: 10,
@@ -1227,7 +1280,7 @@
         showToast('Error: ' + err.message);
         showResult('invalid', null, 'Server error.');
       })
-      .verifyTicket(code);
+      .verifyTicket(code, getAdminSessionToken());
   }
 
   /* ============================================================
@@ -1307,7 +1360,7 @@
         btn.textContent = 'Confirm Check In';
         showToast('Error: ' + err.message);
       })
-      .checkInTicket(pendingCheckInCode);
+      .checkInTicket(pendingCheckInCode, getAdminSessionToken());
   });
 
   $('scanAgainBtn').addEventListener('click', function() {
