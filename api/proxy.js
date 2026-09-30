@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 export const config = {
   api: {
     bodyParser: {
@@ -7,95 +9,226 @@ export const config = {
 };
 
 const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL;
-// Leave a small response-time margin below Vercel's 60-second function limit,
-// while allowing Google Drive media uploads more time to finish.
 const UPSTREAM_TIMEOUT_MS = 59000;
+const ALLOWED_ORIGINS = new Set(
+  String(process.env.ALLOWED_ORIGINS || '')
+    .split(',')
+    .map(origin => origin.trim().replace(/\/$/, ''))
+    .filter(Boolean)
+);
+
+function getRequestId(req) {
+  const incoming = req.headers['x-request-id'];
+
+  if (typeof incoming === 'string' && /^[a-zA-Z0-9_-]{8,80}$/.test(incoming)) {
+    return incoming;
+  }
+
+  return 'req_' + randomUUID();
+}
+
+function applyCors(req, res, requestId) {
+  const origin = req.headers.origin;
+  const normalizedOrigin = typeof origin === 'string'
+    ? origin.replace(/\/$/, '')
+    : '';
+
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('X-Request-ID', requestId);
+
+  // Same-origin requests do not require CORS headers. For cross-origin
+  // requests, require an explicit origin in ALLOWED_ORIGINS.
+  if (normalizedOrigin && ALLOWED_ORIGINS.has(normalizedOrigin)) {
+    res.setHeader('Access-Control-Allow-Origin', normalizedOrigin);
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Accept, Authorization, X-Request-ID'
+    );
+    res.setHeader('Access-Control-Expose-Headers', 'X-Request-ID');
+    res.setHeader('Access-Control-Max-Age', '600');
+  }
+
+  return !normalizedOrigin || ALLOWED_ORIGINS.has(normalizedOrigin);
+}
+
+function jsonError(res, status, code, message, requestId) {
+  return res.status(status).json({
+    success: false,
+    error: {
+      code,
+      message,
+      requestId
+    },
+    requestId
+  });
+}
+
+function addRequestIdToBody(body, requestId) {
+  if (body && typeof body === 'object' && !Buffer.isBuffer(body)) {
+    return JSON.stringify({ ...body, requestId });
+  }
+
+  if (typeof body === 'string') {
+    try {
+      const parsed = JSON.parse(body);
+      if (parsed && typeof parsed === 'object') {
+        return JSON.stringify({ ...parsed, requestId });
+      }
+    } catch (e) {
+      // Keep non-JSON bodies unchanged; the request ID is still sent in a header.
+    }
+
+    return body;
+  }
+
+  return JSON.stringify({ requestId });
+}
+
+function logEvent(event, fields) {
+  const entry = {
+    event,
+    timestamp: new Date().toISOString(),
+    ...fields
+  };
+
+  console.info(JSON.stringify(entry));
+}
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization');
+  const requestId = getRequestId(req);
+  const startedAt = Date.now();
+  const originAllowed = applyCors(req, res, requestId);
+
+  if (!originAllowed) {
+    logEvent('cors_rejected', {
+      requestId,
+      origin: req.headers.origin || '',
+      method: req.method
+    });
+    return jsonError(
+      res,
+      403,
+      'CORS_ORIGIN_NOT_ALLOWED',
+      'This origin is not allowed to call the API.',
+      requestId
+    );
+  }
 
   if (req.method === 'OPTIONS') {
-    return res.status(204).end();
+    if (req.headers.origin) {
+      return res.status(204).end();
+    }
+    return jsonError(res, 400, 'INVALID_PREFLIGHT', 'Invalid CORS preflight request.', requestId);
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, message: 'Method Not Allowed' });
+    return jsonError(res, 405, 'METHOD_NOT_ALLOWED', 'Method Not Allowed.', requestId);
   }
 
   if (!APPS_SCRIPT_URL) {
-    return res.status(500).json({
-      success: false,
-      message: 'APPS_SCRIPT_URL is not configured in Vercel. Set it to the current deployed Apps Script Web App URL ending in /exec.'
+    logEvent('configuration_error', {
+      requestId,
+      code: 'APPS_SCRIPT_URL_MISSING'
     });
+    return jsonError(
+      res,
+      500,
+      'APPS_SCRIPT_URL_MISSING',
+      'The Apps Script backend is not configured.',
+      requestId
+    );
   }
+
   if (!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec(?:\?.*)?$/.test(APPS_SCRIPT_URL)) {
-    return res.status(500).json({
-      success: false,
-      message: 'APPS_SCRIPT_URL must be the current deployed https://script.google.com/macros/s/.../exec URL.'
+    logEvent('configuration_error', {
+      requestId,
+      code: 'APPS_SCRIPT_URL_INVALID'
     });
+    return jsonError(
+      res,
+      500,
+      'APPS_SCRIPT_URL_INVALID',
+      'The Apps Script backend URL is invalid.',
+      requestId
+    );
   }
+
+  const outgoingBody = addRequestIdToBody(req.body, requestId);
+  const bodyBytes = Buffer.byteLength(outgoingBody, 'utf8');
+
+  logEvent('apps_script_request_started', {
+    requestId,
+    method: req.method,
+    bodyBytes
+  });
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
 
   try {
-    const outgoingBody =
-      typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
-
-    try {
-      const upstream = await fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        headers: {
-          Accept: req.headers.accept || 'application/json, text/plain, */*',
-          'Content-Type': 'text/plain;charset=utf-8'
-        },
-        body: outgoingBody,
-        redirect: 'follow',
-        signal: controller.signal
-      });
-
-      const text = await upstream.text();
-      const responsePreview = text.slice(0, 500).replace(/\s+/g, ' ').trim();
-      const contentType = upstream.headers.get('content-type') || '';
-      const looksLikeHtml = /text\/html|application\/xhtml\+xml|<!doctype html|<html/i.test(`${contentType} ${responsePreview}`) || responsePreview.startsWith('<');
-
-      if ((upstream.status === 404 || upstream.status >= 400) && looksLikeHtml) {
-        return res.status(502).json({
-          success: false,
-          message: `Apps Script returned HTTP ${upstream.status} HTML instead of JSON. Confirm APPS_SCRIPT_URL is the current /exec deployment and the Web App access is set to Anyone.`
-        });
-      }
-
-      if (looksLikeHtml) {
-        return res.status(502).json({
-          success: false,
-          message: 'Apps Script returned an HTML login or error page instead of JSON. Confirm the Web App is deployed with access set to Anyone and that APPS_SCRIPT_URL points to the current /exec deployment.'
-        });
-      }
-
-      if (!upstream.ok && !looksLikeHtml) {
-        return res.status(upstream.status).send(text);
-      }
-
-      res.setHeader('Content-Type', upstream.headers.get('content-type') || 'application/json;charset=utf-8');
-      return res.status(upstream.status).send(text);
-    } finally {
-      clearTimeout(timeoutId);
-    }
-  } catch (err) {
-    if (err && err.name === 'AbortError') {
-      return res.status(504).json({
-        success: false,
-        message: 'The Apps Script server is taking longer than expected to respond. Please wait a moment and try again.'
-      });
-    }
-
-    console.error('Proxy error:', err);
-    return res.status(502).json({
-      success: false,
-      message: 'Proxy error: ' + (err && err.message ? err.message : String(err))
+    const upstream = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: {
+        Accept: req.headers.accept || 'application/json, text/plain, */*',
+        'Content-Type': 'text/plain;charset=utf-8',
+        'X-Request-ID': requestId
+      },
+      body: outgoingBody,
+      redirect: 'follow',
+      signal: controller.signal
     });
+
+    const text = await upstream.text();
+    const responsePreview = text.slice(0, 500).replace(/\s+/g, ' ').trim();
+    const contentType = upstream.headers.get('content-type') || '';
+    const looksLikeHtml =
+      /text\/html|application\/xhtml\+xml|<!doctype html|<html/i.test(
+        `${contentType} ${responsePreview}`
+      ) || responsePreview.startsWith('<');
+
+    logEvent('apps_script_response_received', {
+      requestId,
+      status: upstream.status,
+      durationMs: Date.now() - startedAt,
+      responseBytes: Buffer.byteLength(text, 'utf8'),
+      looksLikeHtml
+    });
+
+    if (looksLikeHtml) {
+      return jsonError(
+        res,
+        502,
+        'APPS_SCRIPT_NON_JSON_RESPONSE',
+        'The Apps Script backend returned an unexpected HTML response. Confirm the deployed /exec URL and Web App access setting.',
+        requestId
+      );
+    }
+
+    res.setHeader(
+      'Content-Type',
+      upstream.headers.get('content-type') || 'application/json;charset=utf-8'
+    );
+
+    return res.status(upstream.status).send(text);
+  } catch (error) {
+    const timedOut = error && error.name === 'AbortError';
+    const status = timedOut ? 504 : 502;
+    const code = timedOut ? 'APPS_SCRIPT_TIMEOUT' : 'APPS_SCRIPT_CONNECTION_FAILED';
+    const message = timedOut
+      ? 'The Apps Script backend took too long to respond.'
+      : 'Could not reach the Apps Script backend.';
+
+    logEvent('apps_script_request_failed', {
+      requestId,
+      code,
+      durationMs: Date.now() - startedAt,
+      errorName: error && error.name ? error.name : 'UnknownError',
+      errorMessage: error && error.message ? error.message : String(error)
+    });
+
+    return jsonError(res, status, code, message, requestId);
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
