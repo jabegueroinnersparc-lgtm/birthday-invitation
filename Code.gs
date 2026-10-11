@@ -169,6 +169,7 @@ function handleApiRequest(e) {
     }
 
     if (action === 'getAllAttendees') return jsonResponse(getAllAttendees(params.force === true || params.force === 'true'));
+    if (action === 'getWallOfLove') return jsonResponse(getWallOfLove());
     if (action === 'getAdminAttendees') return jsonResponse(getAdminAttendees(params.token || ''));
     if (action === 'updateAttendee') {
       let attendeeData = {};
@@ -706,6 +707,34 @@ function getAllAttendees(forceRefresh) {
       success: false,
       attendees: [],
       message: 'Could not load attendee responses. Please try again.'
+    };
+  }
+}
+
+function getWallOfLove() {
+  try {
+    const sh = getSheet(SHEET_RESPONSES, false);
+    if (!sh) {
+      return { success: false, messages: [], message: 'The Responses sheet was not found.' };
+    }
+
+    const lastRow = sh.getLastRow();
+    if (lastRow < 2) return { success: true, messages: [] };
+
+    const firstRow = Math.max(2, lastRow - 99);
+    const greetings = sh.getRange(firstRow, COL.GREETINGS + 1, lastRow - firstRow + 1, 1).getValues();
+    const messages = greetings
+      .map(row => String(row[0] || '').trim())
+      .filter(Boolean)
+      .reverse();
+
+    return { success: true, messages: messages };
+  } catch (e) {
+    Logger.log('getWallOfLove error: ' + e.toString());
+    return {
+      success: false,
+      messages: [],
+      message: 'Could not load greetings. Please try again.'
     };
   }
 }

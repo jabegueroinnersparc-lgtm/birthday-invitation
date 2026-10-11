@@ -67,3 +67,25 @@ test('a missing Responses sheet is reported as an error, not an empty attendee l
   assert.equal(result.success, false);
   assert.match(result.message, /Responses sheet was not found/i);
 });
+
+test('wall of love returns only non-empty greetings without guest identity data', () => {
+  const columns = {
+    5: [['Happy birthday!'], ['  '], ['Wishing you all the best.']]
+  };
+  const sheet = {
+    getLastRow: () => 4,
+    getRange: (row, column, count) => ({
+      getValues: () => columns[column].slice(row - 2, row - 2 + count)
+    })
+  };
+  const backend = createBackend(sheet);
+
+  const result = backend.getWallOfLove();
+
+  assert.equal(result.success, true);
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), {
+    success: true,
+    messages: ['Wishing you all the best.', 'Happy birthday!']
+  });
+  assert.equal(Object.hasOwn(result.messages[0], 'name'), false);
+});
