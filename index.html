@@ -329,26 +329,47 @@
     .wall-section { max-width: 980px; margin: 28px auto 0; padding: 26px 30px; background: var(--white); border: 1px solid var(--pearl); border-radius: 22px; box-shadow: var(--shadow-xl); }
     .wall-heading { margin-bottom: 6px; font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--black); letter-spacing: -0.01em; }
     .wall-intro { margin-bottom: 18px; font-size: 13px; color: var(--steel); line-height: 1.5; }
-    .wall-scroll { max-height: 320px; overflow-y: auto; padding: 2px 6px 2px 2px; display: flex; flex-direction: column; gap: 10px; scrollbar-width: thin; }
-    .wall-card { background: var(--fog); border: 1px solid var(--pearl); border-radius: 14px; padding: 14px 16px; text-align: left; animation: wallMessageIn 0.45s var(--ease-out) both; }
-    @keyframes wallMessageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .wall-scroll { min-height: 92px; display: flex; align-items: center; padding: 2px; }
+    .wall-card { width: 100%; background: var(--fog); border: 1px solid var(--pearl); border-radius: 14px; padding: 14px 16px; text-align: left; }
+    .wall-message { opacity: 1; transform: translateY(0); transition: opacity 0.45s ease, transform 0.45s ease; }
+    .wall-message.is-fading { opacity: 0; transform: translateY(6px); }
     .wall-card-label { margin-bottom: 5px; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--steel); }
-    .wall-card-msg { font-size: 13px; color: var(--ink); line-height: 1.6; font-style: italic; overflow-wrap: anywhere; }
+    .wall-card-msg { font-size: 13px; color: var(--ink); line-height: 1.6; font-style: italic; overflow-wrap: anywhere; white-space: pre-wrap; }
     .wall-card-msg::before { content: '"'; }
     .wall-card-msg::after { content: '"'; }
     .wall-empty { text-align: center; padding: 24px 12px; color: var(--steel); font-size: 13px; }
-    .wall-mobile { display: block; }
+    .wall-error { text-align: center; padding: 14px 10px; color: var(--steel); font-size: 12px; line-height: 1.5; }
+    .wall-retry { display: inline-flex; justify-content: center; align-items: center; margin-top: 10px; padding: 8px 14px; border: 1px solid var(--mist); border-radius: 999px; background: transparent; color: inherit; font: inherit; font-weight: 600; cursor: pointer; transition: background 0.2s ease, border-color 0.2s ease; }
+    .wall-retry:hover { background: rgba(255,255,255,0.08); border-color: var(--silver); }
+    .wall-mobile-toast { display: none; }
     .hero-wall { display: none; }
-    .login-hero .wall-section { flex: 1; min-height: 0; display: flex; flex-direction: column; margin: 20px 0 12px; padding: 18px; background: rgba(255,255,255,0.035); border-color: rgba(255,255,255,0.12); border-radius: 16px; box-shadow: none; position: relative; z-index: 2; overflow: hidden; }
+    .login-hero .wall-section { flex: 0 0 auto; min-height: 220px; display: flex; flex-direction: column; margin: 20px 0 12px; padding: 18px; background: rgba(255,255,255,0.035); border-color: rgba(255,255,255,0.12); border-radius: 16px; box-shadow: none; position: relative; z-index: 2; }
     .login-hero .wall-heading { color: var(--white); font-size: 20px; }
     .login-hero .wall-intro { margin-bottom: 12px; color: var(--silver); font-size: 12px; }
-    .login-hero .wall-scroll { min-height: 0; max-height: none; flex: 1; }
+    .login-hero .wall-scroll { min-height: 92px; }
     .login-hero .wall-card { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
     .login-hero .wall-card-label { color: var(--silver); }
     .login-hero .wall-card-msg, .login-hero .wall-empty { color: var(--silver); }
-    @media (min-width: 900px) { .wall-mobile { display: none; } .hero-wall { display: flex; } }
-    @media (max-width: 640px) { .wall-section { margin-top: 20px; padding: 22px 18px; border-radius: 18px; } .wall-heading { font-size: 20px; } }
-    @media (prefers-reduced-motion: reduce) { .wall-card { animation: none; } }
+    @media (min-width: 900px) { .hero-wall { display: flex; } }
+    @media (min-width: 900px) and (max-width: 1100px) {
+      .login-hero { padding: 40px 32px; }
+      .login-hero .wall-section { min-height: 210px; padding: 16px; }
+    }
+    @media (max-width: 899px) {
+      .app { flex-direction: column; }
+      .wall-mobile-toast { display: block; width: min(440px, 100%); max-height: 0; margin: 0 auto; padding: 0 14px; border: 0 solid var(--pearl); border-radius: 18px; background: rgba(255,255,255,0.97); box-shadow: none; opacity: 0; visibility: hidden; transform: translateY(10px); overflow: hidden; transition: max-height 0.4s ease, margin 0.4s ease, padding 0.4s ease, opacity 0.35s ease, transform 0.35s ease, visibility 0.35s, border-width 0.35s ease; }
+      .wall-mobile-toast.visible { max-height: 60vh; margin: 16px auto 0; padding: 14px; border-width: 1px; opacity: 1; visibility: visible; transform: translateY(0); overflow-y: auto; box-shadow: 0 12px 32px rgba(0,0,0,0.12); }
+      .wall-mobile-toast .wall-heading { font-size: 17px; margin-bottom: 8px; }
+      .wall-mobile-toast .wall-scroll { min-height: 0; padding: 0; }
+      .wall-mobile-toast .wall-card { padding: 12px 14px; }
+      .wall-mobile-toast .wall-empty, .wall-mobile-toast .wall-error { padding: 8px 4px; }
+    }
+    @media (max-width: 640px) {
+      .wall-mobile-toast { border-radius: 16px; }
+      .wall-mobile-toast.visible { padding: 12px; }
+      .wall-mobile-toast .wall-card-msg { font-size: 13px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .wall-message, .wall-mobile-toast { transition: none; } }
 
     /* ===== STEP JOURNEY ===== */
     .step-journey { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 22px; padding: 14px 18px; background: var(--fog); border: 1px solid var(--pearl); border-radius: 14px; }
@@ -1321,14 +1342,13 @@
 
         </div>
       </div>
-      <section class="wall-section wall-mobile" aria-labelledby="wallHeading">
-        <h2 class="wall-heading" id="wallHeading">💌 Wall of Love</h2>
-        <p class="wall-intro">Birthday wishes shared by guests, shown anonymously.</p>
-        <div class="wall-scroll" role="list" aria-live="polite">
-          <div class="wall-empty">Loading messages…</div>
-        </div>
-      </section>
     </section>
+    <aside class="wall-mobile-toast" id="wallMobileToast" aria-label="Anonymous birthday wishes" aria-live="polite">
+      <h2 class="wall-heading">💌 Wall of Love</h2>
+      <div class="wall-scroll">
+        <div class="wall-empty">Loading messages…</div>
+      </div>
+    </aside>
 
     <!-- VIEW 2: WELCOME -->
     <section class="view" id="welcomeView">
@@ -2280,10 +2300,50 @@ if (copyInviteBtnWelcome) copyInviteBtnWelcome.addEventListener('click', functio
 })();
 
 let wallLoaded = false;
+let wallMessages = [];
+let wallMessageIndex = 0;
+let wallCycleTimer = null;
+let wallFadeTimer = null;
+const WALL_MESSAGE_INTERVAL_MS = 5000;
+const WALL_FADE_MS = 450;
+
+function setWallCardContent(card, message) {
+  card.innerHTML = `<div class="wall-card-label">Anonymous guest</div><div class="wall-card-msg">${escapeHtml(message)}</div>`;
+  card.classList.remove('is-fading');
+}
+
+function displayWallMessage(index) {
+  const cards = document.querySelectorAll('.wall-message');
+  wallMessageIndex = index % wallMessages.length;
+  cards.forEach(card => setWallCardContent(card, wallMessages[wallMessageIndex]));
+  const mobileToast = $('wallMobileToast');
+  if (mobileToast) mobileToast.classList.add('visible');
+  scheduleNextWallMessage();
+}
+
+function scheduleNextWallMessage() {
+  clearTimeout(wallCycleTimer);
+  if (wallMessages.length < 2) return;
+
+  wallCycleTimer = setTimeout(function() {
+    const cards = document.querySelectorAll('.wall-message');
+    cards.forEach(card => card.classList.add('is-fading'));
+    wallFadeTimer = setTimeout(function() {
+      displayWallMessage(wallMessageIndex + 1);
+    }, WALL_FADE_MS);
+  }, WALL_MESSAGE_INTERVAL_MS);
+}
+
 async function loadWallOfLove(force) {
   if (wallLoaded && !force) return;
   const scrolls = document.querySelectorAll('.wall-scroll');
   if (!scrolls.length) return;
+  clearTimeout(wallCycleTimer);
+  clearTimeout(wallFadeTimer);
+  wallMessages = [];
+  wallMessageIndex = 0;
+  const mobileToast = $('wallMobileToast');
+  if (mobileToast) mobileToast.classList.remove('visible');
 
   try {
     const res = await api('getWallOfLove');
@@ -2293,28 +2353,33 @@ async function loadWallOfLove(force) {
     const messages = res.messages.filter(message => typeof message === 'string' && message.trim());
 
     if (messages.length === 0) {
-      scrolls.forEach(scroll => {
+      document.querySelectorAll('.hero-wall .wall-scroll, #wallMobileToast .wall-scroll').forEach(scroll => {
         scroll.innerHTML = '<div class="wall-empty">No messages yet — be the first to share some love! 💛</div>';
       });
       wallLoaded = true;
       return;
     }
 
-    const cards = messages.map((message, i) => {
-      return `<div class="wall-card" role="listitem" style="animation-delay:${Math.min(i * 45, 450)}ms">
-        <div class="wall-card-label">Anonymous guest</div>
-        <div class="wall-card-msg">${escapeHtml(message.trim())}</div>
-      </div>`;
-    }).join('');
-    scrolls.forEach(scroll => { scroll.innerHTML = cards; });
+    wallMessages = messages.map(message => message.trim());
+    document.querySelectorAll('.hero-wall .wall-scroll, #wallMobileToast .wall-scroll').forEach(scroll => {
+      scroll.innerHTML = '<article class="wall-card wall-message" role="listitem"></article>';
+    });
     wallLoaded = true;
+    displayWallMessage(0);
   } catch (e) {
     console.error('loadWallOfLove error:', e);
+    const errorMessage = e && e.message ? e.message : '';
+    const deploymentIsOutdated = /unknown action:\s*getwalloflove/i.test(errorMessage);
+    const helpText = deploymentIsOutdated
+      ? 'The Wall of Love needs the latest Apps Script deployment. Update it from Code.gs, then retry.'
+      : 'Could not load messages right now. Please try again.';
+
     scrolls.forEach(scroll => {
-      scroll.innerHTML = '<div class="wall-empty">Could not load messages. <button type="button" class="retry-wall-btn">Try again</button></div>';
-      const retryButton = scroll.querySelector('.retry-wall-btn');
+      scroll.innerHTML = `<div class="wall-error">${escapeHtml(helpText)}<br><button type="button" class="wall-retry">Try again</button></div>`;
+      const retryButton = scroll.querySelector('.wall-retry');
       if (retryButton) retryButton.addEventListener('click', function() { loadWallOfLove(true); });
     });
+    if (mobileToast) mobileToast.classList.add('visible');
   }
 }
 
