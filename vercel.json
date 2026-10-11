@@ -3,6 +3,10 @@
     "api/proxy.js": {
       "memory": 1024,
       "maxDuration": 60
+    },
+    "api/admin.js": {
+      "memory": 1024,
+      "maxDuration": 60
     }
   },
   "routes": [

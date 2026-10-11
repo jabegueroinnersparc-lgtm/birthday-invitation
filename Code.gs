@@ -168,7 +168,7 @@ function handleApiRequest(e) {
       ));
     }
 
-    if (action === 'getAllAttendees') return jsonResponse(getAllAttendees());
+    if (action === 'getAllAttendees') return jsonResponse(getAllAttendees(params.force === true || params.force === 'true'));
     if (action === 'getAdminAttendees') return jsonResponse(getAdminAttendees(params.token || ''));
     if (action === 'updateAttendee') {
       let attendeeData = {};
@@ -607,29 +607,31 @@ function checkExistingRSVP(nameOrEmail, mobile) {
 /* ============================================================
    ⭐ GET ALL ATTENDEES — fast, reliable, never fails silently
    ============================================================ */
-function getAllAttendees() {
+function getAllAttendees(forceRefresh) {
   try {
     const cache = CacheService.getScriptCache();
 
     // 1. Try cache first — return immediately if hit
-    try {
-      const cached = cache.get(ATTENDEES_CACHE_KEY);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed && parsed.success) {
-          Logger.log('getAllAttendees: cache hit');
-          return parsed;
+    if (!forceRefresh) {
+      try {
+        const cached = cache.get(ATTENDEES_CACHE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.success) {
+            Logger.log('getAllAttendees: cache hit');
+            return parsed;
+          }
         }
+      } catch (cacheErr) {
+        Logger.log('getAllAttendees: cache read failed — ' + cacheErr.toString());
       }
-    } catch (cacheErr) {
-      Logger.log('getAllAttendees: cache read failed — ' + cacheErr.toString());
     }
 
     // 2. Get the sheet
     const sh = getSheet(SHEET_RESPONSES, false);
     if (!sh) {
       Logger.log('getAllAttendees: Responses sheet not found');
-      return { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
+      return { success: false, attendees: [], message: 'The Responses sheet was not found.' };
     }
 
     const lastRow = sh.getLastRow();
@@ -700,14 +702,10 @@ function getAllAttendees() {
 
   } catch (e) {
     Logger.log('getAllAttendees error: ' + e.toString());
-    // ⭐ Return a success:true response so the frontend doesn't hang forever.
-    //    The frontend will show an empty list instead of an infinite spinner.
     return {
-      success: true,
+      success: false,
       attendees: [],
-      totalGuests: 0,
-      totalParties: 0,
-      warning: 'Could not load attendees: ' + e.toString()
+      message: 'Could not load attendee responses. Please try again.'
     };
   }
 }
@@ -917,9 +915,11 @@ function submitForm(formData) {
 
       const duplicate = findResponseByName(submittedName);
       if (duplicate) {
+        const existingRsvp = checkExistingRSVP(submittedName, mobile);
         return {
           success: false,
           duplicate: true,
+          ticket: existingRsvp && existingRsvp.success ? existingRsvp.ticket : null,
           message: 'This name has already submitted an RSVP. Each player may submit only once.'
         };
       }

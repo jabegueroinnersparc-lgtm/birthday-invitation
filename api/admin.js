@@ -1,7 +1,7 @@
 // Vercel Serverless Function
 // Set APPS_SCRIPT_URL in Vercel Project Settings to the deployed Apps Script /exec URL.
 
-const UPSTREAM_TIMEOUT_MS = 25000;
+const UPSTREAM_TIMEOUT_MS = 55000;
 
 function normalizeBody(body) {
   if (typeof body === 'string') return body;

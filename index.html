@@ -1056,6 +1056,15 @@
       overflow-y: auto;
     }
     @media (max-width: 640px) { .attendees-list { padding: 20px 18px 26px; } }
+    .attendees-tools { display: flex; justify-content: flex-end; padding: 16px 32px 0; }
+    .attendees-refresh {
+      min-height: 44px; padding: 10px 14px; border: 1px solid var(--pearl);
+      border-radius: 9px; background: var(--white); color: var(--ink);
+      font: 600 12px/1.2 'Inter', sans-serif; cursor: pointer;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    }
+    .attendees-refresh:disabled { opacity: 0.55; cursor: wait; }
+    @media (max-width: 640px) { .attendees-tools { padding: 14px 18px 0; } }
 
     .attendee-row {
       display: flex;
@@ -1331,7 +1340,9 @@
     .form-back-btn:active { transform: scale(0.97); }
     @media (max-width: 640px) {
       .form-back-btn { padding: 8px 12px; font-size: 11px; }
-      .form-head { flex-wrap: nowrap; align-items: center; }
+      .form-head { flex-wrap: wrap; align-items: flex-start; }
+      .form-head-left { min-width: 0; }
+      .form-back-btn { margin-left: auto; }
     }
 
     .progress-wrap {
@@ -2764,6 +2775,7 @@
               <span class="btn-arrow">→</span>
             </button>
             <div class="message" id="pwMessage"></div>
+            <button type="button" class="btn btn-outline" id="seeAttendeesLoginBtn" style="margin-top:12px;">See Who's Coming</button>
             <button type="button" class="btn btn-outline" id="forgotAccountBtn" style="margin-top:12px;"
                     aria-expanded="false" aria-controls="recoveryBox">Forgot account?</button>
             <div id="recoveryBox" class="recovery-panel" role="region" aria-labelledby="recoveryTitle" aria-hidden="true">
@@ -2906,10 +2918,13 @@
           </div>
         </div>
 
+        <div class="attendees-tools">
+          <button type="button" class="attendees-refresh" id="refreshAttendeesBtn">Refresh list</button>
+        </div>
         <div class="attendees-list" id="attendeesList">
           <div class="attendees-loading">
             <div class="loader-spinner"></div>
-            <div>Loading attendees…</div>
+            <div id="attendeesLoadingMessage">Loading attendees…</div>
           </div>
         </div>
       </div>
@@ -3424,7 +3439,7 @@
           verifyTicket: [params.code || ''],
           checkInTicket: [params.code || ''],
           checkExistingRSVP: [params.name || params.email || '', params.mobile || ''],
-          getAllAttendees: [],
+          getAllAttendees: [!!params.force],
           submitPayment: [JSON.parse(params.data || '{}')]
         }[action];
 
@@ -3452,7 +3467,7 @@
           else if (action === 'verifyTicket') runner.verifyTicket(serverArgs[0]);
           else if (action === 'checkInTicket') runner.checkInTicket(serverArgs[0]);
           else if (action === 'checkExistingRSVP') runner.checkExistingRSVP(serverArgs[0], serverArgs[1]);
-          else if (action === 'getAllAttendees') runner.getAllAttendees();
+          else if (action === 'getAllAttendees') runner.getAllAttendees(serverArgs[0]);
           else if (action === 'submitPayment') runner.submitPayment(serverArgs[0]);
           else reject(new Error('Unknown action: ' + action));
         });
@@ -3484,16 +3499,10 @@
           if (res.status === 413) throw new Error('Your photo or video is too large. Please record a shorter video.');
 
           if (looksLikeHtml) {
-            if (action === 'getAllAttendees') {
-              return { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
-            }
             throw new Error('Apps Script returned an HTML redirect or login page. Check that the deployed URL ends with /exec and the Web App is published with "Anyone" access.');
           }
 
           if (!res.ok) {
-            if (action === 'getAllAttendees') {
-              return { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
-            }
             if (res.status === 404) throw new Error('Apps Script route not found. Check that the deployed URL ends with /exec and points to the live Web App.');
             if (res.status === 502 || res.status === 504) throw new Error('The server took too long to respond. Please try again in a moment.');
             throw new Error('HTTP ' + res.status + ': ' + (responsePreview || 'Unknown error'));
@@ -3501,23 +3510,14 @@
 
           try {
             const parsed = JSON.parse(text);
-            if (action === 'getAllAttendees' && (!parsed || typeof parsed !== 'object')) {
-              return { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
-            }
+            if (!parsed || typeof parsed !== 'object') throw new Error('Invalid response from server.');
             return parsed;
           }
           catch (e) {
-            if (action === 'getAllAttendees') {
-              return { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
-            }
             throw new Error('Invalid response from server. The Apps Script endpoint may be unreachable or not returning JSON.');
           }
         } catch (err) {
           clearTimeout(timeoutId);
-
-          if (action === 'getAllAttendees') {
-            return { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
-          }
 
           if (err && err.name === 'AbortError' && attempt < attempts) {
             continue;
@@ -3540,6 +3540,7 @@
     let cameraWindow = null;
     let videoWindow = null;
     let currentUser = null;
+    let attendeesReturnView = 'welcomeView';
     let guests = 1;
     let currentTicket = null;
     let selectedAttendance = 'going';
@@ -3979,16 +3980,22 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    $('seeAttendeesBtn').addEventListener('click', function() {
+    function openAttendees(returnView) {
+      attendeesReturnView = returnView === 'loginView' ? 'loginView' : 'welcomeView';
+      $('loginView').classList.remove('active');
       $('welcomeView').classList.remove('active');
       $('attendeesView').classList.add('active');
-      loadAttendees();
+      loadAttendees(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
+    }
+
+    $('seeAttendeesBtn').addEventListener('click', function() { openAttendees('welcomeView'); });
+    $('seeAttendeesLoginBtn').addEventListener('click', function() { openAttendees('loginView'); });
+    $('refreshAttendeesBtn').addEventListener('click', function() { loadAttendees(true); });
 
     $('backFromAttendeesBtn').addEventListener('click', function() {
       $('attendeesView').classList.remove('active');
-      $('welcomeView').classList.add('active');
+      $(attendeesReturnView).classList.add('active');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
@@ -4479,13 +4486,9 @@
       const isUnavailable = safeRes.unavailable === true;
 
       if (!safeRes.success) {
-        if (!hasAttendees) {
-          $('statParties').textContent = 0;
-          $('statGuests').textContent = 0;
-          list.innerHTML = `<div class="attendees-empty"><span class="ic">🎈</span><h3>No responses yet</h3><p>Be the first to confirm your attendance!</p><button type="button" onclick="document.getElementById('backFromAttendeesBtn').click()">Back</button></div>`;
-          return;
-        }
-        showAttendeesError('Could not load', (safeRes && safeRes.message) || 'The server returned an error.');
+        $('statParties').textContent = 0;
+        $('statGuests').textContent = 0;
+        showAttendeesError('Could not load responses', safeRes.message || 'The server returned an error.');
         return;
       }
       if (isUnavailable && hasAttendees) {
@@ -4505,8 +4508,9 @@
         return;
       }
       list.innerHTML = attendees.map((att, i) => {
-        const initial = att.name.charAt(0).toUpperCase();
-        const guests = att.guests || 1;
+        const name = String((att && att.name) || 'Guest');
+        const initial = name.charAt(0).toUpperCase();
+        const guests = Number(att && att.guests) || 1;
         const attendance = att.attendance || 'going';
         const delay = Math.min(i * 20, 300);
         let statusText = 'Going';
@@ -4514,7 +4518,7 @@
         if (attendance === 'planning') { statusText = 'Planning'; badgeClass = 'badge-planning'; }
         if (attendance === 'not_going') { statusText = 'Can\'t Make It'; badgeClass = 'badge-notgoing'; }
         const guestLabel = attendance === 'not_going' ? '—' : `${guests} ${guests === 1 ? 'guest' : 'guests'}`;
-        return `<div class="attendee-row" style="animation-delay: ${delay}ms"><div class="attendee-avatar">${escapeHtml(initial)}</div><div class="attendee-info"><div class="n">${escapeHtml(att.name)}</div><div class="e ${badgeClass}">${statusText}</div></div><div class="attendee-badge">${guestLabel}</div></div>`;
+        return `<div class="attendee-row" style="animation-delay: ${delay}ms"><div class="attendee-avatar">${escapeHtml(initial)}</div><div class="attendee-info"><div class="n">${escapeHtml(name)}</div><div class="e ${badgeClass}">${statusText}</div></div><div class="attendee-badge">${guestLabel}</div></div>`;
       }).join('');
     }
 
@@ -4522,38 +4526,36 @@
       const list = $('attendeesList');
       const fresh = attendeesCache && Date.now() - attendeesCacheTime < ATTENDEES_CACHE_MS;
       if (!force && fresh) { renderAttendees(attendeesCache); return; }
-      if (!attendeesCache) list.innerHTML = `<div class="attendees-loading"><div class="loader-spinner"></div><div>Loading attendees…</div></div>`;
+      if (!attendeesCache) list.innerHTML = `<div class="attendees-loading"><div class="loader-spinner"></div><div id="attendeesLoadingMessage">Loading attendees…</div></div>`;
       if (attendeesRequest) return attendeesRequest;
 
-      const timeoutId = setTimeout(() => {
-        if (!attendeesCache && list.querySelector('.attendees-loading')) {
-          const emptyFallback = { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
-          attendeesCache = emptyFallback;
-          attendeesCacheTime = Date.now();
-          renderAttendees(emptyFallback);
-        }
+      const refreshButton = $('refreshAttendeesBtn');
+      refreshButton.disabled = true;
+      const slowNoticeTimer = setTimeout(() => {
+        const loadingMessage = $('attendeesLoadingMessage');
+        if (loadingMessage) loadingMessage.textContent = 'Still loading responses. Please keep this page open.';
       }, 12000);
 
-      attendeesRequest = api('getAllAttendees').then(function(res) {
-        clearTimeout(timeoutId);
-        const normalized = (res && typeof res === 'object') ? res : { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
+      attendeesRequest = api('getAllAttendees', { force: !!force }).then(function(res) {
+        clearTimeout(slowNoticeTimer);
+        const normalized = (res && typeof res === 'object') ? res : { success: false, message: 'The server returned an invalid response.' };
         if (normalized && normalized.success) {
           attendeesCache = normalized;
-          attendeesCacheTime = Date.now();
-        } else if (!attendeesCache) {
-          attendeesCache = { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
           attendeesCacheTime = Date.now();
         }
         renderAttendees(normalized);
         return normalized;
       }).catch(function(err) {
-        clearTimeout(timeoutId);
+        clearTimeout(slowNoticeTimer);
         console.error('loadAttendees error:', err);
-        const fallback = { success: true, attendees: [], totalGuests: 0, totalParties: 0 };
-        attendeesCache = attendeesCache || fallback;
-        attendeesCacheTime = Date.now();
-        renderAttendees(attendeesCache);
-      }).finally(function() { attendeesRequest = null; });
+        const failure = { success: false, message: err && err.message ? err.message : 'Could not contact the attendee service.' };
+        renderAttendees(failure);
+        return failure;
+      }).finally(function() {
+        clearTimeout(slowNoticeTimer);
+        refreshButton.disabled = false;
+        attendeesRequest = null;
+      });
       return attendeesRequest;
     }
 
@@ -4580,7 +4582,7 @@
         </div>
       `;
       const btn = $('retryAttendeesBtn');
-      if (btn) btn.addEventListener('click', loadAttendees);
+      if (btn) btn.addEventListener('click', function() { loadAttendees(true); });
     }
 
     function showAttendeesError(title, message) {
@@ -4594,7 +4596,7 @@
         </div>
       `;
       const btn = $('retryAttendeesBtn');
-      if (btn) btn.addEventListener('click', loadAttendees);
+      if (btn) btn.addEventListener('click', function() { loadAttendees(true); });
     }
 
     function escapeHtml(s) {
@@ -5237,7 +5239,7 @@
         const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus') ? 'video/webm;codecs=vp8,opus' : 'video/webm';
         mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType, videoBitsPerSecond: 250000, audioBitsPerSecond: 32000 });
       } catch (e) {
-        try { mediaRecorder = new MediaRecorder(stream); }
+        try { mediaRecorder = new MediaRecorder(stream, { videoBitsPerSecond: 250000, audioBitsPerSecond: 32000 }); }
         catch (e2) { status.classList.add('error'); status.textContent = 'Recording not supported on this browser.'; return; }
       }
       
