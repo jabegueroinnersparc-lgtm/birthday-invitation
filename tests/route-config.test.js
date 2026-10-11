@@ -21,11 +21,10 @@ test('a catch-all API route exists to avoid raw API 404s', () => {
 });
 
 test('admin API has enough execution time for the Apps Script upstream timeout', () => {
-  const config = JSON.parse(fs.readFileSync(path.join(projectRoot, 'vercel.json'), 'utf8'));
   const adminApi = fs.readFileSync(path.join(projectRoot, 'api', 'admin.js'), 'utf8');
 
-  assert.equal(config.functions?.['api/admin.js']?.maxDuration, 60, 'Admin API must allow its 55-second upstream timeout');
-  assert.match(adminApi, /const UPSTREAM_TIMEOUT_MS = 55000;/, 'Admin upstream timeout must stay within the Vercel function budget');
+  assert.match(adminApi, /export const config = \{\s*maxDuration: 60\s*\};/, 'Admin API must allow its upstream timeout');
+  assert.match(adminApi, /const UPSTREAM_TIMEOUT_MS = 59000;/, 'Admin upstream timeout must stay within the Vercel function budget');
 });
 
 test('countdown and event metadata use the same event start instant', () => {
