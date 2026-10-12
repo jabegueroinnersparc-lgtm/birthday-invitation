@@ -1335,9 +1335,14 @@
     .gift-sidebar-trigger:active { cursor: grabbing; }
     .gift-sidebar-trigger.dragging { animation: none; transform: scale(1.08); box-shadow: 0 22px 48px -8px rgba(212, 154, 30, 0.75); cursor: grabbing; transition: none; }
     .gift-sidebar-trigger.snap-back { transition: left 0.35s var(--ease-out), top 0.35s var(--ease-out), transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out); }
+    .gift-sidebar-trigger { width: 54px; height: 54px; justify-content: center; padding: 0; gap: 0; overflow: hidden; transition: width .35s var(--ease-out), padding .35s var(--ease-out), gap .25s ease, transform .3s var(--ease-out), box-shadow .3s var(--ease-out); }
+    .gift-sidebar-trigger > span:not(.gift-trigger-icon) { max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap; transition: max-width .3s ease, opacity .2s ease; }
+    .gift-sidebar-trigger.expanded { width: auto; height: auto; min-height: 50px; padding: 15px 22px; gap: 10px; }
+    .gift-sidebar-trigger.expanded > span:not(.gift-trigger-icon) { max-width: 110px; opacity: 1; }
     @keyframes giftTriggerPulse { 0%, 100% { box-shadow: 0 14px 34px -8px rgba(212, 154, 30, 0.55), 0 0 0 0 rgba(224, 165, 44, 0.45); } 50% { box-shadow: 0 14px 34px -8px rgba(212, 154, 30, 0.55), 0 0 0 12px rgba(224, 165, 44, 0); } }
     @media (max-width: 640px) {
-      .gift-sidebar-trigger { right: 16px; bottom: calc(88px + env(safe-area-inset-bottom)); padding: 13px 18px; font-size: 13px; }
+      .gift-sidebar-trigger { right: 16px; bottom: calc(88px + env(safe-area-inset-bottom)); width: 50px; height: 50px; padding: 0; font-size: 13px; }
+      .gift-sidebar-trigger.expanded { width: auto; height: auto; padding: 13px 18px; }
     }
     @media (prefers-reduced-motion: reduce) { .gift-sidebar-trigger { animation: none; } }
     @media (max-width: 640px) {
@@ -2309,7 +2314,7 @@ body.game-lock { overflow: hidden; }
     </section>
   </div>
 
-  <button type="button" class="gift-sidebar-trigger" id="giftSidebarTrigger" aria-expanded="false" aria-controls="socialSidebar" title="Drag to move · Tap to open">
+  <button type="button" class="gift-sidebar-trigger" id="giftSidebarTrigger" aria-label="Send a gift" aria-expanded="false" aria-controls="socialSidebar" title="Send a gift · Drag to move">
     <span class="gift-trigger-icon">🎁</span>
     <span>Send a Gift</span>
   </button>
@@ -3658,7 +3663,10 @@ function setSocialSidebar(open) {
   sidebar.classList.toggle('open', open);
   overlay.classList.toggle('open', open);
   sidebar.setAttribute('aria-hidden', open ? 'false' : 'true');
-  if (giftTrigger) giftTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (giftTrigger) {
+    giftTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    giftTrigger.classList.toggle('expanded', open);
+  }
   document.body.style.overflow = open ? 'hidden' : '';
   if (open) {
     requestAnimationFrame(function() {
