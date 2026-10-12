@@ -176,6 +176,15 @@ function handleApiRequest(e) {
     if (action === 'getWallOfLove') return jsonResponse(getWallOfLove());
     if (action === 'getLeaderboard') return jsonResponse(getLeaderboard(params.force === true || params.force === 'true'));
     if (action === 'saveLeaderboardScore') return jsonResponse(saveLeaderboardScore(params.name || '', params.score));
+    if (action === 'getAdminLeaderboard') return jsonResponse(getAdminLeaderboard(params.token || ''));
+    if (action === 'updateLeaderboardScore') {
+      let leaderboardData = {};
+      try { leaderboardData = JSON.parse(params.data || '{}'); }
+      catch (err) { return jsonResponse({ success: false, message: 'Invalid leaderboard data.' }); }
+      return jsonResponse(updateLeaderboardScore(leaderboardData, params.token || ''));
+    }
+    if (action === 'deleteLeaderboardScore') return jsonResponse(deleteLeaderboardScore(params.rowIndex || '', params.token || ''));
+    if (action === 'resetLeaderboard') return jsonResponse(resetLeaderboard(params.token || ''));
     if (action === 'getAdminAttendees') return jsonResponse(getAdminAttendees(params.token || ''));
     if (action === 'updateAttendee') {
       let attendeeData = {};
@@ -866,6 +875,73 @@ function adminAttendeeFromRow(row, rowIndex) {
   };
 }
 
+function getAdminLeaderboard(token) {
+  if (!isAdminSessionValid(token)) return { success: false, message: 'Admin session expired. Please sign in again.' };
+  try {
+    const sh = ss().getSheetByName(SHEET_LEADERBOARD);
+    if (!sh || sh.getLastRow() < 2) return { success: true, entries: [] };
+    const rows = sh.getRange(2, 1, sh.getLastRow() - 1, LEADERBOARD_HEADERS.length).getValues();
+    const entries = rows.map(function(row, index) {
+      return { rowIndex: index + 2, date: row[0] || '', name: String(row[1] || ''), score: Number(row[2]) || 0 };
+    }).filter(function(entry) { return entry.name; });
+    entries.sort(function(a, b) { return b.score - a.score || a.name.localeCompare(b.name); });
+    return { success: true, entries: entries };
+  } catch (e) {
+    Logger.log('getAdminLeaderboard error: ' + e.toString());
+    return { success: false, message: 'Could not load leaderboard scores.' };
+  }
+}
+function updateLeaderboardScore(data, token) {
+  if (!isAdminSessionValid(token)) return { success: false, message: 'Admin session expired. Please sign in again.' };
+  try {
+    const rowIndex = Number(data && data.rowIndex);
+    const name = String(data && data.name || '').replace(/\s+/g, ' ').trim();
+    const score = Number(data && data.score);
+    if (!Number.isInteger(rowIndex) || rowIndex < 2) return { success: false, message: 'Invalid leaderboard row.' };
+    if (!name || name.length > 100) return { success: false, message: 'Please enter a valid player name.' };
+    if (!Number.isInteger(score) || score < 0 || score > 1000) return { success: false, message: 'Score must be a whole number from 0 to 1000.' };
+    const sh = ss().getSheetByName(SHEET_LEADERBOARD);
+    if (!sh || rowIndex > sh.getLastRow()) return { success: false, message: 'Leaderboard row not found.' };
+    sh.getRange(rowIndex, 1, 1, 3).setValues([[new Date(), name, score]]);
+    cacheRemoveLeaderboard();
+    return { success: true, message: 'Leaderboard score updated.' };
+  } catch (e) {
+    Logger.log('updateLeaderboardScore error: ' + e.toString());
+    return { success: false, message: 'Could not update leaderboard score.' };
+  }
+}
+function deleteLeaderboardScore(rowIndexValue, token) {
+  if (!isAdminSessionValid(token)) return { success: false, message: 'Admin session expired. Please sign in again.' };
+  try {
+    const rowIndex = Number(rowIndexValue);
+    const sh = ss().getSheetByName(SHEET_LEADERBOARD);
+    if (!sh || !Number.isInteger(rowIndex) || rowIndex < 2 || rowIndex > sh.getLastRow()) return { success: false, message: 'Leaderboard row not found.' };
+    sh.deleteRow(rowIndex);
+    cacheRemoveLeaderboard();
+    return { success: true, message: 'Leaderboard score removed.' };
+  } catch (e) {
+    Logger.log('deleteLeaderboardScore error: ' + e.toString());
+    return { success: false, message: 'Could not remove leaderboard score.' };
+  }
+}
+function resetLeaderboard(token) {
+  if (!isAdminSessionValid(token)) return { success: false, message: 'Admin session expired. Please sign in again.' };
+  try {
+    const sh = ss().getSheetByName(SHEET_LEADERBOARD);
+    let deleted = 0;
+    if (sh && sh.getLastRow() > 1) {
+      deleted = sh.getLastRow() - 1;
+      sh.deleteRows(2, deleted);
+      sh.getRange(1, 1, 1, LEADERBOARD_HEADERS.length).setValues([LEADERBOARD_HEADERS]);
+    }
+    cacheRemoveLeaderboard();
+    return { success: true, deleted: deleted, message: 'Leaderboard reset.' };
+  } catch (e) {
+    Logger.log('resetLeaderboard error: ' + e.toString());
+    return { success: false, message: 'Could not reset leaderboard.' };
+  }
+}
+
 function getAdminAttendees(token) {
   if (!isAdminSessionValid(token)) {
     return { success: false, attendees: [], message: 'Admin session expired. Please sign in again.' };
@@ -990,6 +1066,9 @@ function submitForm(formData) {
     }
 
     if (!formData) return { success: false, message: 'No data received.' };
+    if (formData.privacyConsent !== true && String(formData.privacyConsent).toLowerCase() !== 'true') {
+      return { success: false, message: 'Please review and accept the privacy checklist before submitting.' };
+    }
 
     const submittedName = String(formData.name || '').replace(/\s+/g, ' ').trim();
     if (!submittedName) return { success: false, message: 'Name is required.' };
