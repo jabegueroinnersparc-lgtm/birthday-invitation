@@ -183,6 +183,26 @@
       to   { opacity: 1; transform: translateY(0) scale(1); }
     }
 
+    /* ===== SIGN OUT ANIMATION ===== */
+    .view.sign-out-anim {
+      animation: signOutAnim 0.55s var(--ease-out) forwards;
+      pointer-events: none;
+    }
+    @keyframes signOutAnim {
+      0% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+      40% { opacity: 0.5; transform: translateY(8px) scale(0.98); filter: blur(2px); }
+      100% { opacity: 0; transform: translateY(20px) scale(0.94); filter: blur(6px); }
+    }
+
+    .view.sign-in-anim {
+      animation: signInAnim 0.6s var(--ease-out) forwards;
+    }
+    @keyframes signInAnim {
+      0% { opacity: 0; transform: translateY(24px) scale(0.96); filter: blur(6px); }
+      60% { opacity: 1; transform: translateY(-4px) scale(1.01); filter: blur(0); }
+      100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    }
+
     /* LOGIN */
     .login-wrap {
       display: grid; grid-template-columns: 1fr;
@@ -413,7 +433,7 @@
     .easter-egg-toast .sub { display: block; margin-top: 8px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 400; color: var(--silver); }
 
     /* ===== BIRTHDAY QUIZ ===== */
-    .quiz-card { max-width: 340px; margin: 24px auto 0; padding: 22px 20px 20px; border-radius: 18px; background: linear-gradient(165deg, #f0f7ff, #e6f0fb); border: 1.5px solid #cfe0f5; text-align: center; box-shadow: 0 10px 28px -14px rgba(30, 90, 180, 0.25); }
+    .quiz-card { max-width: 340px; margin: 24px auto 0; padding: 22px 20px 20px; border-radius: 18px; background: linear-gradient(165deg, #f0f7ff, #e6f0fb); border: 1.5px solid #cfe0f5; text-align: center; box-shadow: 0 10px 28px -14px rgba(30, 90, 180, 0.25); position: relative; z-index: 10; }
     .quiz-kicker { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #4a7bb7; margin-bottom: 6px; }
     .quiz-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: var(--black); margin-bottom: 6px; }
     .quiz-question { font-size: 14px; color: var(--steel); margin-bottom: 16px; line-height: 1.5; min-height: 42px; }
@@ -429,7 +449,26 @@
     .quiz-replay { margin-top: 12px; background: var(--black); color: var(--white); border: none; padding: 10px 20px; border-radius: 10px; font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; }
     .quiz-replay:active { transform: scale(0.97); }
 
-    /* ===== QUIZ UPGRADE (moved from script) ===== */
+    .quiz-back-btn {
+      margin-top: 14px;
+      width: 100%;
+      min-height: 42px;
+      padding: 10px 16px;
+      border: 1.5px solid #cfe0f5;
+      border-radius: 10px;
+      background: var(--white);
+      color: var(--black);
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: all 0.25s var(--ease-out);
+    }
+    .quiz-back-btn:hover { border-color: var(--black); }
+    .quiz-back-btn:active { transform: scale(0.97); }
+
+    /* ===== QUIZ UPGRADE ===== */
     .quiz-fact { display: none; margin-top: 12px; padding: 10px 12px; font-size: 12.5px; line-height: 1.5; color: #355f94; background: var(--white); border: 1px dashed #cfe0f5; border-radius: 12px; }
     .quiz-fact.show { display: block; animation: msgIn 0.35s var(--ease-out); }
     .quiz-persona-emoji { font-size: 44px; line-height: 1; margin-bottom: 6px; }
@@ -441,7 +480,8 @@
     .quiz-game { text-align: center; }
     .game-hud { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 13px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
     .game-arena { position: relative; width: 100%; height: 240px; overflow: hidden; border-radius: 14px; background: var(--white); border: 1.5px dashed #cfe0f5; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
-    .game-treat { position: absolute; width: 46px; height: 46px; padding: 0; border: none; border-radius: 50%; background: #fff; font-size: 26px; line-height: 46px; text-align: center; cursor: pointer; box-shadow: 0 6px 14px -6px rgba(0,0,0,0.3); animation: treatIn 0.18s var(--ease-out); -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+    .game-treat { position: absolute; width: 46px; height: 46px; padding: 0; border: none; border-radius: 50%; background: #fff; font-size: 26px; line-height: 46px; text-align: center; cursor: pointer; box-shadow: 0 6px 14px -6px rgba(0,0,0,0.3); animation: treatIn 0.18s var(--ease-out); -webkit-tap-highlight-color: transparent; touch-action: manipulation; overflow: hidden; }
+    .game-treat img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
     .game-treat.caught { animation: treatCaught 0.18s ease-out forwards; pointer-events: none; }
     @keyframes treatIn { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     @keyframes treatCaught { to { transform: scale(1.6); opacity: 0; } }
@@ -450,6 +490,12 @@
     @keyframes gameFloat { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-34px); opacity: 0; } }
     .game-hint { margin-top: 8px; font-size: 11.5px; color: var(--steel); }
     @media (prefers-reduced-motion: reduce) { .game-treat, .game-float, .quiz-fact.show { animation: none; } }
+
+    /* Mini game launcher button — ensures it sits above game card */
+    .mini-game-launcher {
+      position: relative;
+      z-index: 20;
+    }
 
     /* ===== MUSIC TOGGLE ===== */
     .music-toggle { position: fixed; top: calc(16px + env(safe-area-inset-top)); right: 16px; z-index: 1100; width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--pearl); background: rgba(255,255,255,0.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--black); font-size: 18px; cursor: pointer; display: none; align-items: center; justify-content: center; transition: all 0.3s var(--ease-out); -webkit-tap-highlight-color: transparent; box-shadow: 0 4px 14px -4px rgba(0,0,0,0.15); }
@@ -1421,6 +1467,13 @@
             <div class="action-desc">Scan a QR to send a birthday gift via GCash or InstaPay.</div>
             <span class="action-arrow">→</span>
           </button>
+
+          <button type="button" class="action-btn" id="playMiniGameBtn">
+            <div class="action-icon">🦴</div>
+            <div class="action-title">Play Mini Game</div>
+            <div class="action-desc">Catch the treats in 15 seconds and beat the high score!</div>
+            <span class="action-arrow">→</span>
+          </button>
         </div>
 
         <div class="welcome-footer">
@@ -1673,11 +1726,6 @@
                 <a class="btn btn-primary location-map-btn" href="https://www.google.com/maps?q=14.3550556,120.9101944" target="_blank" rel="noopener noreferrer">Open in Maps</a>
               </div>
 
-              <div class="ticket-actions">
-                <button type="button" class="btn btn-outline" id="downloadQrBtn">Download QR</button>
-                <button type="button" class="btn btn-primary" id="newRsvpBtn">Back to Home</button>
-              </div>
-
               <div class="ticket-gift-card" id="ticketGiftCard">
                 <div class="ticket-gift-icon">🎁</div>
                 <div class="ticket-gift-copy">No pressure — your presence is the gift 💛<br>But if you'd like, you can send one here.</div>
@@ -1703,7 +1751,20 @@
                 <p class="quiz-question" id="quizQuestion">Loading…</p>
                 <div class="quiz-options" id="quizOptions"></div>
                 <div class="quiz-progress" id="quizProgress"></div>
+                <button type="button" class="quiz-back-btn" id="quizBackBtn" style="display:none;">
+                  ← Back to Home
+                </button>
               </div>
+
+              <div class="ticket-actions">
+                <button type="button" class="btn btn-outline" id="downloadQrBtn">Download QR</button>
+                <button type="button" class="btn btn-primary" id="newRsvpBtn">Back to Home</button>
+              </div>
+
+              <button type="button" class="btn btn-primary mini-game-launcher" id="playMiniGameFromTicketBtn"
+                      style="max-width:340px;margin:16px auto 0;display:block;">
+                🦴 Play "Catch the Treats"
+              </button>
             </div>
           </div>
         </div>
@@ -1835,6 +1896,27 @@
   </div>
 
   <script>
+/* ============================================================
+   CUSTOM IMAGES CONFIG — REPLACE EMOJIS WITH YOUR OWN IMAGES
+   ============================================================
+   To use your own images instead of the emoji, set `image` to a URL
+   or base64 string. If `image` is null, the emoji fallback is used.
+   
+   Example:
+     bone: { emoji: '🦴', image: '/my-dog.png', pts: 1, life: 1000 }
+   ============================================================ */
+const CUSTOM_GAME_IMAGES = {
+  // Replace with your dog's photo URL
+  dog:   null,  // e.g. '/images/saira.png' or 'https://.../saira.png'
+  
+  // Replace with your head/face photo URL
+  head:  null,  // e.g. '/images/sivy.png' or 'https://.../sivy.png',
+  
+  // Optional: extra images for variety
+  treat: null,  // e.g. '/images/saira.png'
+  sock:  null   // e.g. '/images/simon.png'
+};
+
 /* CONFIG */
 const APPS_SCRIPT_URL = '/api/proxy';
 const GIFT_QR_IMAGE_URL = '/sairasivyqr.png';
@@ -3286,51 +3368,70 @@ function escapeHtml(s) {
   })[c]);
 }
 
-/* LOGOUT */
+/* LOGOUT WITH ANIMATION */
 function logout() {
-  safeStorageRemove('birthdayUser');
-  currentUser = null; selfieData = null; videoData = null; guests = 1; currentTicket = null;
-  selectedAttendance = 'going';
-  const attGridReset = $('attendanceGrid');
-  if (attGridReset) {
-    attGridReset.querySelectorAll('.attendance-option').forEach(function(b, i) {
-      b.classList.toggle('selected', i === 0);
-    });
+  const currentView = document.querySelector('.view.active');
+  
+  // Animate out the current view
+  if (currentView) {
+    currentView.classList.add('sign-out-anim');
   }
-  $('guestValue').value = '1';
-  $('guestMinus').disabled = true;
-  $('guestPlus').disabled = false;
-  $('rsvpForm').reset();
-  renderEmptyCamera();
-  renderEmptyVideo();
-  toggleSelfieVideoFields();
-  resetAfterTicket(true);
-  updateProgress();
-  $('formView').classList.remove('active');
-  $('welcomeView').classList.remove('active');
-  $('attendeesView').classList.remove('active');
-  $('loginView').classList.add('active');
-  $('pwName').value = '';
-  $('pwMobile').value = '';
-  $('pwMobile').type = 'password';
-  $('privacyToggle').textContent = 'Show';
-  $('privacyToggle').setAttribute('aria-label', 'Show mobile number');
-  $('privacyToggle').setAttribute('aria-pressed', 'false');
-  $('privacyMascot').classList.add('privacy-on');
-  $('goRsvpBtn').style.opacity = '';
-  $('goRsvpBtn').style.pointerEvents = '';
-  $('goRsvpBtn').querySelector('.action-title').textContent = 'Confirm Attendance';
-  $('goRsvpBtn').querySelector('.action-desc').textContent = 'Share your details and a selfie to get your entrance ticket.';
-  $('viewTicketBtn').style.display = 'none';
-  $('viewTicketBtn').onclick = null;
-  setSocialSidebar(false);
-  $('giftSidebarTrigger').classList.remove('visible');
-  if (typeof window.resetGiftTriggerPosition === 'function') {
-    window.resetGiftTriggerPosition();
-  }
-  const mt = $('musicToggle');
-  if (mt) { mt.classList.remove('visible', 'playing'); mt.querySelector('.music-icon').textContent = '🎵'; }
-  showToast('Signed out.');
+  
+  // Wait for animation, then reset and show login
+  setTimeout(function() {
+    safeStorageRemove('birthdayUser');
+    currentUser = null; selfieData = null; videoData = null; guests = 1; currentTicket = null;
+    selectedAttendance = 'going';
+    const attGridReset = $('attendanceGrid');
+    if (attGridReset) {
+      attGridReset.querySelectorAll('.attendance-option').forEach(function(b, i) {
+        b.classList.toggle('selected', i === 0);
+      });
+    }
+    $('guestValue').value = '1';
+    $('guestMinus').disabled = true;
+    $('guestPlus').disabled = false;
+    $('rsvpForm').reset();
+    renderEmptyCamera();
+    renderEmptyVideo();
+    toggleSelfieVideoFields();
+    resetAfterTicket(true);
+    updateProgress();
+    $('formView').classList.remove('active');
+    $('welcomeView').classList.remove('active');
+    $('attendeesView').classList.remove('active');
+    $('loginView').classList.remove('active');
+    $('pwName').value = '';
+    $('pwMobile').value = '';
+    $('pwMobile').type = 'password';
+    $('privacyToggle').textContent = 'Show';
+    $('privacyToggle').setAttribute('aria-label', 'Show mobile number');
+    $('privacyToggle').setAttribute('aria-pressed', 'false');
+    $('privacyMascot').classList.add('privacy-on');
+    $('goRsvpBtn').style.opacity = '';
+    $('goRsvpBtn').style.pointerEvents = '';
+    $('goRsvpBtn').querySelector('.action-title').textContent = 'Confirm Attendance';
+    $('goRsvpBtn').querySelector('.action-desc').textContent = 'Share your details and a selfie to get your entrance ticket.';
+    $('viewTicketBtn').style.display = 'none';
+    $('viewTicketBtn').onclick = null;
+    setSocialSidebar(false);
+    $('giftSidebarTrigger').classList.remove('visible');
+    if (typeof window.resetGiftTriggerPosition === 'function') {
+      window.resetGiftTriggerPosition();
+    }
+    const mt = $('musicToggle');
+    if (mt) { mt.classList.remove('visible', 'playing'); mt.querySelector('.music-icon').textContent = '🎵'; }
+    
+    // Remove sign-out animation and show login with sign-in animation
+    if (currentView) currentView.classList.remove('sign-out-anim');
+    $('loginView').classList.add('active', 'sign-in-anim');
+    setTimeout(function() {
+      $('loginView').classList.remove('sign-in-anim');
+    }, 700);
+    
+    showToast('Signed out.');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, 550);
 }
 
 $('logoutBtnDesktop').addEventListener('click', logout);
@@ -4436,7 +4537,9 @@ $('downloadQrBtn').addEventListener('click', async () => {
   }
 })();
 
-/* BIRTHDAY QUIZ + DOGGO PERSONA + CATCH THE TREATS */
+/* ============================================================
+   BIRTHDAY QUIZ + DOGGO PERSONA + CATCH THE TREATS
+   ============================================================ */
 (function initBirthdayQuiz() {
   const card = $('quizCard');
   const titleEl = $('quizTitle');
@@ -4450,8 +4553,8 @@ $('downloadQrBtn').addEventListener('click', async () => {
     { q: "Sino ang pinaka maldita na aso?", options: ['Saira', 'Sivy', 'Simon'], answer: 0, fact: "Saira runs this house. Everyone else just lives in it. 💅" },
     { q: "Sino ang pinaka pasaway na aso?", options: ['Saira', 'Sivy', 'Simon'], answer: 1, fact: "Sivy heard \"bawal\" and understood \"subukan mo\". 😈" },
     { q: "Sino pinakapogi?", options: ['Saira', 'Sivy', 'Simon'], answer: 2, fact: "Obvious naman. No further questions. 😎" },
-    { q: "Sino ang mahilig mag kalat?", options: ['Saira', 'Sivy', 'Simon'], answer: 2, fact: "Pogi pero may iniwang bakas sa sahig. 🧦" },
-    { q: "Sino ang pinaka mabait?", options: ['Saira', 'Sivy', 'Simon'], answer: 1, fact: "Yes, Sivy. Surprise! Pasaway pero mabait. 💛" }
+    { q: "Sino ang mahilig mag kalat?", options: ['Saira', 'Sivy', 'Simon'], answer: 1, fact: "Pogi pero may iniwang bakas sa sahig. 🧦" },
+    { q: "Sino ang pinaka mabait?", options: ['Saira', 'Sivy', 'Simon'], answer: 0, fact: "Yes, Sivy. Surprise! Pasaway pero mabait. 💛" }
   ];
 
   const CORRECT_REACTIONS = [
@@ -4605,12 +4708,20 @@ $('downloadQrBtn').addEventListener('click', async () => {
     renderQuestion();
   }
 
-  /* ---------- CATCH THE TREATS ---------- */
+  /* ---------- CATCH THE TREATS (with custom image support) ---------- */
+  // If you set CUSTOM_GAME_IMAGES.dog / .head above, those will be used.
   const ITEMS = {
-    bone: { emoji: '🦴', pts: 1,  life: 1000 },
-    meat: { emoji: '🍖', pts: 3,  life: 750 },
-    sock: { emoji: '🧦', pts: -2, life: 1100 }
+    bone:  { emoji: '🦴', image: CUSTOM_GAME_IMAGES.dog || null,  pts: 1,  life: 1000 },
+    meat:  { emoji: '🍖', image: CUSTOM_GAME_IMAGES.head || null, pts: 3,  life: 750 },
+    sock:  { emoji: '🧦', image: CUSTOM_GAME_IMAGES.sock || null, pts: -2, life: 1100 }
   };
+
+  function makeTreatContent(kind) {
+    if (kind.image) {
+      return '<img src="' + kind.image + '" alt="">';
+    }
+    return kind.emoji;
+  }
 
   function stopGame() {
     playing = false;
@@ -4633,15 +4744,21 @@ $('downloadQrBtn').addEventListener('click', async () => {
     gameStart = Date.now();
     playing = true;
 
+    // Update hint dynamically if images are used
+    const hasCustom = !!(ITEMS.bone.image || ITEMS.meat.image || ITEMS.sock.image);
+    const hintText = hasCustom
+      ? 'Tap the good ones (+points). Avoid the bad one (−2)!'
+      : 'Tap 🦴 (+1) and 🍖 (+3). Avoid 🧦 (−2)!';
+
     gameEl.style.display = 'block';
     gameEl.innerHTML =
       '<div class="game-hud">' +
         '<span>⏱ <b id="gameTime">' + GAME_SECONDS + '</b>s</span>' +
-        '<span>🦴 <b id="gameScore">0</b></span>' +
+        '<span>⭐ <b id="gameScore">0</b></span>' +
         '<span>🏆 <b id="gameBest">' + getBest() + '</b></span>' +
       '</div>' +
       '<div class="game-arena" id="gameArena"></div>' +
-      '<p class="game-hint">Tap 🦴 (+1) and 🍖 (+3). Avoid 🧦 (−2)!</p>';
+      '<p class="game-hint">' + hintText + '</p>';
 
     tickTimer = setInterval(function() {
       timeLeft--;
@@ -4685,7 +4802,7 @@ $('downloadQrBtn').addEventListener('click', async () => {
     const el = document.createElement('button');
     el.type = 'button';
     el.className = 'game-treat';
-    el.textContent = kind.emoji;
+    el.innerHTML = makeTreatContent(kind);
     el.style.left = x + 'px';
     el.style.top = y + 'px';
     el.setAttribute('aria-label', kind.emoji);
@@ -4749,6 +4866,152 @@ $('downloadQrBtn').addEventListener('click', async () => {
   }
 
   window.startBirthdayQuiz = startQuiz;
+  window.startCatchTheTreats = startGame;
+  window.stopCatchTheTreats = stopGame;
+})();
+
+/* MINI GAME LAUNCHERS */
+(function initMiniGameLaunchers() {
+  const playFromWelcome = $('playMiniGameBtn');
+  const playFromTicket = $('playMiniGameFromTicketBtn');
+  const backBtn = $('quizBackBtn');
+
+  // Remember where we came from so Back can return there
+  let miniGameReturnTarget = 'welcomeView';
+  let miniGameHidTicket = false;
+
+  function hideTicketChrome() {
+    const selectors = [
+      '.ticket-card',
+      '.ticket-note',
+      '.ticket-actions',
+      '#ticketLocationCard',
+      '#ticketGiftCard',
+      '#excitementBar',
+      '#successImage',
+      '#checkWrap',
+      '#successCaption',
+      '#successSub'
+    ];
+    selectors.forEach(function(sel) {
+      const el = document.querySelector(sel);
+      if (el) el.style.display = 'none';
+    });
+  }
+
+  function restoreTicketChrome() {
+    const selectors = [
+      '.ticket-card',
+      '.ticket-note',
+      '.ticket-actions',
+      '#ticketLocationCard',
+      '#ticketGiftCard',
+      '#excitementBar',
+      '#successImage',
+      '#checkWrap',
+      '#successCaption',
+      '#successSub'
+    ];
+    selectors.forEach(function(sel) {
+      const el = document.querySelector(sel);
+      if (el) el.style.display = '';
+    });
+  }
+
+  function openMiniGame(returnView) {
+    miniGameReturnTarget = returnView || 'welcomeView';
+    if ($('welcomeView').classList.contains('active')) {
+      $('welcomeView').classList.remove('active');
+      $('formView').classList.add('active');
+    }
+    $('loginView').classList.remove('active');
+    $('attendeesView').classList.remove('active');
+
+    const ticketShown = $('successScreen').classList.contains('show') && !!currentTicket;
+    miniGameHidTicket = !ticketShown;
+    if (ticketShown) {
+      const excitement = $('excitementBar');
+      if (excitement) excitement.style.display = 'none';
+    } else {
+      $('rsvpForm').style.display = 'none';
+      const head = document.querySelector('.form-head');
+      if (head) head.style.display = 'none';
+      const prog = document.querySelector('.progress-wrap');
+      if (prog) prog.style.display = 'none';
+      $('message').style.display = 'none';
+      $('successScreen').classList.add('show');
+      hideTicketChrome();
+    }
+
+    // Show the back button
+    if (backBtn) backBtn.style.display = 'block';
+
+    const quizCard = $('quizCard');
+    if (quizCard) quizCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    setTimeout(function() {
+      if (typeof window.startCatchTheTreats === 'function') {
+        window.startCatchTheTreats();
+      } else {
+        showToast('Mini game is loading… please try again in a moment.');
+      }
+    }, 400);
+  }
+
+  function closeMiniGame() {
+    if (typeof window.stopCatchTheTreats === 'function') {
+      window.stopCatchTheTreats();
+    }
+
+    // Reset the quiz card back to its default state
+    const card = $('quizCard');
+    const titleEl = $('quizTitle');
+    const qEl = $('quizQuestion');
+    const optionsEl = $('quizOptions');
+    const progressEl = $('quizProgress');
+    if (titleEl) titleEl.textContent = 'Guess the birthday star';
+    if (qEl) { qEl.style.display = ''; qEl.textContent = 'Tap "Play" to start the quiz!'; }
+    if (optionsEl) { optionsEl.style.display = ''; optionsEl.innerHTML = ''; }
+    if (progressEl) { progressEl.style.display = ''; progressEl.textContent = ''; }
+
+    if (backBtn) backBtn.style.display = 'none';
+
+    if (miniGameHidTicket) {
+      restoreTicketChrome();
+      $('successScreen').classList.remove('show');
+      $('rsvpForm').style.display = '';
+      const head = document.querySelector('.form-head');
+      if (head) head.style.display = '';
+      const prog = document.querySelector('.progress-wrap');
+      if (prog) prog.style.display = '';
+    } else {
+      // Came from ticket — restore chrome, stay on success screen
+      restoreTicketChrome();
+    }
+
+    // Go back to the welcome screen (or wherever we came from)
+    $('formView').classList.remove('active');
+    if (miniGameReturnTarget === 'welcomeView' && currentUser) {
+      $('welcomeView').classList.add('active');
+    } else if (miniGameReturnTarget === 'loginView') {
+      $('loginView').classList.add('active');
+    } else if (currentUser) {
+      $('welcomeView').classList.add('active');
+    } else {
+      $('loginView').classList.add('active');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  if (playFromWelcome) {
+    playFromWelcome.addEventListener('click', function() { openMiniGame('welcomeView'); });
+  }
+  if (playFromTicket) {
+    playFromTicket.addEventListener('click', function() { openMiniGame('successView'); });
+  }
+  if (backBtn) {
+    backBtn.addEventListener('click', closeMiniGame);
+  }
 })();
 
 /* MUSIC TOGGLE */
