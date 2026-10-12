@@ -706,6 +706,11 @@
     .action-btn.gift:hover { border-color: #d4a94a; box-shadow: 0 16px 40px -12px rgba(180, 130, 20, 0.22); }
     .action-btn.gift .action-arrow { background: rgba(180, 130, 20, 0.12); color: #8a6414; }
 
+    .action-btn.leaderboard { background: linear-gradient(160deg, #f0f7ff, #e0eefc); border-color: #b8d4f0; }
+    .action-btn.leaderboard .action-icon { background: #d0e5f7; }
+    .action-btn.leaderboard:hover { border-color: #4a7bb7; box-shadow: 0 16px 40px -12px rgba(30, 90, 180, 0.22); }
+    .action-btn.leaderboard .action-arrow { background: rgba(30, 90, 180, 0.12); color: #2c5a8f; }
+
     .action-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 4px; color: var(--black); }
     .action-desc { font-size: 13px; color: var(--steel); line-height: 1.5; }
     .action-arrow { position: absolute; top: 20px; right: 20px; width: 32px; height: 32px; border-radius: 50%; background: var(--fog); color: var(--black); display: flex; align-items: center; justify-content: center; font-size: 14px; transition: transform 0.3s var(--ease-out); }
@@ -1306,6 +1311,141 @@ body.game-lock { overflow: hidden; }
 .dog-reaction { z-index: 10002; }
 .toast { z-index: 10003; }
 .success-confetti, .floating-emoji { z-index: 10001; }
+
+/* ===== MINI GAME LEADERBOARD ===== */
+.leaderboard-card {
+  margin: 18px auto 0;
+  max-width: 360px;
+  width: 100%;
+  padding: 16px 18px 14px;
+  border-radius: 16px;
+  background: linear-gradient(165deg, #ffffff, #f8faff);
+  border: 1.5px solid #dbe7f5;
+  box-shadow: 0 8px 24px -14px rgba(30, 90, 180, 0.18);
+  text-align: left;
+}
+.leaderboard-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--black);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.leaderboard-title .emoji { font-size: 18px; }
+.leaderboard-list { display: flex; flex-direction: column; gap: 6px; }
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--white);
+  border: 1px solid var(--pearl);
+  transition: all 0.2s ease;
+}
+.leaderboard-row.is-you {
+  background: #fff9e6;
+  border-color: #f5c95a;
+  box-shadow: 0 0 0 1px #f5c95a;
+}
+.leaderboard-rank {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--steel);
+  min-width: 26px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.leaderboard-row:nth-child(1) .leaderboard-rank { color: #d4a017; }
+.leaderboard-row:nth-child(2) .leaderboard-rank { color: #8a8a8a; }
+.leaderboard-row:nth-child(3) .leaderboard-rank { color: #b87333; }
+.leaderboard-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.leaderboard-score {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--black);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.leaderboard-empty {
+  font-size: 12.5px;
+  color: var(--steel);
+  text-align: center;
+  padding: 12px 0 6px;
+  line-height: 1.5;
+}
+.leaderboard-loading {
+  font-size: 12.5px;
+  color: var(--steel);
+  text-align: center;
+  padding: 12px 0 6px;
+}
+.leaderboard-refresh {
+  display: block;
+  margin: 10px auto 0;
+  min-height: 34px;
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--pearl);
+  background: var(--white);
+  color: var(--steel);
+  font: 600 11px/1 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.leaderboard-refresh:hover { border-color: var(--silver); color: var(--black); }
+.leaderboard-refresh:active { transform: scale(0.97); }
+.leaderboard-refresh:disabled { opacity: 0.5; cursor: wait; }
+
+/* Dark theme inside fullscreen game */
+.game-fs .leaderboard-card {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.14);
+  box-shadow: none;
+}
+.game-fs .leaderboard-title { color: #fff; }
+.game-fs .leaderboard-row {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.1);
+}
+.game-fs .leaderboard-row.is-you {
+  background: rgba(245, 201, 90, 0.18);
+  border-color: rgba(245, 201, 90, 0.6);
+  box-shadow: 0 0 0 1px rgba(245, 201, 90, 0.4);
+}
+.game-fs .leaderboard-name { color: #e2e8f0; }
+.game-fs .leaderboard-score { color: #fff; }
+.game-fs .leaderboard-rank { color: #94a3b8; }
+.game-fs .leaderboard-row:nth-child(1) .leaderboard-rank { color: #facc15; }
+.game-fs .leaderboard-row:nth-child(2) .leaderboard-rank { color: #cbd5e1; }
+.game-fs .leaderboard-row:nth-child(3) .leaderboard-rank { color: #d97706; }
+.game-fs .leaderboard-empty,
+.game-fs .leaderboard-loading { color: #94a3b8; }
+.game-fs .leaderboard-refresh {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.2);
+  color: #e2e8f0;
+}
+.game-fs .leaderboard-refresh:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+@media (max-width: 480px) {
+  .leaderboard-card { max-width: 100%; padding: 14px 12px 12px; }
+  .leaderboard-title { font-size: 15px; }
+  .leaderboard-name, .leaderboard-score { font-size: 12px; }
+}
   </style>
 </head>
 <body>
@@ -1546,6 +1686,13 @@ body.game-lock { overflow: hidden; }
             <div class="action-icon">🦴</div>
             <div class="action-title">Play Mini Game</div>
             <div class="action-desc">Catch Saira and Sivy in 15 seconds and beat the high score!</div>
+            <span class="action-arrow">→</span>
+          </button>
+
+          <button type="button" class="action-btn leaderboard" id="viewLeaderboardBtn">
+            <div class="action-icon">🏆</div>
+            <div class="action-title">View Leaderboard</div>
+            <div class="action-desc">See who's leading the mini game rankings.</div>
             <span class="action-arrow">→</span>
           </button>
         </div>
@@ -1833,6 +1980,17 @@ body.game-lock { overflow: hidden; }
                 
               </div>
 
+              <!-- LEADERBOARD -->
+              <div class="leaderboard-card" id="leaderboardCard">
+                <div class="leaderboard-title">
+                  <span class="emoji">🏆</span> Mini Game Leaderboard
+                </div>
+                <div class="leaderboard-list" id="leaderboardList">
+                  <div class="leaderboard-loading">Loading scores…</div>
+                </div>
+                <button type="button" class="leaderboard-refresh" id="leaderboardRefreshBtn">Refresh scores</button>
+              </div>
+
               <div class="ticket-actions">
                 <button type="button" class="btn btn-primary" id="newRsvpBtn">Back to Home</button>
               </div>
@@ -1992,6 +2150,7 @@ const CUSTOM_GAME_IMAGES = {
 const APPS_SCRIPT_URL = '/api/proxy';
 const GIFT_QR_IMAGE_URL = '/sairasivyqr.png';
 const GIFT_TRIGGER_POS_KEY = 'birthdayGiftTriggerPos';
+const LEADERBOARD_KEY = 'birthdayLeaderboard';
 
 /* BUTTON CLICK SOUND */
 let clickSoundAudio = null;
@@ -4377,6 +4536,7 @@ function showTicket(ticket) {
   setTimeout(() => playAttendanceSound(attendance), 150);
 
   if (typeof window.startBirthdayQuiz === 'function') window.startBirthdayQuiz();
+  if (typeof window.loadLeaderboard === 'function') window.loadLeaderboard();
 
   showToast(media.toast || "You're on the list! 🎉");
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -4609,7 +4769,7 @@ $('downloadQrBtn').addEventListener('click', async () => {
 })();
 
 /* ============================================================
-   BIRTHDAY QUIZ + DOGGO PERSONA + CATCH THE TREATS
+   BIRTHDAY QUIZ + DOGGO PERSONA + CATCH THE TREATS + LEADERBOARD
    ============================================================ */
 (function initBirthdayQuiz() {
   const card = $('quizCard');
@@ -4932,6 +5092,9 @@ $('downloadQrBtn').addEventListener('click', async () => {
     if (isNewBest) safeStorageSet(BEST_KEY, String(gameScore));
     const best = Math.max(prevBest, gameScore);
 
+    // Save to leaderboard
+    saveScoreToLeaderboard(currentUser ? currentUser.name : 'Guest', gameScore);
+
     let emoji = '🐶';
     let msg = 'Nice try! Subukan ulit?';
     if (gameScore >= 25) { emoji = '🏆'; msg = 'Legendary treat hunter!'; }
@@ -4962,6 +5125,75 @@ $('downloadQrBtn').addEventListener('click', async () => {
     } else {
       showDogReaction('🐕🦴', 'Good game! Nakakapagod ha.');
     }
+
+    // Refresh leaderboard in the card below
+    if (typeof window.loadLeaderboard === 'function') window.loadLeaderboard();
+  }
+
+  /* ---------- LEADERBOARD ---------- */
+  function loadLeaderboardFromStorage() {
+    try {
+      const raw = safeStorageGet(LEADERBOARD_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) { return []; }
+  }
+
+  function saveScoreToLeaderboard(playerName, score) {
+    if (!playerName || score <= 0) return;
+    const entries = loadLeaderboardFromStorage();
+    const existingIndex = entries.findIndex(function(e) {
+      return e.name.toLowerCase() === playerName.toLowerCase();
+    });
+    if (existingIndex !== -1) {
+      if (score > entries[existingIndex].score) {
+        entries[existingIndex].score = score;
+        entries[existingIndex].date = Date.now();
+      }
+    } else {
+      entries.push({ name: playerName, score: score, date: Date.now() });
+    }
+    entries.sort(function(a, b) { return b.score - a.score; });
+    safeStorageSet(LEADERBOARD_KEY, JSON.stringify(entries.slice(0, 50)));
+  }
+
+  function renderLeaderboard(entries) {
+    const listEl = $('leaderboardList');
+    if (!listEl) return;
+    if (!entries || entries.length === 0) {
+      listEl.innerHTML = '<div class="leaderboard-empty">No scores yet. Play the mini game to be the first! 🐶</div>';
+      return;
+    }
+    const currentName = currentUser ? currentUser.name : null;
+    listEl.innerHTML = entries.map(function(entry, index) {
+      const rank = index + 1;
+      const isYou = currentName && entry.name.toLowerCase() === currentName.toLowerCase();
+      return '<div class="leaderboard-row' + (isYou ? ' is-you' : '') + '">' +
+               '<span class="leaderboard-rank">#' + rank + '</span>' +
+               '<span class="leaderboard-name">' + escapeHtml(entry.name) + (isYou ? ' (you)' : '') + '</span>' +
+               '<span class="leaderboard-score">' + entry.score + ' pts</span>' +
+             '</div>';
+    }).join('');
+  }
+
+  window.loadLeaderboard = function() {
+    const listEl = $('leaderboardList');
+    const refreshBtn = $('leaderboardRefreshBtn');
+    if (!listEl) return;
+    if (refreshBtn) refreshBtn.disabled = true;
+    listEl.innerHTML = '<div class="leaderboard-loading">Loading scores…</div>';
+    const entries = loadLeaderboardFromStorage();
+    renderLeaderboard(entries);
+    if (refreshBtn) refreshBtn.disabled = false;
+  };
+
+  // Hook up refresh button
+  const refreshBtn = $('leaderboardRefreshBtn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', function() {
+      if (typeof window.loadLeaderboard === 'function') window.loadLeaderboard();
+    });
   }
 
   window.startBirthdayQuiz = startQuiz;
@@ -5033,6 +5265,7 @@ $('downloadQrBtn').addEventListener('click', async () => {
     }
     placeholder = null;
     if (typeof window.startBirthdayQuiz === 'function') window.startBirthdayQuiz(); // reset the quiz card
+    if (typeof window.loadLeaderboard === 'function') window.loadLeaderboard();
   }
 
   function openMiniGame() {
@@ -5128,6 +5361,17 @@ initApp();
 updateProgress();
 preloadSuccessSound();
 toggleSelfieVideoFields();
+if (typeof window.loadLeaderboard === 'function') window.loadLeaderboard();
+
+// Add leaderboard button listener
+$('viewLeaderboardBtn').addEventListener('click', function() {
+  const leaderboardCard = $('leaderboardCard');
+  if (leaderboardCard) {
+    leaderboardCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (typeof window.loadLeaderboard === 'function') window.loadLeaderboard();
+    showToast('🏆 Leaderboard refreshed!');
+  }
+});
   </script>
 </body>
 </html>
