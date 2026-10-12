@@ -17,6 +17,9 @@ const SHEET_SETTINGS  = 'Settings';
 const FOLDER_NAME     = 'Birthday Selfies';
 const VIDEO_FOLDER_NAME = 'Birthday Video Greetings';
 const SHEET_PAYMENTS   = 'Payments';
+const SHEET_LEADERBOARD = 'Leaderboard';
+
+const LEADERBOARD_HEADERS = ['Timestamp', 'Name', 'Score'];
 
 const PAYMENT_HEADERS = [
   'Timestamp', 'Name', 'Mobile', 'Amount', 'Transaction Reference', 'Notes', 'Status'
@@ -30,6 +33,7 @@ const ADMIN_SESSION_PREFIX = 'birthday_admin_session_';
 const WHITELIST_CACHE_KEY = 'birthday_whitelist_v1';
 const ATTENDEES_CACHE_KEY = 'birthday_attendees_v1';
 const SETTINGS_CACHE_KEY = 'birthday_settings_v1';
+const LEADERBOARD_CACHE_KEY = 'birthday_leaderboard_v1';
 
 // ⭐ CHANGED: Added "Video Greeting URL" column.
 const RESPONSES_HEADERS = [
@@ -170,6 +174,8 @@ function handleApiRequest(e) {
 
     if (action === 'getAllAttendees') return jsonResponse(getAllAttendees(params.force === true || params.force === 'true'));
     if (action === 'getWallOfLove') return jsonResponse(getWallOfLove());
+    if (action === 'getLeaderboard') return jsonResponse(getLeaderboard(params.force === true || params.force === 'true'));
+    if (action === 'saveLeaderboardScore') return jsonResponse(saveLeaderboardScore(params.name || '', params.score));
     if (action === 'getAdminAttendees') return jsonResponse(getAdminAttendees(params.token || ''));
     if (action === 'updateAttendee') {
       let attendeeData = {};
@@ -258,7 +264,8 @@ function clearBirthdayCaches() {
     CacheService.getScriptCache().removeAll([
       WHITELIST_CACHE_KEY,
       ATTENDEES_CACHE_KEY,
-      SETTINGS_CACHE_KEY
+      SETTINGS_CACHE_KEY,
+      LEADERBOARD_CACHE_KEY
     ]);
   } catch (e) {}
 }
@@ -709,6 +716,99 @@ function getAllAttendees(forceRefresh) {
       message: 'Could not load attendee responses. Please try again.'
     };
   }
+}
+
+/* ============================================================
+   SHARED MINI-GAME LEADERBOARD
+   ============================================================ */
+function getLeaderboardSheet() {
+  const sh = getSheet(SHEET_LEADERBOARD, true);
+  if (!sh) throw new Error('Could not create "' + SHEET_LEADERBOARD + '".');
+  if (sh.getLastRow() === 0) {
+    sh.getRange(1, 1, 1, LEADERBOARD_HEADERS.length).setValues([LEADERBOARD_HEADERS]);
+  } else if (sh.getLastColumn() < LEADERBOARD_HEADERS.length) {
+    sh.getRange(1, 1, 1, LEADERBOARD_HEADERS.length).setValues([LEADERBOARD_HEADERS]);
+  }
+  return sh;
+}
+
+function getLeaderboard(forceRefresh) {
+  const cache = CacheService.getScriptCache();
+  if (!forceRefresh) {
+    const cached = cache.get(LEADERBOARD_CACHE_KEY);
+    if (cached) {
+      try { return JSON.parse(cached); } catch (e) {}
+    }
+  }
+
+  const sh = getLeaderboardSheet();
+  const lastRow = sh.getLastRow();
+  const entries = [];
+  if (lastRow >= 2) {
+    const values = sh.getRange(2, 1, lastRow - 1, LEADERBOARD_HEADERS.length).getValues();
+    values.forEach(function(row) {
+      const name = String(row[1] || '').replace(/\s+/g, ' ').trim();
+      const score = Number(row[2]);
+      if (name && Number.isFinite(score) && score > 0) {
+        entries.push({ name: name, score: Math.floor(score), date: row[0] || '' });
+      }
+    });
+  }
+  entries.sort(function(a, b) {
+    return b.score - a.score || String(a.name).localeCompare(String(b.name));
+  });
+  const result = { success: true, entries: entries.slice(0, 50) };
+  try { cache.put(LEADERBOARD_CACHE_KEY, JSON.stringify(result), CACHE_TTL_SECONDS); } catch (e) {}
+  return result;
+}
+
+function saveLeaderboardScore(nameValue, scoreValue) {
+  const name = String(nameValue || '').replace(/\s+/g, ' ').trim();
+  const score = Number(scoreValue);
+  if (!name || name.length < 2 || name.length > 100) {
+    return { success: false, message: 'A valid player name is required.' };
+  }
+  if (!Number.isFinite(score) || !Number.isInteger(score) || score <= 0 || score > 1000) {
+    return { success: false, message: 'Invalid score.' };
+  }
+
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+    const sh = getLeaderboardSheet();
+    const lastRow = sh.getLastRow();
+    let matchingRow = 0;
+    if (lastRow >= 2) {
+      const names = sh.getRange(2, 2, lastRow - 1, 1).getValues();
+      const target = normalizeName(name);
+      for (let i = 0; i < names.length; i++) {
+        if (normalizeName(names[i][0]) === target) {
+          matchingRow = i + 2;
+          break;
+        }
+      }
+    }
+
+    if (matchingRow) {
+      const existingScore = Number(sh.getRange(matchingRow, 3).getValue()) || 0;
+      if (score > existingScore) {
+        sh.getRange(matchingRow, 1, 1, 3).setValues([[new Date(), name, score]]);
+      }
+    } else {
+      sh.appendRow([new Date(), name, score]);
+    }
+    try { cacheRemoveLeaderboard(); } catch (e) {}
+    return { success: true, message: 'Score saved.' };
+  } catch (e) {
+    Logger.log('saveLeaderboardScore error: ' + e.toString());
+    return { success: false, message: 'Could not save score: ' + e.toString() };
+  } finally {
+    try { lock.releaseLock(); } catch (e) {}
+  }
+}
+
+function cacheRemoveLeaderboard() {
+  CacheService.getScriptCache().remove(LEADERBOARD_CACHE_KEY);
 }
 
 function getWallOfLove() {
@@ -1292,6 +1392,14 @@ function setupSheets() {
     Logger.log('✓ Created "' + SHEET_SETTINGS + '"');
   }
 
+  let leaderboard = spreadsheet.getSheetByName(SHEET_LEADERBOARD);
+  if (!leaderboard) {
+    leaderboard = spreadsheet.insertSheet(SHEET_LEADERBOARD);
+    leaderboard.appendRow(LEADERBOARD_HEADERS);
+    Logger.log('✓ Created "' + SHEET_LEADERBOARD + '"');
+  } else {
+    leaderboard.getRange(1, 1, 1, LEADERBOARD_HEADERS.length).setValues([LEADERBOARD_HEADERS]);
+  }
   let whitelist = spreadsheet.getSheetByName(SHEET_WHITELIST);
   if (!whitelist) {
     whitelist = spreadsheet.insertSheet(SHEET_WHITELIST);
@@ -1367,7 +1475,8 @@ function resetAllData() {
     whitelistDeleted: 0,
     selfiesDeleted: 0,
     videosDeleted: 0,
-    settingsReset: false
+    settingsReset: false,
+    leaderboardDeleted: 0
   };
 
   try {
@@ -1446,6 +1555,20 @@ function resetAllData() {
   }
 
   try {
+    const leaderboard = spreadsheet.getSheetByName(SHEET_LEADERBOARD);
+    if (leaderboard) {
+      const lastRow = leaderboard.getLastRow();
+      if (lastRow > 1) {
+        summary.leaderboardDeleted = lastRow - 1;
+        leaderboard.deleteRows(2, lastRow - 1);
+      }
+      leaderboard.getRange(1, 1, 1, LEADERBOARD_HEADERS.length).setValues([LEADERBOARD_HEADERS]);
+      cacheRemoveLeaderboard();
+    }
+  } catch (e) {
+    Logger.log('Could not reset Leaderboard: ' + e.toString());
+  }
+  try {
     const settings = spreadsheet.getSheetByName(SHEET_SETTINGS);
     if (settings) {
       const lastRow = settings.getLastRow();
@@ -1471,6 +1594,7 @@ function resetAllData() {
     'Whitelist entries deleted: ' + summary.whitelistDeleted + '\n' +
     'Selfie files deleted: ' + summary.selfiesDeleted + '\n' +
     'Video files deleted: ' + summary.videosDeleted + '\n' +
+    'Leaderboard rows deleted: ' + summary.leaderboardDeleted + '\n' +
     'Settings reset: ' + (summary.settingsReset ? 'yes' : 'no'),
     ui.ButtonSet.OK
   );
