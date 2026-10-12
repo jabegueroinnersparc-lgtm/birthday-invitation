@@ -429,6 +429,28 @@
     .quiz-replay { margin-top: 12px; background: var(--black); color: var(--white); border: none; padding: 10px 20px; border-radius: 10px; font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; }
     .quiz-replay:active { transform: scale(0.97); }
 
+    /* ===== QUIZ UPGRADE (moved from script) ===== */
+    .quiz-fact { display: none; margin-top: 12px; padding: 10px 12px; font-size: 12.5px; line-height: 1.5; color: #355f94; background: var(--white); border: 1px dashed #cfe0f5; border-radius: 12px; }
+    .quiz-fact.show { display: block; animation: msgIn 0.35s var(--ease-out); }
+    .quiz-persona-emoji { font-size: 44px; line-height: 1; margin-bottom: 6px; }
+    .quiz-persona-label { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #4a7bb7; margin-bottom: 4px; }
+    .quiz-persona-name { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: var(--black); margin-bottom: 6px; }
+    .quiz-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+    .quiz-actions .quiz-replay { margin-top: 0; width: 100%; min-height: 44px; }
+    .quiz-replay.alt { background: var(--white); color: var(--black); border: 1.5px solid #cfe0f5; }
+    .quiz-game { text-align: center; }
+    .game-hud { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 13px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .game-arena { position: relative; width: 100%; height: 240px; overflow: hidden; border-radius: 14px; background: var(--white); border: 1.5px dashed #cfe0f5; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+    .game-treat { position: absolute; width: 46px; height: 46px; padding: 0; border: none; border-radius: 50%; background: #fff; font-size: 26px; line-height: 46px; text-align: center; cursor: pointer; box-shadow: 0 6px 14px -6px rgba(0,0,0,0.3); animation: treatIn 0.18s var(--ease-out); -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+    .game-treat.caught { animation: treatCaught 0.18s ease-out forwards; pointer-events: none; }
+    @keyframes treatIn { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes treatCaught { to { transform: scale(1.6); opacity: 0; } }
+    .game-float { position: absolute; pointer-events: none; font-size: 16px; font-weight: 800; color: #16a34a; animation: gameFloat 0.7s ease-out forwards; }
+    .game-float.bad { color: #dc2626; }
+    @keyframes gameFloat { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-34px); opacity: 0; } }
+    .game-hint { margin-top: 8px; font-size: 11.5px; color: var(--steel); }
+    @media (prefers-reduced-motion: reduce) { .game-treat, .game-float, .quiz-fact.show { animation: none; } }
+
     /* ===== MUSIC TOGGLE ===== */
     .music-toggle { position: fixed; top: calc(16px + env(safe-area-inset-top)); right: 16px; z-index: 1100; width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--pearl); background: rgba(255,255,255,0.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--black); font-size: 18px; cursor: pointer; display: none; align-items: center; justify-content: center; transition: all 0.3s var(--ease-out); -webkit-tap-highlight-color: transparent; box-shadow: 0 4px 14px -4px rgba(0,0,0,0.15); }
     .music-toggle.visible { display: flex; }
@@ -4414,7 +4436,7 @@ $('downloadQrBtn').addEventListener('click', async () => {
   }
 })();
 
-/* BIRTHDAY QUIZ */
+/* BIRTHDAY QUIZ + DOGGO PERSONA + CATCH THE TREATS */
 (function initBirthdayQuiz() {
   const card = $('quizCard');
   const titleEl = $('quizTitle');
@@ -4423,19 +4445,59 @@ $('downloadQrBtn').addEventListener('click', async () => {
   const progressEl = $('quizProgress');
   if (!card || !questionEl || !optionsEl) return;
 
+  /* ---------- DATA ---------- */
   const QUESTIONS = [
-    { q: "Sino ang pinaka maldita na aso?", options: ['Saira', 'Sivy', 'Simon'], answer: 0 },
-    { q: "Sino ang pinaka pasaway na aso?", options: ['Saira', 'Sivy', 'Simon'], answer: 1 },
-    { q: "Sino pinakapogi?", options: ['Saira', 'Sivy', 'Simon'], answer: 2 },
-    { q: "Sino ang mahilig mag kalat?", options: ['Saira', 'Sivy', 'Simon'], answer: 1 },
-    { q: "Sino ang pinaka mabait?", options: ['Saira', 'Sivy', 'Simon'], answer: 0 }
+    { q: "Sino ang pinaka maldita na aso?", options: ['Saira', 'Sivy', 'Simon'], answer: 0, fact: "Saira runs this house. Everyone else just lives in it. 💅" },
+    { q: "Sino ang pinaka pasaway na aso?", options: ['Saira', 'Sivy', 'Simon'], answer: 1, fact: "Sivy heard \"bawal\" and understood \"subukan mo\". 😈" },
+    { q: "Sino pinakapogi?", options: ['Saira', 'Sivy', 'Simon'], answer: 2, fact: "Obvious naman. No further questions. 😎" },
+    { q: "Sino ang mahilig mag kalat?", options: ['Saira', 'Sivy', 'Simon'], answer: 2, fact: "Pogi pero may iniwang bakas sa sahig. 🧦" },
+    { q: "Sino ang pinaka mabait?", options: ['Saira', 'Sivy', 'Simon'], answer: 1, fact: "Yes, Sivy. Surprise! Pasaway pero mabait. 💛" }
   ];
 
+  const CORRECT_REACTIONS = [
+    ['🐶🎉', 'Tama! Woof woof!'],
+    ['🐕✨', 'Ang galing mo! Treat for you!'],
+    ['🐶💛', 'Kilala mo nga sila!']
+  ];
+  const WRONG_REACTIONS = [
+    ['🐕💭', 'Hmm… hindi yan. Sniff sniff.'],
+    ['🐶😅', 'Aray! Close, pero hindi.'],
+    ['🐕🙈', 'Ay naku, review ka pa!']
+  ];
+
+  const PERSONAS = {
+    simon: { emoji: '😎🐶', name: 'Simon, the Pogi Expert', text: "You know everything, and you look good doing it." },
+    sivy:  { emoji: '😈🐕', name: 'Sivy, the Pasaway',      text: "Chaotic but lovable. You'll be the life of the party." },
+    saira: { emoji: '💅🐩', name: 'Saira, the Maldita',     text: "Mataray ka, and honestly, iconic. Ikaw ang boss." }
+  };
+
+  const BEST_KEY = 'birthdayTreatBest';
+  const GAME_SECONDS = 15;
+
+  /* ---------- EXTRA ELEMENTS ---------- */
+  const factEl = document.createElement('div');
+  factEl.className = 'quiz-fact';
+  optionsEl.insertAdjacentElement('afterend', factEl);
+
+  const gameEl = document.createElement('div');
+  gameEl.className = 'quiz-game';
+  gameEl.style.display = 'none';
+  card.appendChild(gameEl);
+
+  /* ---------- STATE ---------- */
   let current = 0;
   let score = 0;
   let locked = false;
   let order = [];
 
+  let playing = false;
+  let timeLeft = 0;
+  let gameScore = 0;
+  let tickTimer = null;
+  let spawnTimer = null;
+  let gameStart = 0;
+
+  /* ---------- HELPERS ---------- */
   function shuffle(arr) {
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i--) {
@@ -4444,18 +4506,32 @@ $('downloadQrBtn').addEventListener('click', async () => {
     }
     return a;
   }
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function getBest() { return parseInt(safeStorageGet(BEST_KEY) || '0', 10) || 0; }
 
+  function showQuizUI() {
+    gameEl.style.display = 'none';
+    gameEl.innerHTML = '';
+    titleEl.textContent = 'Guess the birthday star';
+    questionEl.style.display = '';
+    optionsEl.style.display = '';
+    progressEl.style.display = '';
+  }
+
+  /* ---------- QUIZ ---------- */
   function renderQuestion() {
     if (current >= order.length) return renderResult();
     const q = QUESTIONS[order[current]];
     questionEl.textContent = q.q;
-    progressEl.textContent = `Question ${current + 1} of ${order.length}`;
+    progressEl.textContent = 'Question ' + (current + 1) + ' of ' + order.length;
+    factEl.classList.remove('show');
+    factEl.textContent = '';
     locked = false;
-    optionsEl.innerHTML = q.options.map((opt, i) =>
-      `<button type="button" class="quiz-option" data-i="${i}">${escapeHtml(opt)}</button>`
-    ).join('');
-    optionsEl.querySelectorAll('.quiz-option').forEach(btn => {
-      btn.addEventListener('click', () => handleAnswer(parseInt(btn.dataset.i, 10), q));
+    optionsEl.innerHTML = q.options.map(function(opt, i) {
+      return '<button type="button" class="quiz-option" data-i="' + i + '">' + escapeHtml(opt) + '</button>';
+    }).join('');
+    optionsEl.querySelectorAll('.quiz-option').forEach(function(btn) {
+      btn.addEventListener('click', function() { handleAnswer(parseInt(btn.dataset.i, 10), q); });
     });
   }
 
@@ -4463,42 +4539,213 @@ $('downloadQrBtn').addEventListener('click', async () => {
     if (locked) return;
     locked = true;
     const buttons = optionsEl.querySelectorAll('.quiz-option');
-    buttons.forEach((btn, i) => {
+    buttons.forEach(function(btn, i) {
       btn.disabled = true;
       if (i === q.answer) btn.classList.add('correct');
       else if (i === picked) btn.classList.add('wrong');
     });
-    if (picked === q.answer) score++;
-    setTimeout(() => {
+
+    const isCorrect = picked === q.answer;
+    if (isCorrect) score++;
+
+    const r = pick(isCorrect ? CORRECT_REACTIONS : WRONG_REACTIONS);
+    showDogReaction(r[0], r[1], isCorrect ? 'bark' : null);
+
+    if (q.fact) {
+      factEl.textContent = q.fact;
+      factEl.classList.add('show');
+    }
+
+    setTimeout(function() {
       current++;
       if (current >= order.length) renderResult();
       else renderQuestion();
-    }, 900);
+    }, q.fact ? 1700 : 900);
+  }
+
+  function personaFor(s, total) {
+    const ratio = s / total;
+    if (ratio >= 0.8) return PERSONAS.simon;
+    if (ratio >= 0.4) return PERSONAS.sivy;
+    return PERSONAS.saira;
   }
 
   function renderResult() {
-    questionEl.textContent = '';
+    const total = order.length;
+    const p = personaFor(score, total);
     optionsEl.innerHTML = '';
     progressEl.textContent = '';
-    const total = order.length;
-    let msg = '';
-    let emoji = '🎉';
-    if (score === total) { msg = "Perfect score! You know the birthday stars by heart. 💛"; emoji = '🏆'; }
-    else if (score >= total - 1) { msg = "So close! You clearly know them well."; emoji = '🌟'; }
-    else if (score >= total / 2) { msg = "Not bad! A little more gossip needed."; emoji = '😄'; }
-    else { msg = "Looks like you need to hang out with them more!"; emoji = '😅'; }
-    card.querySelector('.quiz-question').innerHTML =
-      `<div style="font-size:40px;margin-bottom:8px;">${emoji}</div>
-       <div class="quiz-result">You got <strong>${score} / ${total}</strong> right.<br>${msg}</div>
-       <button type="button" class="quiz-replay" id="quizReplay">Play again</button>`;
-    $('quizReplay').addEventListener('click', () => startQuiz());
+    factEl.classList.remove('show');
+    factEl.textContent = '';
+
+    questionEl.innerHTML =
+      '<div class="quiz-persona-emoji">' + p.emoji + '</div>' +
+      '<div class="quiz-persona-label">Which doggo are you?</div>' +
+      '<div class="quiz-persona-name">You\'re ' + escapeHtml(p.name) + '!</div>' +
+      '<div class="quiz-result"><strong>' + score + ' / ' + total + '</strong> correct<br>' + escapeHtml(p.text) + '</div>' +
+      '<div class="quiz-actions">' +
+        '<button type="button" class="quiz-replay" id="quizPlayGame">🦴 Catch the treats</button>' +
+        '<button type="button" class="quiz-replay alt" id="quizReplay">Play again</button>' +
+      '</div>';
+
+    $('quizReplay').addEventListener('click', startQuiz);
+    $('quizPlayGame').addEventListener('click', startGame);
+
+    if (score === total) {
+      try { fireConfetti(); playHappyBark(); } catch (e) {}
+    }
   }
 
   function startQuiz() {
+    stopGame();
+    showQuizUI();
     current = 0;
     score = 0;
-    order = shuffle(QUESTIONS.map((_, i) => i)).slice(0, 5);
+    order = shuffle(QUESTIONS.map(function(_, i) { return i; })).slice(0, 5);
     renderQuestion();
+  }
+
+  /* ---------- CATCH THE TREATS ---------- */
+  const ITEMS = {
+    bone: { emoji: '🦴', pts: 1,  life: 1000 },
+    meat: { emoji: '🍖', pts: 3,  life: 750 },
+    sock: { emoji: '🧦', pts: -2, life: 1100 }
+  };
+
+  function stopGame() {
+    playing = false;
+    clearInterval(tickTimer);
+    clearTimeout(spawnTimer);
+    tickTimer = null;
+    spawnTimer = null;
+  }
+
+  function startGame() {
+    stopGame();
+    questionEl.style.display = 'none';
+    optionsEl.style.display = 'none';
+    progressEl.style.display = 'none';
+    factEl.classList.remove('show');
+    titleEl.textContent = 'Catch the treats 🦴';
+
+    gameScore = 0;
+    timeLeft = GAME_SECONDS;
+    gameStart = Date.now();
+    playing = true;
+
+    gameEl.style.display = 'block';
+    gameEl.innerHTML =
+      '<div class="game-hud">' +
+        '<span>⏱ <b id="gameTime">' + GAME_SECONDS + '</b>s</span>' +
+        '<span>🦴 <b id="gameScore">0</b></span>' +
+        '<span>🏆 <b id="gameBest">' + getBest() + '</b></span>' +
+      '</div>' +
+      '<div class="game-arena" id="gameArena"></div>' +
+      '<p class="game-hint">Tap 🦴 (+1) and 🍖 (+3). Avoid 🧦 (−2)!</p>';
+
+    tickTimer = setInterval(function() {
+      timeLeft--;
+      const t = $('gameTime');
+      if (t) t.textContent = Math.max(0, timeLeft);
+      if (timeLeft <= 0) endGame();
+    }, 1000);
+
+    spawn();
+  }
+
+  function updateScoreUI() {
+    const s = $('gameScore');
+    if (s) s.textContent = gameScore;
+  }
+
+  function floatText(arena, text, x, y, bad) {
+    const f = document.createElement('span');
+    f.className = 'game-float' + (bad ? ' bad' : '');
+    f.textContent = text;
+    f.style.left = x + 'px';
+    f.style.top = y + 'px';
+    arena.appendChild(f);
+    setTimeout(function() { f.remove(); }, 700);
+  }
+
+  function spawn() {
+    if (!playing) return;
+    const arena = $('gameArena');
+    if (!arena) return;
+
+    const roll = Math.random();
+    const kind = roll < 0.18 ? ITEMS.sock : roll < 0.30 ? ITEMS.meat : ITEMS.bone;
+
+    const size = 46;
+    const w = Math.max(arena.clientWidth - size, 10);
+    const h = Math.max(arena.clientHeight - size, 10);
+    const x = Math.random() * w;
+    const y = Math.random() * h;
+
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'game-treat';
+    el.textContent = kind.emoji;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.setAttribute('aria-label', kind.emoji);
+
+    let caught = false;
+    el.addEventListener('pointerdown', function(ev) {
+      ev.preventDefault();
+      if (caught || !playing) return;
+      caught = true;
+      gameScore = Math.max(0, gameScore + kind.pts);
+      updateScoreUI();
+      floatText(arena, (kind.pts > 0 ? '+' : '') + kind.pts, x + 8, y, kind.pts < 0);
+      el.classList.add('caught');
+      setTimeout(function() { el.remove(); }, 180);
+    });
+
+    arena.appendChild(el);
+    setTimeout(function() { if (!caught) el.remove(); }, kind.life);
+
+    const elapsed = (Date.now() - gameStart) / 1000;
+    const delay = Math.max(320, 760 - elapsed * 28);
+    spawnTimer = setTimeout(spawn, delay);
+  }
+
+  function endGame() {
+    stopGame();
+    const prevBest = getBest();
+    const isNewBest = gameScore > prevBest;
+    if (isNewBest) safeStorageSet(BEST_KEY, String(gameScore));
+    const best = Math.max(prevBest, gameScore);
+
+    let emoji = '🐶';
+    let msg = 'Nice try! Subukan ulit?';
+    if (gameScore >= 25) { emoji = '🏆'; msg = 'Legendary treat hunter!'; }
+    else if (gameScore >= 15) { emoji = '🌟'; msg = 'Ang bilis ng paws mo!'; }
+    else if (gameScore >= 8) { emoji = '😄'; msg = 'Not bad, doggo trainee!'; }
+
+    gameEl.innerHTML =
+      '<div class="quiz-persona-emoji">' + emoji + '</div>' +
+      '<div class="quiz-persona-name">' + gameScore + ' points</div>' +
+      '<div class="quiz-result">' + msg + '<br>' +
+        (isNewBest ? '<strong>🎉 New best score!</strong>' : 'Best: <strong>' + best + '</strong>') +
+      '</div>' +
+      '<div class="quiz-actions">' +
+        '<button type="button" class="quiz-replay" id="gameAgain">Play again</button>' +
+        '<button type="button" class="quiz-replay alt" id="gameBack">Back to results</button>' +
+      '</div>';
+
+    $('gameAgain').addEventListener('click', startGame);
+    $('gameBack').addEventListener('click', function() {
+      showQuizUI();
+      renderResult();
+    });
+
+    if (isNewBest && gameScore > 0) {
+      try { fireConfetti(); playHappyBark(); } catch (e) {}
+      showDogReaction('🐶🏆', 'New record! Woof woof woof!', 'bark');
+    } else {
+      showDogReaction('🐕🦴', 'Good game! Nakakapagod ha.');
+    }
   }
 
   window.startBirthdayQuiz = startQuiz;
