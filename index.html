@@ -1339,6 +1339,9 @@
     .gift-sidebar-trigger > span:not(.gift-trigger-icon) { max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap; transition: max-width .3s ease, opacity .2s ease; }
     .gift-sidebar-trigger.expanded { width: auto; height: auto; min-height: 50px; padding: 15px 22px; gap: 10px; }
     .gift-sidebar-trigger.expanded > span:not(.gift-trigger-icon) { max-width: 110px; opacity: 1; }
+    .gift-sidebar-trigger.visible:not(.expanded):not(.dragging) { animation: giftTriggerGlow 3.4s ease-in-out infinite; }
+    .gift-sidebar-trigger.expanded, .gift-sidebar-trigger.dragging { animation: none; }
+    @keyframes giftTriggerGlow { 0%, 100% { box-shadow: 0 10px 25px -9px rgba(212,154,30,.48), 0 0 0 0 rgba(224,165,44,0); } 50% { box-shadow: 0 12px 28px -8px rgba(212,154,30,.58), 0 0 0 7px rgba(224,165,44,.12); } }
     @keyframes giftTriggerPulse { 0%, 100% { box-shadow: 0 14px 34px -8px rgba(212, 154, 30, 0.55), 0 0 0 0 rgba(224, 165, 44, 0.45); } 50% { box-shadow: 0 14px 34px -8px rgba(212, 154, 30, 0.55), 0 0 0 12px rgba(224, 165, 44, 0); } }
     @media (max-width: 640px) {
       .gift-sidebar-trigger { right: 16px; bottom: calc(88px + env(safe-area-inset-bottom)); width: 50px; height: 50px; padding: 0; font-size: 13px; }
