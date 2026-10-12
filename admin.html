@@ -614,6 +614,7 @@
     <button type="button" class="admin-side-btn active" data-admin-section="scanner"><span class="side-icon">▣</span><span>Code Scanner</span></button>
     <button type="button" class="admin-side-btn" data-admin-section="manual"><span class="side-icon">⌨</span><span>Manual Code</span></button>
     <button type="button" class="admin-side-btn" data-admin-section="attendees"><span class="side-icon">♙</span><span>Attendees</span></button>
+    <button type="button" class="admin-side-btn" data-admin-section="leaderboard"><span class="side-icon">🏆</span><span>Leaderboard</span></button>
   </aside>
 
   <div class="scanner-main">
@@ -686,6 +687,14 @@
 
   </div>
 
+  <section class="leaderboard-admin-panel hidden" id="leaderboardAdminPanel" aria-labelledby="leaderboardAdminTitle">
+    <div class="leaderboard-admin-head">
+      <div><div class="attendee-kicker">Protected Google Sheets controls</div><h1 id="leaderboardAdminTitle">Leaderboard moderation</h1><p>Review, correct, or remove scores. Changes are protected by your admin session.</p></div>
+      <div class="leaderboard-admin-actions"><button type="button" class="attendee-refresh" id="refreshAdminLeaderboardBtn">Refresh scores</button><button type="button" class="danger-outline" id="resetAdminLeaderboardBtn">Reset all</button></div>
+    </div>
+    <div class="leaderboard-admin-toolbar"><div id="leaderboardAdminStatus" class="attendee-load-status">Ready to load leaderboard scores.</div><input class="attendee-search" id="leaderboardAdminSearch" type="search" placeholder="Search player name" autocomplete="off"></div>
+    <div class="leaderboard-admin-list" id="leaderboardAdminList"><div class="attendee-empty">Select Leaderboard to load scores.</div></div>
+  </section>
   <!-- ATTENDEES PANEL (now inside #adminApp so it isn't pushed below
        the full-viewport-height admin-app block) -->
   <section class="attendee-panel hidden" id="attendeePanel" aria-labelledby="attendeePanelTitle">
@@ -730,8 +739,8 @@
               if (token) body.set('token', token);
             } catch (e) {}
           }
-          if (prop === 'updateAttendee') body.set('data', JSON.stringify(value || {}));
-          else if (prop === 'deleteAttendee') body.set('rowIndex', String(value || ''));
+          if (prop === 'updateAttendee' || prop === 'updateLeaderboardScore') body.set('data', JSON.stringify(value || {}));
+          else if (prop === 'deleteAttendee' || prop === 'deleteLeaderboardScore') body.set('rowIndex', String(value || ''));
           else if (prop === 'submitForm' || prop === 'submitPayment') body.set('data', JSON.stringify(value || {}));
           else if (prop === 'adminLogin') body.set('password', String(value || ''));
           else if (prop === 'verifyTicket' || prop === 'checkInTicket') body.set('code', String(value || ''));
@@ -774,10 +783,13 @@
     document.querySelectorAll('[data-admin-section]').forEach(btn => btn.classList.toggle('active', btn.dataset.adminSection === section));
     const scanner = $('adminApp').querySelector('.scanner-main');
     const panel = $('attendeePanel');
+    const leaderboardPanel = $('leaderboardAdminPanel');
     if (section === 'attendees') {
-      scanner.style.display = 'none'; panel.classList.remove('hidden'); stopInlineScanner(); closeCameraPopup(); loadAdminAttendees();
+      scanner.style.display = 'none'; panel.classList.remove('hidden'); leaderboardPanel.classList.add('hidden'); stopInlineScanner(); closeCameraPopup(); loadAdminAttendees();
+    } else if (section === 'leaderboard') {
+      scanner.style.display = 'none'; panel.classList.add('hidden'); leaderboardPanel.classList.remove('hidden'); stopInlineScanner(); closeCameraPopup(); loadAdminLeaderboard();
     } else {
-      scanner.style.display = ''; panel.classList.add('hidden');
+      scanner.style.display = ''; panel.classList.add('hidden'); leaderboardPanel.classList.add('hidden');
       if (section === 'manual') switchMode('manual'); else switchMode('camera');
     }
   }
@@ -927,6 +939,50 @@
     google.script.run.withSuccessHandler(res => { if (!res || !res.success) { showToast((res && res.message) || 'Could not remove attendee.'); return; } showToast('Attendee removed.'); loadAdminAttendees(); }).withFailureHandler(err => showToast('Error: ' + err.message)).deleteAttendee(rowIndex, getAdminSessionToken());
   }
 
+  /* ============================================================
+     LEADERBOARD MODERATION
+     ============================================================ */
+  let adminLeaderboard = [];
+  let adminLeaderboardFilter = '';
+  $('refreshAdminLeaderboardBtn').addEventListener('click', loadAdminLeaderboard);
+  $('leaderboardAdminSearch').addEventListener('input', function(e) { adminLeaderboardFilter = e.target.value.toLowerCase().trim(); renderAdminLeaderboard(); });
+  $('resetAdminLeaderboardBtn').addEventListener('click', resetAdminLeaderboard);
+  function loadAdminLeaderboard() {
+    $('leaderboardAdminList').innerHTML = '<div class="attendee-empty">Loading leaderboard scores…</div>';
+    const status = $('leaderboardAdminStatus'); status.textContent = 'Contacting Google Sheets backend…'; status.className = 'attendee-load-status';
+    google.script.run.withSuccessHandler(function(res) {
+      if (!res || !res.success) { status.textContent = (res && res.message) || 'Could not load scores.'; status.className = 'attendee-load-status error'; $('leaderboardAdminList').innerHTML = '<div class="attendee-empty">' + escapeHtml(status.textContent) + '</div>'; return; }
+      adminLeaderboard = Array.isArray(res.entries) ? res.entries : []; renderAdminLeaderboard(); status.textContent = 'Connected — ' + adminLeaderboard.length + ' score record(s) loaded.'; status.className = 'attendee-load-status ok';
+    }).withFailureHandler(function(err) { status.textContent = 'Load failed: ' + ((err && err.message) || 'Backend unavailable.'); status.className = 'attendee-load-status error'; }).getAdminLeaderboard(getAdminSessionToken());
+  }
+  function renderAdminLeaderboard() {
+    const rows = adminLeaderboard.filter(function(e) { return String(e.name || '').toLowerCase().includes(adminLeaderboardFilter); });
+    const list = $('leaderboardAdminList');
+    if (!rows.length) { list.innerHTML = '<div class="attendee-empty">No matching scores.</div>'; return; }
+    list.innerHTML = rows.map(function(e, index) {
+      const rank = adminLeaderboard.indexOf(e) + 1; const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '⭐';
+      return '<article class="leaderboard-admin-card' + (rank <= 3 ? ' is-top' : '') + '">' +
+        '<div class="leaderboard-admin-card-head"><span class="leaderboard-admin-rank">Rank #' + rank + '</span><span class="leaderboard-admin-medal">' + medal + '</span></div>' +
+        '<div class="leaderboard-admin-fields"><label>Player name<input data-score-name="' + e.rowIndex + '" value="' + escapeHtml(e.name) + '" maxlength="100"></label><label>Score<input data-score-value="' + e.rowIndex + '" type="number" min="0" max="1000" step="1" value="' + (Number(e.score) || 0) + '"></label></div>' +
+        '<div class="leaderboard-admin-card-actions"><button type="button" data-score-save="' + e.rowIndex + '">Save changes</button><button type="button" class="danger" data-score-delete="' + e.rowIndex + '">Remove score</button></div></article>';
+    }).join('');
+    list.querySelectorAll('[data-score-save]').forEach(function(btn) { btn.addEventListener('click', function() { saveAdminScore(Number(btn.dataset.scoreSave)); }); });
+    list.querySelectorAll('[data-score-delete]').forEach(function(btn) { btn.addEventListener('click', function() { deleteAdminScore(Number(btn.dataset.scoreDelete)); }); });
+  }
+  function saveAdminScore(rowIndex) {
+    const nameInput = document.querySelector('[data-score-name="' + rowIndex + '"]'); const scoreInput = document.querySelector('[data-score-value="' + rowIndex + '"]');
+    if (!nameInput || !scoreInput) return;
+    google.script.run.withSuccessHandler(function(res) { if (!res || !res.success) { showToast((res && res.message) || 'Could not update score.'); return; } showToast('Score updated.'); loadAdminLeaderboard(); }).withFailureHandler(function(err) { showToast('Error: ' + ((err && err.message) || 'Could not update score.')); }).updateLeaderboardScore({ rowIndex: rowIndex, name: nameInput.value.trim(), score: Number(scoreInput.value) }, getAdminSessionToken());
+  }
+  function deleteAdminScore(rowIndex) {
+    const entry = adminLeaderboard.find(function(e) { return Number(e.rowIndex) === rowIndex; });
+    if (!entry || !confirm('Remove ' + entry.name + '\'s score? This cannot be undone.')) return;
+    google.script.run.withSuccessHandler(function(res) { if (!res || !res.success) { showToast((res && res.message) || 'Could not remove score.'); return; } showToast('Score removed.'); loadAdminLeaderboard(); }).withFailureHandler(function(err) { showToast('Error: ' + ((err && err.message) || 'Could not remove score.')); }).deleteLeaderboardScore(rowIndex, getAdminSessionToken());
+  }
+  function resetAdminLeaderboard() {
+    if (!confirm('Reset the entire leaderboard? Every score will be deleted. This cannot be undone.')) return;
+    google.script.run.withSuccessHandler(function(res) { if (!res || !res.success) { showToast((res && res.message) || 'Could not reset leaderboard.'); return; } showToast('Leaderboard reset.'); loadAdminLeaderboard(); }).withFailureHandler(function(err) { showToast('Error: ' + ((err && err.message) || 'Could not reset leaderboard.')); }).resetLeaderboard(getAdminSessionToken());
+  }
   /* ============================================================
      AUTH
      ============================================================ */
@@ -1211,6 +1267,36 @@
       touch-action: manipulation;
     }
     button:active { transform: scale(0.97); }
+  
+    /* MODERN LEADERBOARD MODERATION */
+    .leaderboard-admin-panel { display: none; width: min(100%, 980px); margin: 0 auto; padding: 28px 22px 40px; animation: resultIn .4s var(--ease-out); }
+    .leaderboard-admin-panel:not(.hidden) { display: block; }
+    .leaderboard-admin-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 22px; }
+    .leaderboard-admin-head h1 { font-family: 'Playfair Display', serif; font-size: clamp(28px, 5vw, 42px); letter-spacing: -.03em; line-height: 1.05; margin: 4px 0 8px; }
+    .leaderboard-admin-head p { color: var(--steel); font-size: 13px; line-height: 1.5; }
+    .leaderboard-admin-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .danger-outline { min-height: 40px; padding: 9px 14px; border-radius: 10px; border: 1px solid #fecaca; background: #fff5f5; color: #b91c1c; font: 700 11px 'Inter', sans-serif; cursor: pointer; transition: .2s ease; }
+    .danger-outline:hover { background: #fee2e2; transform: translateY(-1px); }
+    .leaderboard-admin-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .leaderboard-admin-toolbar .attendee-search { max-width: 320px; }
+    .leaderboard-admin-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+    .leaderboard-admin-card { background: #fff; border: 1px solid var(--pearl); border-radius: 16px; padding: 16px; box-shadow: 0 10px 26px -20px rgba(0,0,0,.35); transition: transform .2s ease, box-shadow .2s ease; }
+    .leaderboard-admin-card:hover { transform: translateY(-2px); box-shadow: 0 16px 30px -20px rgba(0,0,0,.45); }
+    .leaderboard-admin-card.is-top { border-color: #e6b93f; background: linear-gradient(145deg, #fffdf3, #fff); }
+    .leaderboard-admin-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+    .leaderboard-admin-rank { color: var(--steel); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .leaderboard-admin-medal { font-size: 22px; }
+    .leaderboard-admin-fields { display: grid; grid-template-columns: minmax(0, 1fr) 100px; gap: 8px; }
+    .leaderboard-admin-fields label { display: grid; gap: 5px; color: var(--steel); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .leaderboard-admin-fields input { width: 100%; min-height: 40px; padding: 9px 10px; border: 1px solid var(--mist); border-radius: 9px; background: #fff; color: var(--ink); font: 600 13px 'Inter', sans-serif; }
+    .leaderboard-admin-fields input:focus { outline: none; border-color: #6087b4; box-shadow: 0 0 0 3px rgba(74,123,183,.12); }
+    .leaderboard-admin-card-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .leaderboard-admin-card-actions button { flex: 1; min-height: 38px; border-radius: 9px; border: 1px solid var(--pearl); background: var(--fog); color: var(--ink); font: 700 11px 'Inter', sans-serif; cursor: pointer; transition: .2s ease; }
+    .leaderboard-admin-card-actions button:hover { background: var(--ink); color: #fff; transform: translateY(-1px); }
+    .leaderboard-admin-card-actions button.danger { color: #b91c1c; background: #fff5f5; border-color: #fecaca; }
+    .leaderboard-admin-card-actions button.danger:hover { background: #b91c1c; color: #fff; }
+    @media (max-width: 700px) { .leaderboard-admin-panel { padding: 20px 12px 30px; } .leaderboard-admin-head { align-items: stretch; flex-direction: column; } .leaderboard-admin-actions { justify-content: flex-start; } .leaderboard-admin-toolbar { align-items: stretch; flex-direction: column; } .leaderboard-admin-toolbar .attendee-search { max-width: none; } }
+    @media (prefers-reduced-motion: reduce) { .leaderboard-admin-card, .danger-outline, .leaderboard-admin-card-actions button { transition: none; } }
   </style>
 </head>
 <body>
