@@ -1697,6 +1697,16 @@ body.game-lock { overflow: hidden; }
           </button>
         </div>
 
+              <!-- LEADERBOARD -->
+              <div class="leaderboard-card" id="leaderboardCard">
+                <div class="leaderboard-title">
+                  <span class="emoji">🏆</span> Mini Game Leaderboard
+                </div>
+                <div class="leaderboard-list" id="leaderboardList">
+                  <div class="leaderboard-loading">Loading scores…</div>
+                </div>
+                <button type="button" class="leaderboard-refresh" id="leaderboardRefreshBtn">Refresh scores</button>
+              </div>
         <div class="welcome-footer">
           <button type="button" class="btn-copy-invite" id="copyInviteBtnWelcome">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -1980,16 +1990,7 @@ body.game-lock { overflow: hidden; }
                 
               </div>
 
-              <!-- LEADERBOARD -->
-              <div class="leaderboard-card" id="leaderboardCard">
-                <div class="leaderboard-title">
-                  <span class="emoji">🏆</span> Mini Game Leaderboard
-                </div>
-                <div class="leaderboard-list" id="leaderboardList">
-                  <div class="leaderboard-loading">Loading scores…</div>
-                </div>
-                <button type="button" class="leaderboard-refresh" id="leaderboardRefreshBtn">Refresh scores</button>
-              </div>
+
 
               <div class="ticket-actions">
                 <button type="button" class="btn btn-primary" id="newRsvpBtn">Back to Home</button>
@@ -2324,6 +2325,8 @@ async function api(action, params) {
       checkExistingRSVP: [params.name || params.email || '', params.mobile || ''],
       getAllAttendees: [!!params.force],
       getWallOfLove: [],
+      getLeaderboard: [!!params.force],
+      saveLeaderboardScore: [params.name || '', Number(params.score || 0)],
       submitPayment: [JSON.parse(params.data || '{}')]
     }[action];
 
@@ -2353,6 +2356,8 @@ async function api(action, params) {
       else if (action === 'checkExistingRSVP') runner.checkExistingRSVP(serverArgs[0], serverArgs[1]);
       else if (action === 'getAllAttendees') runner.getAllAttendees(serverArgs[0]);
       else if (action === 'getWallOfLove') runner.getWallOfLove();
+      else if (action === 'getLeaderboard') runner.getLeaderboard(serverArgs[0]);
+      else if (action === 'saveLeaderboardScore') runner.saveLeaderboardScore(serverArgs[0], serverArgs[1]);
       else if (action === 'submitPayment') runner.submitPayment(serverArgs[0]);
       else reject(new Error('Unknown action: ' + action));
     });
@@ -5092,8 +5097,6 @@ $('downloadQrBtn').addEventListener('click', async () => {
     if (isNewBest) safeStorageSet(BEST_KEY, String(gameScore));
     const best = Math.max(prevBest, gameScore);
 
-    // Save to leaderboard
-    saveScoreToLeaderboard(currentUser ? currentUser.name : 'Guest', gameScore);
 
     let emoji = '🐶';
     let msg = 'Nice try! Subukan ulit?';
@@ -5126,8 +5129,11 @@ $('downloadQrBtn').addEventListener('click', async () => {
       showDogReaction('🐕🦴', 'Good game! Nakakapagod ha.');
     }
 
-    // Refresh leaderboard in the card below
-    if (typeof window.loadLeaderboard === 'function') window.loadLeaderboard();
+    // Save the score to the shared Google Sheet, then refresh the visible board.
+    if (typeof window.loadLeaderboard === 'function') {
+      saveScoreToLeaderboard(currentUser ? currentUser.name : 'Guest', gameScore)
+        .then(function() { window.loadLeaderboard(); });
+    }
   }
 
   /* ---------- LEADERBOARD ---------- */
@@ -5140,22 +5146,46 @@ $('downloadQrBtn').addEventListener('click', async () => {
     } catch (e) { return []; }
   }
 
-  function saveScoreToLeaderboard(playerName, score) {
-    if (!playerName || score <= 0) return;
-    const entries = loadLeaderboardFromStorage();
-    const existingIndex = entries.findIndex(function(e) {
-      return e.name.toLowerCase() === playerName.toLowerCase();
-    });
-    if (existingIndex !== -1) {
-      if (score > entries[existingIndex].score) {
-        entries[existingIndex].score = score;
-        entries[existingIndex].date = Date.now();
+  async function saveScoreToLeaderboard(playerName, score) {
+    if (!playerName || score <= 0) return { success: false, message: 'No score to save.' };
+    try {
+      const result = await api('saveLeaderboardScore', {
+        name: playerName,
+        score: score
+      });
+      if (!result || !result.success) {
+        throw new Error((result && result.message) || 'Could not save score.');
       }
-    } else {
-      entries.push({ name: playerName, score: score, date: Date.now() });
+      // Keep a small local cache for graceful offline fallback only.
+      const entries = loadLeaderboardFromStorage();
+      const existingIndex = entries.findIndex(function(e) {
+        return String(e.name || '').toLowerCase() === String(playerName).toLowerCase();
+      });
+      if (existingIndex !== -1) {
+        entries[existingIndex].score = Math.max(Number(entries[existingIndex].score) || 0, score);
+        entries[existingIndex].date = Date.now();
+      } else {
+        entries.push({ name: playerName, score: score, date: Date.now() });
+      }
+      entries.sort(function(a, b) { return b.score - a.score; });
+      safeStorageSet(LEADERBOARD_KEY, JSON.stringify(entries.slice(0, 50)));
+      return result;
+    } catch (error) {
+      console.error('saveScoreToLeaderboard error:', error);
+      // Do not lose the score if the network is briefly unavailable.
+      const entries = loadLeaderboardFromStorage();
+      const existingIndex = entries.findIndex(function(e) {
+        return String(e.name || '').toLowerCase() === String(playerName).toLowerCase();
+      });
+      if (existingIndex !== -1) {
+        entries[existingIndex].score = Math.max(Number(entries[existingIndex].score) || 0, score);
+      } else {
+        entries.push({ name: playerName, score: score, date: Date.now() });
+      }
+      entries.sort(function(a, b) { return b.score - a.score; });
+      safeStorageSet(LEADERBOARD_KEY, JSON.stringify(entries.slice(0, 50)));
+      return { success: false, message: error && error.message ? error.message : 'Could not reach shared leaderboard.' };
     }
-    entries.sort(function(a, b) { return b.score - a.score; });
-    safeStorageSet(LEADERBOARD_KEY, JSON.stringify(entries.slice(0, 50)));
   }
 
   function renderLeaderboard(entries) {
@@ -5177,15 +5207,32 @@ $('downloadQrBtn').addEventListener('click', async () => {
     }).join('');
   }
 
-  window.loadLeaderboard = function() {
+  window.loadLeaderboard = async function() {
     const listEl = $('leaderboardList');
     const refreshBtn = $('leaderboardRefreshBtn');
     if (!listEl) return;
     if (refreshBtn) refreshBtn.disabled = true;
-    listEl.innerHTML = '<div class="leaderboard-loading">Loading scores…</div>';
-    const entries = loadLeaderboardFromStorage();
-    renderLeaderboard(entries);
-    if (refreshBtn) refreshBtn.disabled = false;
+    listEl.innerHTML = '<div class="leaderboard-loading">Loading shared scores…</div>';
+    try {
+      const result = await api('getLeaderboard', { force: true });
+      if (!result || !result.success || !Array.isArray(result.entries)) {
+        throw new Error((result && result.message) || 'Invalid leaderboard response.');
+      }
+      renderLeaderboard(result.entries);
+      // Refresh the offline fallback cache with the latest shared values.
+      safeStorageSet(LEADERBOARD_KEY, JSON.stringify(result.entries));
+      return result.entries;
+    } catch (error) {
+      console.error('loadLeaderboard error:', error);
+      const localEntries = loadLeaderboardFromStorage();
+      renderLeaderboard(localEntries);
+      if (!localEntries.length) {
+        listEl.innerHTML = '<div class="leaderboard-empty">Shared scores are temporarily unavailable. Please try again.</div>';
+      }
+      return localEntries;
+    } finally {
+      if (refreshBtn) refreshBtn.disabled = false;
+    }
   };
 
   // Hook up refresh button
