@@ -2317,60 +2317,6 @@ function playHappyBark() {
       oscillator.stop(start + 0.14);
     });
   } catch (e) {}
-
-  /* GAME END SOUNDS */
-// Optional: use your own mp3s instead (e.g. '/yehey.mp3'). Leave null for built-in sounds.
-const GAME_SOUND_FILES = { newBest: null, good: null, tryAgain: null };
-
-let gameAudioCtx = null;
-function gameTone(freq, delay, dur, type, vol, endFreq) {
-  try {
-    gameAudioCtx = gameAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    if (gameAudioCtx.state === 'suspended') gameAudioCtx.resume();
-    const t = gameAudioCtx.currentTime + delay;
-    const osc = gameAudioCtx.createOscillator();
-    const gain = gameAudioCtx.createGain();
-    osc.type = type || 'triangle';
-    osc.frequency.setValueAtTime(freq, t);
-    if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, t + dur);
-    gain.gain.setValueAtTime(0.0001, t);
-    gain.gain.exponentialRampToValueAtTime(vol || 0.15, t + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    osc.connect(gain);
-    gain.connect(gameAudioCtx.destination);
-    osc.start(t);
-    osc.stop(t + dur + 0.02);
-  } catch (e) {}
-}
-
-function playGameTick() { gameTone(880, 0, 0.06, 'square', 0.05); }
-
-function playGameEndSound(score, isNewBest) {
-  const kind = (isNewBest && score > 0) ? 'newBest' : score >= 8 ? 'good' : 'tryAgain';
-
-  const file = GAME_SOUND_FILES[kind];
-  if (file) {
-    const a = createSafeAudio(file);
-    if (a) {
-      a.volume = 0.9;
-      const p = a.play();
-      if (p && typeof p.catch === 'function') p.catch(function() {});
-      return;
-    }
-  }
-
-  if (kind === 'newBest') {
-    [523, 659, 784, 1047, 1319].forEach(function(f, i) { gameTone(f, i * 0.11, 0.22, 'triangle', 0.16); });
-    gameTone(1047, 0.6, 0.55, 'sine', 0.12);
-  } else if (kind === 'good') {
-    [440, 554, 659, 880].forEach(function(f, i) { gameTone(f, i * 0.1, 0.2, 'triangle', 0.15); });
-  } else {
-    gameTone(392, 0, 0.22, 'triangle', 0.14);
-    gameTone(330, 0.2, 0.22, 'triangle', 0.14);
-    gameTone(262, 0.4, 0.5, 'triangle', 0.14, 200);
-  }
-}
-
 }
 document.addEventListener('click', function(event) {
   if (!USE_LOCAL_UI_SOUNDS) return;
@@ -4907,7 +4853,6 @@ $('downloadQrBtn').addEventListener('click', async () => {
 
     tickTimer = setInterval(function() {
       timeLeft--;
-      if (timeLeft <= 5 && timeLeft > 0) playGameTick();
       const t = $('gameTime');
       if (t) {
         t.textContent = Math.max(0, timeLeft);
@@ -5011,13 +4956,13 @@ $('downloadQrBtn').addEventListener('click', async () => {
       if (typeof window.exitGameFullscreen === 'function') window.exitGameFullscreen();
     });
 
-          playGameEndSound(gameScore, isNewBest);
-      if (isNewBest && gameScore > 0) {
-        try { fireConfetti(); } catch (e) {}
-        showDogReaction('🐶🏆', 'New record! Woof woof woof!');
-      } else {
-        showDogReaction('🐕🦴', 'Good game! Nakakapagod ha.');
-      }
+    if (isNewBest && gameScore > 0) {
+      try { fireConfetti(); playHappyBark(); } catch (e) {}
+      showDogReaction('🐶🏆', 'New record! Woof woof woof!', 'bark');
+    } else {
+      showDogReaction('🐕🦴', 'Good game! Nakakapagod ha.');
+    }
+  }
 
   window.startBirthdayQuiz = startQuiz;
   window.startCatchTheTreats = startGame;
