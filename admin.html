@@ -1297,6 +1297,28 @@
     .leaderboard-admin-card-actions button.danger:hover { background: #b91c1c; color: #fff; }
     @media (max-width: 700px) { .leaderboard-admin-panel { padding: 20px 12px 30px; } .leaderboard-admin-head { align-items: stretch; flex-direction: column; } .leaderboard-admin-actions { justify-content: flex-start; } .leaderboard-admin-toolbar { align-items: stretch; flex-direction: column; } .leaderboard-admin-toolbar .attendee-search { max-width: none; } }
     @media (prefers-reduced-motion: reduce) { .leaderboard-admin-card, .danger-outline, .leaderboard-admin-card-actions button { transition: none; } }
+  
+    /* FINAL ALIGNMENT PASS */
+    .scanner-main, .attendee-panel, .leaderboard-admin-panel { box-sizing: border-box; }
+    .leaderboard-admin-panel { margin-left: 218px; width: auto; max-width: none; min-height: calc(100dvh - 58px); padding: 28px clamp(16px, 3vw, 42px) 42px; background: #f5f5f3; }
+    .leaderboard-admin-head, .leaderboard-admin-toolbar, .leaderboard-admin-list { width: 100%; max-width: 1180px; margin-left: auto; margin-right: auto; }
+    .leaderboard-admin-head { align-items: flex-start; margin-bottom: 20px; }
+    .leaderboard-admin-head > div:first-child { min-width: 0; flex: 1 1 auto; }
+    .leaderboard-admin-head h1 { margin: 4px 0 8px; color: #111; }
+    .leaderboard-admin-head p { max-width: 620px; margin: 0; }
+    .leaderboard-admin-actions { flex: 0 0 auto; align-items: center; }
+    .leaderboard-admin-toolbar { align-items: center; margin-bottom: 16px; }
+    .leaderboard-admin-toolbar .attendee-load-status { margin: 0; min-width: 0; flex: 1 1 auto; }
+    .leaderboard-admin-toolbar .attendee-search { flex: 0 1 320px; width: 100%; }
+    .leaderboard-admin-list { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); align-items: start; }
+    .leaderboard-admin-card { min-width: 0; }
+    @media (max-width: 760px) {
+      .leaderboard-admin-panel { margin-left: 0; width: 100%; min-height: 0; padding: 20px 12px 30px; }
+      .leaderboard-admin-head, .leaderboard-admin-toolbar { align-items: stretch; flex-direction: column; }
+      .leaderboard-admin-actions { justify-content: flex-start; align-items: stretch; }
+      .leaderboard-admin-actions button { flex: 1; }
+      .leaderboard-admin-toolbar .attendee-search { max-width: none; flex-basis: auto; }
+    }
   </style>
 </head>
 <body>
