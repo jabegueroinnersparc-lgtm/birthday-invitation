@@ -1244,46 +1244,68 @@
     }
 
     /* ===== FULLSCREEN MINI GAME ===== */
-    .game-fullscreen-active {
-      overflow: hidden !important;
-      position: fixed !important;
-      inset: 0 !important;
-      width: 100vw !important;
-      height: 100vh !important;
-      height: 100dvh !important;
-      z-index: 9999 !important;
-      background: #0a0a0a !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      padding: 16px !important;
-      margin: 0 !important;
-    }
-    .game-fullscreen-active #quizCard {
-      max-width: 900px !important;
-      width: 100% !important;
-      margin: 0 auto !important;
-      padding: 28px 24px 24px !important;
-      border-radius: 24px !important;
-      background: linear-gradient(165deg, #f0f7ff, #e6f0fb) !important;
-      max-height: 96dvh !important;
-      overflow-y: auto !important;
-      box-shadow: 0 40px 100px -20px rgba(0,0,0,0.8) !important;
-    }
-    @media (max-width: 640px) {
-      .game-fullscreen-active { padding: 8px !important; }
-      .game-fullscreen-active #quizCard {
-        padding: 16px 12px 14px !important;
-        border-radius: 16px !important;
-        max-height: 98dvh !important;
-      }
-    }
-    @media (max-width: 400px) {
-      .game-fullscreen-active #quizCard {
-        padding: 12px 8px 10px !important;
-        border-radius: 12px !important;
-      }
-    }
+body.game-lock { overflow: hidden; }
+.game-topbar { display: none; }
+
+.quiz-card.game-fs {
+  position: fixed; inset: 0; z-index: 9999;
+  width: 100%; height: 100vh; height: 100dvh;
+  max-width: none; margin: 0; border: 0; border-radius: 0;
+  padding: calc(12px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right))
+           calc(12px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));
+  display: flex; flex-direction: column;
+  background: radial-gradient(circle at 50% 0%, #1e293b, #0b1020 70%);
+  box-shadow: none; overflow: hidden;
+}
+.game-fs .quiz-kicker { display: none; }
+.game-fs .game-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; flex-shrink: 0; margin-bottom: 6px;
+}
+.game-top-btn {
+  min-height: 42px; padding: 9px 16px; border-radius: 100px;
+  border: 1.5px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.08);
+  color: #fff; font-family: inherit; font-size: 13px; font-weight: 700;
+  cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+.game-top-btn:active { transform: scale(0.97); }
+.game-top-btn.close { margin-left: auto; }
+
+.game-fs .quiz-title { color: #fff; font-size: clamp(18px, 4vmin, 28px); margin-bottom: 8px; flex-shrink: 0; }
+.game-fs .quiz-game { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+.game-fs .game-hud { justify-content: center; gap: 10px; margin-bottom: 8px; font-size: clamp(14px, 3.6vmin, 20px); color: #fff; flex-shrink: 0; }
+.game-fs .game-hud span { background: rgba(255,255,255,0.08); padding: 6px 16px; border-radius: 100px; }
+.game-hud b.urgent { color: #f87171; }
+
+.game-timebar { height: 6px; border-radius: 100px; background: rgba(255,255,255,0.12); overflow: hidden; margin-bottom: 10px; flex-shrink: 0; }
+.game-timebar i { display: block; height: 100%; width: 100%; border-radius: 100px; background: linear-gradient(90deg, #22c55e, #facc15, #ef4444); }
+
+.game-arena { touch-action: none; }
+.game-fs .game-arena {
+  flex: 1; height: auto; min-height: 0; width: 100%;
+  background: radial-gradient(circle at 50% 40%, #16213a, #0b1220);
+  border: 1.5px solid rgba(255,255,255,0.14);
+}
+.game-fs .game-hint { color: #94a3b8; flex-shrink: 0; margin-top: 10px; font-size: clamp(11px, 2.6vmin, 14px); }
+.game-fs .game-float { font-size: 28px; }
+
+.game-treat.gold { box-shadow: 0 0 0 4px #facc15, 0 0 22px rgba(250,204,21,0.7); }
+.game-treat.bad  { box-shadow: 0 0 0 4px #ef4444, 0 0 22px rgba(239,68,68,0.6); }
+.game-treat img { pointer-events: none; -webkit-user-drag: none; }
+
+.game-end { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; max-width: 420px; width: 100%; margin: 0 auto; }
+.game-fs .quiz-persona-emoji { font-size: 64px; }
+.game-fs .quiz-persona-name, .game-fs .quiz-result strong { color: #fff; }
+.game-fs .quiz-result { color: #cbd5e1; font-size: 15px; }
+.game-fs .quiz-actions { flex-direction: row; width: 100%; gap: 10px; }
+.game-fs .quiz-replay { background: #fff; color: #0a0a0a; }
+.game-fs .quiz-replay.alt { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,0.3); }
+
+/* keep reactions, toasts and confetti above the game overlay */
+.dog-reaction { z-index: 10002; }
+.toast { z-index: 10003; }
+.success-confetti, .floating-emoji { z-index: 10001; }
   </style>
 </head>
 <body>
@@ -1797,15 +1819,17 @@
                 </div>
               </div>
 
+              <div class="game-topbar" id="gameTopbar">
+                <button type="button" class="game-top-btn" id="gameFsToggle">⛶ Full screen</button>
+                <button type="button" class="game-top-btn close" id="quizBackBtn">✕ Close</button>
+              </div> 
               <div class="quiz-card" id="quizCard">
                 <span class="quiz-kicker">🎂 Fun break</span>
                 <h4 class="quiz-title" id="quizTitle">Guess the birthday star</h4>
                 <p class="quiz-question" id="quizQuestion">Loading…</p>
                 <div class="quiz-options" id="quizOptions"></div>
                 <div class="quiz-progress" id="quizProgress"></div>
-                <button type="button" class="quiz-back-btn" id="quizBackBtn" style="display:none;">
-                  ← Back to Home
-                </button>
+                
               </div>
 
               <div class="ticket-actions">
@@ -1955,7 +1979,7 @@
    or base64 string. If `image` is null, the emoji fallback is used.
    
    Example:
-     bone: { emoji: '🦴', image: '/my-dog.png', pts: 1, life: 1000 }
+     bone: { emoji: '🦴', image: '/saira.png', pts: 1, life: 1000 }
    ============================================================ */
 const CUSTOM_GAME_IMAGES = {
   // Replace with your dog's photo URL
@@ -4612,7 +4636,7 @@ $('downloadQrBtn').addEventListener('click', async () => {
   const CORRECT_REACTIONS = [
     ['🐶🎉', 'Tama! Woof woof!'],
     ['🐕✨', 'Ang galing mo! Treat for you!'],
-    ['🐶💛', 'Kilala mo nga sila!']
+    ['🐶❤️', 'Alam mo ah']
   ];
   const WRONG_REACTIONS = [
     ['🐕💭', 'Hmm… hindi yan. Sniff sniff.'],
@@ -4760,17 +4784,28 @@ $('downloadQrBtn').addEventListener('click', async () => {
     renderQuestion();
   }
 
-  /* ---------- CATCH THE TREATS (with custom image support) ---------- */
-  // If you set CUSTOM_GAME_IMAGES.dog / .head above, those will be used.
+    /* ---------- CATCH THE TREATS ---------- */
   const ITEMS = {
-    bone:  { emoji: '🦴', image: CUSTOM_GAME_IMAGES.dog || null,  pts: 1,  life: 1000 },
-    meat:  { emoji: '🍖', image: CUSTOM_GAME_IMAGES.head || null, pts: 3,  life: 750 },
-    sock:  { emoji: '🧦', image: CUSTOM_GAME_IMAGES.sock || null, pts: -2, life: 1100 }
+    bone: { emoji: '🦴', image: CUSTOM_GAME_IMAGES.dog  || CUSTOM_GAME_IMAGES.treat || null, pts: 1,  life: 1100, ring: '' },
+    meat: { emoji: '🍖', image: CUSTOM_GAME_IMAGES.head || null,                           pts: 3,  life: 850,  ring: 'gold' },
+    sock: { emoji: '🧦', image: CUSTOM_GAME_IMAGES.sock || null,                           pts: -2, life: 1200, ring: 'bad' }
   };
 
+  // Preload custom images so we know early if one is broken
+  const imageOk = {};
+  Object.keys(ITEMS).forEach(function(k) {
+    const url = ITEMS[k].image;
+    if (!url || (url in imageOk)) return;
+    const img = new Image();
+    img.onload  = function() { imageOk[url] = true; };
+    img.onerror = function() { imageOk[url] = false; console.warn('Game image failed to load:', url); };
+    img.src = url;
+  });
+
   function makeTreatContent(kind) {
-    if (kind.image) {
-      return '<img src="' + kind.image + '" alt="">';
+    if (kind.image && imageOk[kind.image] !== false) {
+      return '<img src="' + escapeHtml(kind.image) + '" alt="" draggable="false" ' +
+             'onerror="this.outerHTML=\'' + kind.emoji + '\'">';
     }
     return kind.emoji;
   }
@@ -4785,6 +4820,8 @@ $('downloadQrBtn').addEventListener('click', async () => {
 
   function startGame() {
     stopGame();
+    if (typeof window.enterGameFullscreen === 'function') window.enterGameFullscreen();
+
     questionEl.style.display = 'none';
     optionsEl.style.display = 'none';
     progressEl.style.display = 'none';
@@ -4796,26 +4833,36 @@ $('downloadQrBtn').addEventListener('click', async () => {
     gameStart = Date.now();
     playing = true;
 
-    // Update hint dynamically if images are used
     const hasCustom = !!(ITEMS.bone.image || ITEMS.meat.image || ITEMS.sock.image);
     const hintText = hasCustom
-      ? 'Tap the good ones (+points). Avoid the bad one (−2)!'
-      : 'Tap 🦴 (+1) and 🍖 (+3). Avoid 🧦 (−2)!';
+      ? 'Plain = +1 · Gold ring = +3 · Red ring = −2 (avoid!)'
+      : 'Tap 🦴 (+1) and 🍖 (+3, gold ring). Avoid 🧦 (−2, red ring)!';
 
-    gameEl.style.display = 'block';
+    gameEl.style.display = 'flex';
     gameEl.innerHTML =
       '<div class="game-hud">' +
         '<span>⏱ <b id="gameTime">' + GAME_SECONDS + '</b>s</span>' +
         '<span>⭐ <b id="gameScore">0</b></span>' +
         '<span>🏆 <b id="gameBest">' + getBest() + '</b></span>' +
       '</div>' +
+      '<div class="game-timebar"><i id="gameTimeFill"></i></div>' +
       '<div class="game-arena" id="gameArena"></div>' +
       '<p class="game-hint">' + hintText + '</p>';
+
+    const fill = $('gameTimeFill');
+    if (fill) {
+      void fill.offsetWidth;
+      fill.style.transition = 'width ' + GAME_SECONDS + 's linear';
+      fill.style.width = '0%';
+    }
 
     tickTimer = setInterval(function() {
       timeLeft--;
       const t = $('gameTime');
-      if (t) t.textContent = Math.max(0, timeLeft);
+      if (t) {
+        t.textContent = Math.max(0, timeLeft);
+        if (timeLeft <= 5) t.classList.add('urgent');
+      }
       if (timeLeft <= 0) endGame();
     }, 1000);
 
@@ -4845,18 +4892,22 @@ $('downloadQrBtn').addEventListener('click', async () => {
     const roll = Math.random();
     const kind = roll < 0.18 ? ITEMS.sock : roll < 0.30 ? ITEMS.meat : ITEMS.bone;
 
-    const size = 56;
-    const w = Math.max(arena.clientWidth - size, 10);
-    const h = Math.max(arena.clientHeight - size, 10);
-    const x = Math.random() * w;
-    const y = Math.random() * h;
+    // Size scales with the arena so it looks right on phones and full-screen desktops
+    const minDim = Math.min(arena.clientWidth, arena.clientHeight);
+    const size = Math.round(Math.max(56, Math.min(minDim * 0.16, 110)));
+    const x = Math.random() * Math.max(arena.clientWidth - size, 10);
+    const y = Math.random() * Math.max(arena.clientHeight - size, 10);
 
     const el = document.createElement('button');
     el.type = 'button';
-    el.className = 'game-treat';
+    el.className = 'game-treat' + (kind.ring ? ' ' + kind.ring : '');
     el.innerHTML = makeTreatContent(kind);
     el.style.left = x + 'px';
     el.style.top = y + 'px';
+    el.style.width = size + 'px';
+    el.style.height = size + 'px';
+    el.style.lineHeight = size + 'px';
+    el.style.fontSize = Math.round(size * 0.55) + 'px';
     el.setAttribute('aria-label', kind.emoji);
 
     let caught = false;
@@ -4866,7 +4917,7 @@ $('downloadQrBtn').addEventListener('click', async () => {
       caught = true;
       gameScore = Math.max(0, gameScore + kind.pts);
       updateScoreUI();
-      floatText(arena, (kind.pts > 0 ? '+' : '') + kind.pts, x + 8, y, kind.pts < 0);
+      floatText(arena, (kind.pts > 0 ? '+' : '') + kind.pts, x + size / 4, y, kind.pts < 0);
       el.classList.add('caught');
       setTimeout(function() { el.remove(); }, 180);
     });
@@ -4893,20 +4944,21 @@ $('downloadQrBtn').addEventListener('click', async () => {
     else if (gameScore >= 8) { emoji = '😄'; msg = 'Not bad, doggo trainee!'; }
 
     gameEl.innerHTML =
-      '<div class="quiz-persona-emoji">' + emoji + '</div>' +
-      '<div class="quiz-persona-name">' + gameScore + ' points</div>' +
-      '<div class="quiz-result">' + msg + '<br>' +
-        (isNewBest ? '<strong>🎉 New best score!</strong>' : 'Best: <strong>' + best + '</strong>') +
-      '</div>' +
-      '<div class="quiz-actions">' +
-        '<button type="button" class="quiz-replay" id="gameAgain">Play again</button>' +
-        '<button type="button" class="quiz-replay alt" id="gameBack">Back to results</button>' +
+      '<div class="game-end">' +
+        '<div class="quiz-persona-emoji">' + emoji + '</div>' +
+        '<div class="quiz-persona-name">' + gameScore + ' points</div>' +
+        '<div class="quiz-result">' + msg + '<br>' +
+          (isNewBest ? '<strong>🎉 New best score!</strong>' : 'Best: <strong>' + best + '</strong>') +
+        '</div>' +
+        '<div class="quiz-actions">' +
+          '<button type="button" class="quiz-replay" id="gameAgain">Play again</button>' +
+          '<button type="button" class="quiz-replay alt" id="gameBack">Close</button>' +
+        '</div>' +
       '</div>';
 
     $('gameAgain').addEventListener('click', startGame);
     $('gameBack').addEventListener('click', function() {
-      showQuizUI();
-      renderResult();
+      if (typeof window.exitGameFullscreen === 'function') window.exitGameFullscreen();
     });
 
     if (isNewBest && gameScore > 0) {
@@ -4922,217 +4974,156 @@ $('downloadQrBtn').addEventListener('click', async () => {
   window.stopCatchTheTreats = stopGame;
 })();
 
-/* MINI GAME LAUNCHERS */
-(function initMiniGameLaunchers() {
+  /* MINI GAME: FULL-SCREEN OVERLAY */
+(function initMiniGameFullscreen() {
+  const card = $('quizCard');
+  const toggleBtn = $('gameFsToggle');
+  const closeBtn = $('quizBackBtn');
   const playFromWelcome = $('playMiniGameBtn');
   const playFromTicket = $('playMiniGameFromTicketBtn');
-  const backBtn = $('quizBackBtn');
+  if (!card) return;
 
-  // Remember where we came from so Back can return there
-  let miniGameReturnTarget = 'welcomeView';
-  let miniGameHidTicket = false;
+  let placeholder = null;
+  let active = false;
 
-  function hideTicketChrome() {
-    const selectors = [
-      '.ticket-card',
-      '.ticket-note',
-      '.ticket-actions',
-      '#ticketLocationCard',
-      '#ticketGiftCard',
-      '#excitementBar',
-      '#successImage',
-      '#checkWrap',
-      '#successCaption',
-      '#successSub'
-    ];
-    selectors.forEach(function(sel) {
-      const el = document.querySelector(sel);
-      if (el) el.style.display = 'none';
-    });
-  }
+  const fsSupported = !!(card.requestFullscreen || card.webkitRequestFullscreen);
+  function nativeElement() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
 
-  function restoreTicketChrome() {
-    const selectors = [
-      '.ticket-card',
-      '.ticket-note',
-      '.ticket-actions',
-      '#ticketLocationCard',
-      '#ticketGiftCard',
-      '#excitementBar',
-      '#successImage',
-      '#checkWrap',
-      '#successCaption',
-      '#successSub'
-    ];
-    selectors.forEach(function(sel) {
-      const el = document.querySelector(sel);
-      if (el) el.style.display = '';
-    });
-  }
-
-  function openMiniGame(returnView) {
-    miniGameReturnTarget = returnView || 'welcomeView';
-    if ($('welcomeView').classList.contains('active')) {
-      $('welcomeView').classList.remove('active');
-      $('formView').classList.add('active');
-    }
-    $('loginView').classList.remove('active');
-    $('attendeesView').classList.remove('active');
-
-    const ticketShown = $('successScreen').classList.contains('show') && !!currentTicket;
-    miniGameHidTicket = !ticketShown;
-    if (ticketShown) {
-      const excitement = $('excitementBar');
-      if (excitement) excitement.style.display = 'none';
-    } else {
-      $('rsvpForm').style.display = 'none';
-      const head = document.querySelector('.form-head');
-      if (head) head.style.display = 'none';
-      const prog = document.querySelector('.progress-wrap');
-      if (prog) prog.style.display = 'none';
-      $('message').style.display = 'none';
-      $('successScreen').classList.add('show');
-      hideTicketChrome();
-    }
-
-    // Show the back button
-    if (backBtn) backBtn.style.display = 'block';
-
-    // FULLSCREEN MODE
-    document.body.classList.add('game-fullscreen-active');
-
-    const quizCard = $('quizCard');
-    if (quizCard) quizCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-    setTimeout(function() {
-      if (typeof window.startCatchTheTreats === 'function') {
-        window.startCatchTheTreats();
-      } else {
-        showToast('Mini game is loading… please try again in a moment.');
-      }
-    }, 400);
-  }
-
-  function closeMiniGame() {
-    if (typeof window.stopCatchTheTreats === 'function') {
-      window.stopCatchTheTreats();
-    }
-
-    // Remove fullscreen mode
-    document.body.classList.remove('game-fullscreen-active');
-
-    // Reset the quiz card back to its default state
-    const card = $('quizCard');
-    const titleEl = $('quizTitle');
-    const qEl = $('quizQuestion');
-    const optionsEl = $('quizOptions');
-    const progressEl = $('quizProgress');
-    if (titleEl) titleEl.textContent = 'Guess the birthday star';
-    if (qEl) { qEl.style.display = ''; qEl.textContent = 'Tap "Play" to start the quiz!'; }
-    if (optionsEl) { optionsEl.style.display = ''; optionsEl.innerHTML = ''; }
-    if (progressEl) { progressEl.style.display = ''; progressEl.textContent = ''; }
-
-    if (backBtn) backBtn.style.display = 'none';
-
-    if (miniGameHidTicket) {
-      restoreTicketChrome();
-      $('successScreen').classList.remove('show');
-      $('rsvpForm').style.display = '';
-      const head = document.querySelector('.form-head');
-      if (head) head.style.display = '';
-      const prog = document.querySelector('.progress-wrap');
-      if (prog) prog.style.display = '';
-    } else {
-      // Came from ticket — restore chrome, stay on success screen
-      restoreTicketChrome();
-    }
-
-    // Go back to the welcome screen (or wherever we came from)
-    $('formView').classList.remove('active');
-    if (miniGameReturnTarget === 'welcomeView' && currentUser) {
-      $('welcomeView').classList.add('active');
-    } else if (miniGameReturnTarget === 'loginView') {
-      $('loginView').classList.add('active');
-    } else if (currentUser) {
-      $('welcomeView').classList.add('active');
-    } else {
-      $('loginView').classList.add('active');
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  if (playFromWelcome) {
-    playFromWelcome.addEventListener('click', function() { openMiniGame('welcomeView'); });
-  }
-  if (playFromTicket) {
-    playFromTicket.addEventListener('click', function() { openMiniGame('successView'); });
-  }
-  if (backBtn) {
-    backBtn.addEventListener('click', closeMiniGame);
-  }
-})();
-
-/* MUSIC TOGGLE */
-(function initMusicToggle() {
-  const btn = $('musicToggle');
-  if (!btn) return;
-
-  const MUSIC_URL = '/saira%20ingay%202%20(mp3cut.net).mp3';
-  let music = null;
-  let playing = false;
-
-  function ensureMusic() {
-    if (music) return music;
-    const media = browserMediaSupport();
-    if (!media.hasAudio) return null;
-    music = createSafeAudio(MUSIC_URL);
-    if (!music) return null;
-    music.loop = true;
-    music.volume = 0.35;
-    music.preload = 'none';
-    return music;
-  }
-
-  btn.addEventListener('click', async function() {
-    const m = ensureMusic();
-    if (!m) { showToast('Music not supported on this device.'); return; }
-
-    if (playing) {
-      m.pause();
-      playing = false;
-      btn.classList.remove('playing');
-      btn.setAttribute('aria-pressed', 'false');
-      btn.setAttribute('aria-label', 'Play party music');
-      btn.querySelector('.music-icon').textContent = '🎵';
-      return;
-    }
-
+  function requestNative() {
     try {
-      m.currentTime = 0;
-      await m.play();
-      playing = true;
-      btn.classList.add('playing');
-      btn.setAttribute('aria-pressed', 'true');
-      btn.setAttribute('aria-label', 'Pause party music');
-      btn.querySelector('.music-icon').textContent = '🎶';
-      showToast('Party music on 🎵');
-    } catch (e) {
-      showToast('Tap again to allow audio.');
-    }
-  });
+      const fn = card.requestFullscreen || card.webkitRequestFullscreen;
+      if (!fn) return;
+      const p = fn.call(card);
+      if (p && typeof p.catch === 'function') p.catch(function() {});
+    } catch (e) {}
+  }
+  function exitNative() {
+    try {
+      if (!nativeElement()) return;
+      const fn = document.exitFullscreen || document.webkitExitFullscreen;
+      const p = fn && fn.call(document);
+      if (p && typeof p.catch === 'function') p.catch(function() {});
+    } catch (e) {}
+  }
+  function syncToggle() {
+    if (!toggleBtn) return;
+    if (!fsSupported) { toggleBtn.style.display = 'none'; return; }
+    toggleBtn.textContent = nativeElement() ? '⤢ Exit full screen' : '⛶ Full screen';
+  }
 
-  window.showMusicToggle = function() {
-    btn.classList.add('visible');
-  };
+  // Move the card to <body> so it can cover the whole screen,
+  // no matter which page/view it normally lives in.
+  function enter() {
+    if (active) return;
+    active = true;
+    placeholder = document.createComment('quiz-card-home');
+    card.parentNode.insertBefore(placeholder, card);
+    document.body.appendChild(card);
+    card.classList.add('game-fs');
+    document.body.classList.add('game-lock');
+    requestNative();   // real full screen where the browser allows it
+    syncToggle();
+  }
 
-  document.addEventListener('visibilitychange', function() {
-    if (document.hidden && playing && music) {
-      music.pause();
-    } else if (!document.hidden && playing && music) {
-      music.play().catch(() => {});
+  function exit() {
+    if (!active) return;
+    active = false;
+    if (typeof window.stopCatchTheTreats === 'function') window.stopCatchTheTreats();
+    exitNative();
+    card.classList.remove('game-fs');
+    document.body.classList.remove('game-lock');
+    if (placeholder && placeholder.parentNode) {
+      placeholder.parentNode.insertBefore(card, placeholder);
+      placeholder.remove();
     }
-  });
+    placeholder = null;
+    if (typeof window.startBirthdayQuiz === 'function') window.startBirthdayQuiz(); // reset the quiz card
+  }
+
+  function openMiniGame() {
+    enter();
+    if (typeof window.startCatchTheTreats === 'function') window.startCatchTheTreats();
+    else showToast('Mini game is loading… please try again in a moment.');
+  }
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', function() {
+      if (nativeElement()) exitNative(); else requestNative();
+    });
+  }
+  if (closeBtn) closeBtn.addEventListener('click', exit);
+  if (playFromWelcome) playFromWelcome.addEventListener('click', openMiniGame);
+  if (playFromTicket) playFromTicket.addEventListener('click', openMiniGame);
+
+  document.addEventListener('fullscreenchange', syncToggle);
+  document.addEventListener('webkitfullscreenchange', syncToggle);
+
+  window.enterGameFullscreen = enter;
+  window.exitGameFullscreen = exit;
+  syncToggle();
 })();
+
+  /* MUSIC TOGGLE */
+  (function initMusicToggle() {
+    const btn = $('musicToggle');
+    if (!btn) return;
+
+    const MUSIC_URL = '/saira%20ingay%202%20(mp3cut.net).mp3';
+    let music = null;
+    let playing = false;
+
+    function ensureMusic() {
+      if (music) return music;
+      const media = browserMediaSupport();
+      if (!media.hasAudio) return null;
+      music = createSafeAudio(MUSIC_URL);
+      if (!music) return null;
+      music.loop = true;
+      music.volume = 0.35;
+      music.preload = 'none';
+      return music;
+    }
+
+    btn.addEventListener('click', async function() {
+      const m = ensureMusic();
+      if (!m) { showToast('Music not supported on this device.'); return; }
+
+      if (playing) {
+        m.pause();
+        playing = false;
+        btn.classList.remove('playing');
+        btn.setAttribute('aria-pressed', 'false');
+        btn.setAttribute('aria-label', 'Play party music');
+        btn.querySelector('.music-icon').textContent = '🎵';
+        return;
+      }
+
+      try {
+        m.currentTime = 0;
+        await m.play();
+        playing = true;
+        btn.classList.add('playing');
+        btn.setAttribute('aria-pressed', 'true');
+        btn.setAttribute('aria-label', 'Pause party music');
+        btn.querySelector('.music-icon').textContent = '🎶';
+        showToast('Party music on 🎵');
+      } catch (e) {
+        showToast('Tap again to allow audio.');
+      }
+    });
+
+    window.showMusicToggle = function() {
+      btn.classList.add('visible');
+    };
+
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden && playing && music) {
+        music.pause();
+      } else if (!document.hidden && playing && music) {
+        music.play().catch(() => {});
+      }
+    });
+  })();
 
 /* INIT */
 renderEmptyCamera();
