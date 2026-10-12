@@ -177,6 +177,54 @@
     }
 
     .view { display: none; width: 100%; max-width: 1100px; animation: viewEnter 0.7s var(--ease-out); }
+
+    /* ===== DEDICATED LEADERBOARD VIEW ===== */
+    .leaderboard-page-wrap {
+      width: 100%; max-width: 720px; margin: 0 auto;
+      padding: 28px 24px 32px; border-radius: 28px;
+      background: rgba(255,255,255,0.92); border: 1px solid var(--pearl);
+      box-shadow: var(--shadow-xl);
+    }
+    .leaderboard-page-header { text-align: center; margin-bottom: 24px; }
+    .leaderboard-page-header .back-btn {
+      display: inline-flex; margin: 0 auto 20px 0;
+      background: var(--fog); border: 1.5px solid var(--pearl);
+      color: var(--ink); box-shadow: 0 4px 12px -8px rgba(0,0,0,.25);
+    }
+    .leaderboard-page-header .back-btn:hover {
+      background: var(--black); border-color: var(--black); color: var(--white);
+      transform: translateX(-2px);
+    }
+    .leaderboard-page-kicker {
+      display: block; margin-bottom: 8px; color: var(--steel);
+      font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+    }
+    .leaderboard-page-title {
+      font-family: 'Playfair Display', serif; color: var(--black);
+      font-size: clamp(30px, 6vw, 48px); line-height: 1.05; letter-spacing: -.025em;
+    }
+    .leaderboard-page-subtitle { margin: 10px auto 0; max-width: 480px; color: var(--steel); font-size: 14px; }
+    .leaderboard-page-card .leaderboard-card {
+      max-width: none; margin: 0; padding: 20px;
+      box-shadow: 0 12px 32px -20px rgba(30, 90, 180, .32);
+    }
+    .leaderboard-page-card .leaderboard-title { font-size: 21px; margin-bottom: 16px; }
+    .leaderboard-page-card .leaderboard-row { min-height: 48px; padding: 11px 13px; }
+    .leaderboard-page-card .leaderboard-refresh { min-height: 42px; padding: 9px 18px; font-size: 12px; }
+    @media (max-width: 640px) {
+      .leaderboard-page-wrap { padding: 16px 12px 20px; border-radius: 20px; box-shadow: 0 16px 36px -24px rgba(0,0,0,.25); }
+      .leaderboard-page-header { margin-bottom: 16px; }
+      .leaderboard-page-header .back-btn { margin: 0 auto 16px 0; min-height: 42px; padding: 9px 15px; }
+      .leaderboard-page-title { font-size: clamp(29px, 10vw, 40px); }
+      .leaderboard-page-subtitle { font-size: 13px; }
+      .leaderboard-page-card .leaderboard-card { padding: 14px 12px 12px; }
+      .leaderboard-page-card .leaderboard-title { font-size: 17px; }
+      .leaderboard-page-card .leaderboard-row { gap: 7px; padding: 10px 8px; }
+      .leaderboard-page-card .leaderboard-rank-badge { width: 26px; height: 26px; flex-basis: 26px; font-size: 15px; }
+      .leaderboard-page-card .leaderboard-rank { min-width: 21px; font-size: 11px; }
+      .leaderboard-page-card .leaderboard-score { font-size: 12px; }
+    }
+
     .view.active { display: block; }
     @keyframes viewEnter {
       from { opacity: 0; transform: translateY(20px) scale(0.98); }
@@ -499,7 +547,45 @@
     .game-float.bad { color: #dc2626; }
     @keyframes gameFloat { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-34px); opacity: 0; } }
     .game-hint { margin-top: 10px; font-size: 12px; color: var(--steel); }
-    @media (prefers-reduced-motion: reduce) { .game-treat, .game-float, .quiz-fact.show { animation: none; } }
+    .game-rules {
+      display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
+      gap: 6px; margin: 8px 0 0;
+    }
+    .game-rule {
+      display: inline-flex; align-items: center; gap: 4px;
+      min-height: 30px; padding: 5px 9px; border-radius: 999px;
+      background: var(--white); border: 1px solid var(--pearl);
+      color: var(--ink); font-size: 11px; font-weight: 700;
+      box-shadow: 0 4px 10px -8px rgba(0,0,0,.25);
+    }
+    .game-rule.bonus { background: #fff8d9; border-color: #e6b93f; color: #8a6500; }
+    .game-rule.penalty { background: #fff0f0; border-color: #f2a4a4; color: #a32222; }
+    .game-exit-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      min-height: 42px; padding: 9px 15px; margin-bottom: 8px;
+      border: 1.5px solid #fecaca; border-radius: 999px;
+      background: #fff5f5; color: #b91c1c; font-family: inherit;
+      font-size: 12px; font-weight: 800; cursor: pointer;
+      transition: transform .2s var(--ease-out), background .2s ease, box-shadow .2s ease;
+      -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+    }
+    .game-exit-btn:hover { background: #fee2e2; box-shadow: 0 8px 18px -12px rgba(185,28,28,.55); transform: translateY(-2px); }
+    .game-exit-btn:active { transform: scale(.96); }
+    .game-exit-btn:focus-visible { outline: 3px solid rgba(220,38,38,.25); outline-offset: 2px; }
+    @keyframes gameButtonPop { 0% { transform: scale(1); } 45% { transform: scale(1.06); } 100% { transform: scale(1); } }
+    .game-exit-btn.pop { animation: gameButtonPop .28s ease-out; }
+    .game-fs .game-rules { margin-top: 5px; gap: 5px; }
+    .game-fs .game-rule { min-height: 28px; padding: 4px 8px; background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); color: #e2e8f0; font-size: clamp(10px, 2.5vmin, 12px); }
+    .game-fs .game-rule.bonus { background: rgba(250,204,21,.16); border-color: rgba(250,204,21,.55); color: #fde68a; }
+    .game-fs .game-rule.penalty { background: rgba(239,68,68,.14); border-color: rgba(248,113,113,.55); color: #fecaca; }
+    .game-fs .game-exit-btn { align-self: flex-start; margin-bottom: 4px; min-height: 40px; background: rgba(127,29,29,.35); border-color: rgba(252,165,165,.65); color: #fecaca; }
+    .game-fs .game-exit-btn:hover { background: rgba(185,28,28,.65); color: #fff; }
+    @media (max-width: 420px) {
+      .game-rules { gap: 4px; }
+      .game-rule { min-height: 28px; padding: 4px 7px; font-size: 10px; }
+      .game-exit-btn { width: 100%; margin-bottom: 6px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .game-treat, .game-float, .quiz-fact.show, .game-exit-btn.pop { animation: none; } }
 
     /* Mini game launcher button — ensures it sits above game card */
     .mini-game-launcher {
@@ -549,6 +635,24 @@
 
     .field { margin-bottom: 18px; position: relative; }
     .field-label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--steel); margin-bottom: 8px; }
+    .privacy-checklist {
+      margin: 20px 0; padding: 16px; border-radius: 16px;
+      background: linear-gradient(145deg, #f7fbff, #ffffff);
+      border: 1.5px solid #cfe0f5; box-shadow: 0 8px 20px -16px rgba(30,90,180,.35);
+    }
+    .privacy-checklist-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; color: var(--black); font-size: 13px; font-weight: 800; }
+    .privacy-checklist-heading .privacy-lock { font-size: 18px; }
+    .privacy-checklist-intro { margin-bottom: 10px; color: var(--steel); font-size: 11px; line-height: 1.5; }
+    .privacy-checklist-items { display: grid; gap: 6px; margin: 0 0 13px; padding: 0; list-style: none; }
+    .privacy-checklist-items li { position: relative; padding-left: 22px; color: var(--ink); font-size: 11px; line-height: 1.45; }
+    .privacy-checklist-items li::before { content: '✓'; position: absolute; left: 0; top: 0; color: #15803d; font-weight: 900; }
+    .privacy-consent { display: flex; align-items: flex-start; gap: 9px; padding: 10px; border-radius: 11px; background: #fff; border: 1px solid var(--pearl); color: var(--ink); font-size: 11px; line-height: 1.45; cursor: pointer; transition: border-color .2s ease, box-shadow .2s ease, background .2s ease; }
+    .privacy-consent:hover { border-color: #8fb5dc; background: #fbfdff; }
+    .privacy-consent:focus-within { border-color: #4a7bb7; box-shadow: 0 0 0 3px rgba(74,123,183,.14); }
+    .privacy-consent input { width: 18px; height: 18px; flex: 0 0 18px; margin: 0; accent-color: #166534; cursor: pointer; }
+    .privacy-consent strong { display: block; margin-bottom: 2px; font-size: 11px; }
+    .privacy-consent small { display: block; color: var(--steel); font-size: 10px; }
+    @media (max-width: 480px) { .privacy-checklist { margin: 16px 0; padding: 13px; } .privacy-consent { padding: 9px; } }
     .field input, .field textarea {
       width: 100%; padding: 14px 16px;
       border: 1.5px solid var(--mist); border-radius: 12px;
@@ -1151,7 +1255,7 @@
     @media (max-width: 640px) {
       body { overflow-x: hidden; }
       .view { max-width: 100%; }
-      .login-wrap, .welcome-wrap, .attendees-wrap, .form-wrap { width: 100%; }
+      .login-wrap, .welcome-wrap, .attendees-wrap, .form-wrap, .leaderboard-page-wrap { width: 100%; }
       .login-form-side { min-width: 0; }
       .countdown-units { gap: 5px; }
       .countdown-unit { min-width: 0; padding-left: 2px; padding-right: 2px; }
@@ -1335,6 +1439,16 @@ body.game-lock { overflow: hidden; }
   gap: 8px;
 }
 .leaderboard-title .emoji { font-size: 18px; }
+.leaderboard-tools { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin: 0 0 12px; }
+.leaderboard-search { width: 100%; min-height: 40px; padding: 9px 12px; border: 1px solid var(--pearl); border-radius: 10px; background: #fff; color: var(--ink); font: 500 12px/1.2 'Inter', sans-serif; }
+.leaderboard-search:focus { outline: none; border-color: #6c91bd; box-shadow: 0 0 0 3px rgba(74,123,183,.14); }
+.leaderboard-page-size { min-height: 40px; padding: 0 10px; border: 1px solid var(--pearl); border-radius: 10px; background: #fff; color: var(--ink); font: 600 11px 'Inter', sans-serif; }
+.leaderboard-pagination { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; }
+.leaderboard-page-btn { min-height: 34px; padding: 6px 11px; border: 1px solid var(--pearl); border-radius: 9px; background: #fff; color: var(--ink); font: 700 11px 'Inter', sans-serif; cursor: pointer; transition: transform .2s ease, background .2s ease, border-color .2s ease; }
+.leaderboard-page-btn:hover:not(:disabled) { background: var(--fog); border-color: var(--silver); transform: translateY(-1px); }
+.leaderboard-page-btn:disabled { opacity: .45; cursor: not-allowed; }
+.leaderboard-page-status { color: var(--steel); font-size: 11px; text-align: center; }
+@media (max-width: 420px) { .leaderboard-tools { grid-template-columns: 1fr; } .leaderboard-page-btn { padding-inline: 9px; } }
 .leaderboard-list { display: flex; flex-direction: column; gap: 6px; }
 .leaderboard-row {
   display: flex;
@@ -1351,17 +1465,44 @@ body.game-lock { overflow: hidden; }
   border-color: #f5c95a;
   box-shadow: 0 0 0 1px #f5c95a;
 }
+.leaderboard-row.rank-gold {
+  background: linear-gradient(100deg, #fff8d9, #fffdf3);
+  border-color: #e6b93f;
+  box-shadow: 0 6px 16px -12px rgba(190, 140, 20, .55);
+}
+.leaderboard-row.rank-silver {
+  background: linear-gradient(100deg, #f1f4f7, #ffffff);
+  border-color: #b9c2cc;
+}
+.leaderboard-row.rank-bronze {
+  background: linear-gradient(100deg, #fff0e5, #fffaf6);
+  border-color: #d09a72;
+}
+.leaderboard-rank-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; flex: 0 0 28px;
+  border-radius: 50%; font-size: 17px; line-height: 1;
+  background: var(--fog); border: 1px solid var(--pearl);
+}
+.rank-gold .leaderboard-rank-badge { background: #fff0a8; border-color: #e6b93f; }
+.rank-silver .leaderboard-rank-badge { background: #e7edf2; border-color: #b9c2cc; }
+.rank-bronze .leaderboard-rank-badge { background: #f8d8c1; border-color: #d09a72; }
 .leaderboard-rank {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   color: var(--steel);
-  min-width: 26px;
+  min-width: 24px;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
-.leaderboard-row:nth-child(1) .leaderboard-rank { color: #d4a017; }
-.leaderboard-row:nth-child(2) .leaderboard-rank { color: #8a8a8a; }
-.leaderboard-row:nth-child(3) .leaderboard-rank { color: #b87333; }
+.rank-gold .leaderboard-rank { color: #a97800; }
+.rank-silver .leaderboard-rank { color: #687684; }
+.rank-bronze .leaderboard-rank { color: #a45d2d; }
+@keyframes medalRowAchievement { 0% { transform: scale(1); } 28% { transform: scale(1.035); box-shadow: 0 0 0 4px rgba(250,204,21,.18), 0 12px 28px -12px rgba(190,140,20,.5); } 65% { transform: scale(.99); } 100% { transform: scale(1); } }
+@keyframes medalBadgeAchievement { 0% { transform: scale(.75) rotate(-10deg); } 45% { transform: scale(1.28) rotate(8deg); } 75% { transform: scale(.94) rotate(-3deg); } 100% { transform: scale(1) rotate(0); } }
+.leaderboard-row.rank-achievement { animation: medalRowAchievement 1s var(--ease-out); }
+.leaderboard-row.rank-achievement .leaderboard-rank-badge { animation: medalBadgeAchievement .9s var(--ease-out); }
+@media (prefers-reduced-motion: reduce) { .leaderboard-row.rank-achievement, .leaderboard-row.rank-achievement .leaderboard-rank-badge { animation: none; } }
 .leaderboard-name {
   flex: 1;
   min-width: 0;
@@ -1697,16 +1838,6 @@ body.game-lock { overflow: hidden; }
           </button>
         </div>
 
-              <!-- LEADERBOARD -->
-              <div class="leaderboard-card" id="leaderboardCard">
-                <div class="leaderboard-title">
-                  <span class="emoji">🏆</span> Mini Game Leaderboard
-                </div>
-                <div class="leaderboard-list" id="leaderboardList">
-                  <div class="leaderboard-loading">Loading scores…</div>
-                </div>
-                <button type="button" class="leaderboard-refresh" id="leaderboardRefreshBtn">Refresh scores</button>
-              </div>
         <div class="welcome-footer">
           <button type="button" class="btn-copy-invite" id="copyInviteBtnWelcome">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -1717,7 +1848,35 @@ body.game-lock { overflow: hidden; }
       </div>
     </section>
 
-    <!-- VIEW 3: ATTENDEES -->
+    <!-- VIEW 3: LEADERBOARD -->
+    <section class="view" id="leaderboardView">
+      <div class="leaderboard-page-wrap">
+        <div class="leaderboard-page-header">
+          <button type="button" class="back-btn" id="backFromLeaderboardBtn">← Back</button>
+          <span class="leaderboard-page-kicker">Mini game rankings</span>
+          <h1 class="leaderboard-page-title">The leaderboard.</h1>
+          <p class="leaderboard-page-subtitle">See who has caught the most treats. Scores are shared with all guests.</p>
+        </div>
+        <div class="leaderboard-page-card">
+          <div class="leaderboard-card" id="leaderboardCard">
+            <div class="leaderboard-title">
+              <span class="emoji">🏆</span> Mini Game Leaderboard
+            </div>
+            <div class="leaderboard-tools" role="search" aria-label="Search leaderboard">
+              <input class="leaderboard-search" id="leaderboardSearch" type="search" placeholder="Search player name…" autocomplete="off">
+              <select class="leaderboard-page-size" id="leaderboardPageSize" aria-label="Scores per page"><option value="10">10 / page</option><option value="25">25 / page</option><option value="50">50 / page</option></select>
+            </div>
+            <div class="leaderboard-list" id="leaderboardList">
+              <div class="leaderboard-loading">Loading scores…</div>
+            </div>
+            <div class="leaderboard-pagination" id="leaderboardPagination" aria-label="Leaderboard pages"><button type="button" class="leaderboard-page-btn" id="leaderboardPrev">← Previous</button><span class="leaderboard-page-status" id="leaderboardPageStatus">Page 1</span><button type="button" class="leaderboard-page-btn" id="leaderboardNext">Next →</button></div>
+            <button type="button" class="leaderboard-refresh" id="leaderboardRefreshBtn">Refresh scores</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: ATTENDEES -->
     <section class="view" id="attendeesView">
       <div class="attendees-wrap">
         <div class="attendees-header">
@@ -1887,6 +2046,19 @@ body.game-lock { overflow: hidden; }
                 <textarea id="greetings" required placeholder="Write a heartfelt birthday message..."></textarea>
               </div>
 
+              <div class="privacy-checklist" id="privacyChecklist" aria-labelledby="privacyChecklistHeading">
+                <div class="privacy-checklist-heading" id="privacyChecklistHeading"><span class="privacy-lock" aria-hidden="true">🔒</span> Your privacy matters</div>
+                <p class="privacy-checklist-intro">Please review this checklist before submitting. Your information is used only to manage this birthday event.</p>
+                <ul class="privacy-checklist-items">
+                  <li>Your mobile number and address are stored privately for event administration.</li>
+                  <li>Your selfie or video greeting is stored privately and is not shown in the public attendee list.</li>
+                  <li>Your name and game score may appear on the shared leaderboard; no contact details are displayed there.</li>
+                </ul>
+                <label class="privacy-consent" for="privacyConsent">
+                  <input type="checkbox" id="privacyConsent" name="privacyConsent" aria-required="true" required>
+                  <span><strong>I understand and agree to this privacy notice.</strong><small>You may contact the host to request help with your submitted information.</small></span>
+                </label>
+              </div>
               <div class="field" id="selfieSection">
                 <label class="field-label">Selfie *</label>
                 <div class="camera-box" id="cameraBox"></div>
@@ -3035,6 +3207,19 @@ function openTicket(ticket) {
   showTicket(ticket);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+function openLeaderboard() {
+  $('welcomeView').classList.remove('active');
+  $('leaderboardView').classList.add('active');
+  if (typeof window.loadLeaderboard === 'function') window.loadLeaderboard();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+$('backFromLeaderboardBtn').addEventListener('click', function() {
+  $('leaderboardView').classList.remove('active');
+  $('welcomeView').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
 
 function openAttendees(returnView) {
   attendeesReturnView = returnView === 'loginView' ? 'loginView' : 'welcomeView';
@@ -4395,6 +4580,12 @@ function getVideoHTML() {
 $('rsvpForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   if (appConfig.isPastDeadline) { showMessage('Confirmations are closed.', 'error'); return; }
+  const privacyConsent = $('privacyConsent');
+  if (!privacyConsent || !privacyConsent.checked) {
+    showMessage('Please review and accept the privacy checklist before submitting.', 'error');
+    if (privacyConsent) privacyConsent.focus();
+    return;
+  }
 
   const guestCount = readGuestValue(true);
   if (guestCount === null) {
@@ -4428,7 +4619,8 @@ $('rsvpForm').addEventListener('submit', async function(e) {
     email: currentUser ? currentUser.name : '',
     loginMethod: 'name',
     guests: guestCount,
-    attendance: selectedAttendance
+    attendance: selectedAttendance,
+    privacyConsent: true
   };
 
   try {
@@ -5000,14 +5192,33 @@ $('downloadQrBtn').addEventListener('click', async () => {
 
     gameEl.style.display = 'flex';
     gameEl.innerHTML =
+      '<button type="button" class="game-exit-btn" id="gameExitBtn" aria-label="Exit mini game">✕ Exit game</button>' +
       '<div class="game-hud">' +
         '<span>⏱ <b id="gameTime">' + GAME_SECONDS + '</b>s</span>' +
         '<span>⭐ <b id="gameScore">0</b></span>' +
         '<span>🏆 <b id="gameBest">' + getBest() + '</b></span>' +
       '</div>' +
       '<div class="game-timebar"><i id="gameTimeFill"></i></div>' +
+      '<div class="game-rules" aria-label="Game scoring rules">' +
+        '<span class="game-rule">🦴 +1 point</span>' +
+        '<span class="game-rule bonus">🍖 +3 bonus</span>' +
+        '<span class="game-rule penalty">🧦 −2 avoid</span>' +
+      '</div>' +
       '<div class="game-arena" id="gameArena"></div>' +
       '<p class="game-hint">' + hintText + '</p>';
+
+    const gameExitBtn = $('gameExitBtn');
+    if (gameExitBtn) {
+      gameExitBtn.addEventListener('click', function() {
+        gameExitBtn.classList.remove('pop');
+        void gameExitBtn.offsetWidth;
+        gameExitBtn.classList.add('pop');
+        playGamePopSound('bad');
+        setTimeout(function() {
+          if (typeof window.exitGameFullscreen === 'function') window.exitGameFullscreen();
+        }, 100);
+      });
+    }
 
     const fill = $('gameTimeFill');
     if (fill) {
@@ -5044,6 +5255,29 @@ $('downloadQrBtn').addEventListener('click', async () => {
     setTimeout(function() { f.remove(); }, 700);
   }
 
+  let gameAudioContext = null;
+  function playGamePopSound(kind) {
+    try {
+      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextCtor) return;
+      if (!gameAudioContext) gameAudioContext = new AudioContextCtor();
+      if (gameAudioContext.state === 'suspended') gameAudioContext.resume().catch(function() {});
+      const now = gameAudioContext.currentTime;
+      const oscillator = gameAudioContext.createOscillator();
+      const gain = gameAudioContext.createGain();
+      const isBad = kind === 'bad';
+      const isBonus = kind === 'bonus';
+      oscillator.type = isBad ? 'sawtooth' : 'sine';
+      oscillator.frequency.setValueAtTime(isBad ? 150 : isBonus ? 660 : 520, now);
+      oscillator.frequency.exponentialRampToValueAtTime(isBad ? 90 : isBonus ? 920 : 700, now + 0.09);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(isBad ? 0.06 : 0.09, now + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.13);
+      oscillator.connect(gain); gain.connect(gameAudioContext.destination);
+      oscillator.start(now); oscillator.stop(now + 0.14);
+    } catch (e) {}
+  }
+
   function spawn() {
     if (!playing) return;
     const arena = $('gameArena');
@@ -5076,6 +5310,7 @@ $('downloadQrBtn').addEventListener('click', async () => {
       if (caught || !playing) return;
       caught = true;
       gameScore = Math.max(0, gameScore + kind.pts);
+      playGamePopSound(kind.pts < 0 ? 'bad' : kind.pts >= 3 ? 'bonus' : 'good');
       updateScoreUI();
       floatText(arena, (kind.pts > 0 ? '+' : '') + kind.pts, x + size / 4, y, kind.pts < 0);
       el.classList.add('caught');
@@ -5132,7 +5367,10 @@ $('downloadQrBtn').addEventListener('click', async () => {
     // Save the score to the shared Google Sheet, then refresh the visible board.
     if (typeof window.loadLeaderboard === 'function') {
       saveScoreToLeaderboard(currentUser ? currentUser.name : 'Guest', gameScore)
-        .then(function() { window.loadLeaderboard(); });
+        .then(function(result) {
+          if (result && result.success) celebrateNextRank = true;
+          window.loadLeaderboard();
+        });
     }
   }
 
@@ -5188,25 +5426,82 @@ $('downloadQrBtn').addEventListener('click', async () => {
     }
   }
 
+  let celebrateNextRank = false;
+  let medalAudioContext = null;
+  function playMedalSound(rank) {
+    try {
+      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextCtor) return;
+      if (!medalAudioContext) medalAudioContext = new AudioContextCtor();
+      if (medalAudioContext.state === 'suspended') medalAudioContext.resume().catch(function() {});
+      const now = medalAudioContext.currentTime;
+      const notes = rank === 1 ? [523, 659, 784] : rank === 2 ? [440, 554, 659] : [392, 494, 587];
+      notes.forEach(function(freq, index) {
+        const oscillator = medalAudioContext.createOscillator();
+        const gain = medalAudioContext.createGain();
+        const start = now + index * 0.1;
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(freq, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.08, start + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.16);
+        oscillator.connect(gain); gain.connect(medalAudioContext.destination);
+        oscillator.start(start); oscillator.stop(start + 0.17);
+      });
+    } catch (e) {}
+  }
+  function celebrateCurrentRank(entries) {
+    if (!celebrateNextRank || !currentUser || !Array.isArray(entries)) return;
+    celebrateNextRank = false;
+    const currentName = String(currentUser.name || '').toLowerCase();
+    const rankIndex = entries.findIndex(function(entry) { return String(entry.name || '').toLowerCase() === currentName; });
+    if (rankIndex < 0 || rankIndex > 2) return;
+    const rank = rankIndex + 1;
+    const row = $('leaderboardList').querySelectorAll('.leaderboard-row')[rankIndex];
+    if (row) {
+      row.classList.remove('rank-achievement');
+      void row.offsetWidth;
+      row.classList.add('rank-achievement');
+    }
+    playMedalSound(rank);
+    const medalName = rank === 1 ? 'Gold' : rank === 2 ? 'Silver' : 'Bronze';
+    showToast('🎉 ' + medalName + ' ranking! You are #' + rank + ' on the leaderboard!');
+  }
+
+  let leaderboardEntries = [];
+  let leaderboardPage = 1;
+  let leaderboardQuery = '';
+  let leaderboardPageSize = 10;
   function renderLeaderboard(entries) {
     const listEl = $('leaderboardList');
     if (!listEl) return;
-    if (!entries || entries.length === 0) {
-      listEl.innerHTML = '<div class="leaderboard-empty">No scores yet. Play the mini game to be the first! 🐶</div>';
-      return;
+    leaderboardEntries = Array.isArray(entries) ? entries : [];
+    const filtered = leaderboardEntries.filter(function(entry) { return String(entry.name || '').toLowerCase().includes(leaderboardQuery); });
+    const totalPages = Math.max(1, Math.ceil(filtered.length / leaderboardPageSize));
+    leaderboardPage = Math.min(Math.max(1, leaderboardPage), totalPages);
+    const start = (leaderboardPage - 1) * leaderboardPageSize;
+    const pageEntries = filtered.slice(start, start + leaderboardPageSize);
+    if (!filtered.length) {
+      listEl.innerHTML = '<div class="leaderboard-empty">' + (leaderboardQuery ? 'No players match your search.' : 'No scores yet. Play the mini game to be the first! 🐶') + '</div>';
+    } else {
+      listEl.innerHTML = pageEntries.map(function(entry, pageIndex) {
+        const rank = start + pageIndex + 1;
+        const currentName = currentUser ? currentUser.name : null;
+        const isYou = currentName && String(entry.name || '').toLowerCase() === String(currentName).toLowerCase();
+        const rankClass = rank === 1 ? ' rank-gold' : rank === 2 ? ' rank-silver' : rank === 3 ? ' rank-bronze' : '';
+        const badge = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '⭐';
+        return '<div class="leaderboard-row' + rankClass + (isYou ? ' is-you' : '') + '">' +
+          '<span class="leaderboard-rank-badge" aria-label="Rank ' + rank + '">' + badge + '</span>' +
+          '<span class="leaderboard-rank">#' + rank + '</span>' +
+          '<span class="leaderboard-name">' + escapeHtml(entry.name) + (isYou ? ' (you)' : '') + '</span>' +
+          '<span class="leaderboard-score">' + (Number(entry.score) || 0) + ' pts</span></div>';
+      }).join('');
     }
-    const currentName = currentUser ? currentUser.name : null;
-    listEl.innerHTML = entries.map(function(entry, index) {
-      const rank = index + 1;
-      const isYou = currentName && entry.name.toLowerCase() === currentName.toLowerCase();
-      return '<div class="leaderboard-row' + (isYou ? ' is-you' : '') + '">' +
-               '<span class="leaderboard-rank">#' + rank + '</span>' +
-               '<span class="leaderboard-name">' + escapeHtml(entry.name) + (isYou ? ' (you)' : '') + '</span>' +
-               '<span class="leaderboard-score">' + entry.score + ' pts</span>' +
-             '</div>';
-    }).join('');
+    const status = $('leaderboardPageStatus');
+    if (status) status.textContent = filtered.length ? ('Page ' + leaderboardPage + ' of ' + totalPages + ' · ' + filtered.length + ' player' + (filtered.length === 1 ? '' : 's')) : 'No matching players';
+    if ($('leaderboardPrev')) $('leaderboardPrev').disabled = leaderboardPage <= 1;
+    if ($('leaderboardNext')) $('leaderboardNext').disabled = leaderboardPage >= totalPages;
   }
-
   window.loadLeaderboard = async function() {
     const listEl = $('leaderboardList');
     const refreshBtn = $('leaderboardRefreshBtn');
@@ -5219,6 +5514,7 @@ $('downloadQrBtn').addEventListener('click', async () => {
         throw new Error((result && result.message) || 'Invalid leaderboard response.');
       }
       renderLeaderboard(result.entries);
+      celebrateCurrentRank(result.entries);
       // Refresh the offline fallback cache with the latest shared values.
       safeStorageSet(LEADERBOARD_KEY, JSON.stringify(result.entries));
       return result.entries;
@@ -5235,6 +5531,12 @@ $('downloadQrBtn').addEventListener('click', async () => {
     }
   };
 
+  const leaderboardSearch = $('leaderboardSearch');
+  if (leaderboardSearch) leaderboardSearch.addEventListener('input', function() { leaderboardQuery = this.value.toLowerCase().trim(); leaderboardPage = 1; renderLeaderboard(leaderboardEntries); });
+  const leaderboardPageSizeEl = $('leaderboardPageSize');
+  if (leaderboardPageSizeEl) leaderboardPageSizeEl.addEventListener('change', function() { leaderboardPageSize = Number(this.value) || 10; leaderboardPage = 1; renderLeaderboard(leaderboardEntries); });
+  if ($('leaderboardPrev')) $('leaderboardPrev').addEventListener('click', function() { leaderboardPage--; renderLeaderboard(leaderboardEntries); });
+  if ($('leaderboardNext')) $('leaderboardNext').addEventListener('click', function() { leaderboardPage++; renderLeaderboard(leaderboardEntries); });
   // Hook up refresh button
   const refreshBtn = $('leaderboardRefreshBtn');
   if (refreshBtn) {
@@ -5411,14 +5713,7 @@ toggleSelfieVideoFields();
 if (typeof window.loadLeaderboard === 'function') window.loadLeaderboard();
 
 // Add leaderboard button listener
-$('viewLeaderboardBtn').addEventListener('click', function() {
-  const leaderboardCard = $('leaderboardCard');
-  if (leaderboardCard) {
-    leaderboardCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    if (typeof window.loadLeaderboard === 'function') window.loadLeaderboard();
-    showToast('🏆 Leaderboard refreshed!');
-  }
-});
+$('viewLeaderboardBtn').addEventListener('click', openLeaderboard);
   </script>
 </body>
 </html>
