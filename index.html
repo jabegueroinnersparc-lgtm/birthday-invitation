@@ -1982,15 +1982,10 @@ body.game-lock { overflow: hidden; }
      bone: { emoji: '🦴', image: '/saira.png', pts: 1, life: 1000 }
    ============================================================ */
 const CUSTOM_GAME_IMAGES = {
-  // Replace with your dog's photo URL
-  dog:   null,  // e.g. '/images/saira.png' or 'https://github.com/jabegueroinnersparc-lgtm/birthday-invitation/blob/main/images/saira.png'
-  
-  // Replace with your head/face photo URL
-  head:  null,  // e.g. '/images/sivy.png' or 'https://github.com/jabegueroinnersparc-lgtm/birthday-invitation/blob/main/images/sivy.png',
-  
-  // Optional: extra images for variety
-  treat: null,  // e.g. '/images/saira.png'
-  sock:  null   // e.g. '/images/simon.png' or 'https://github.com/jabegueroinnersparc-lgtm/birthday-invitation/blob/main/images/simon.png',
+  dog:   '/images/saira.png',   // +1 point item (plain)
+  head:  '/images/sivy.png',    // +3 points item (gold ring)
+  treat: null,                  // optional fallback for the +1 item
+  sock:  '/images/simon.png'    // -2 points item (red ring) <- change if you don't want Simon as the "bad" one
 };
 
 /* CONFIG */
