@@ -39,7 +39,8 @@ const LEADERBOARD_CACHE_KEY = 'birthday_leaderboard_v1';
 const RESPONSES_HEADERS = [
   'Timestamp', 'Name', 'Mobile', 'Address', 'Greetings',
   'Selfie URL', 'Email', 'Guests', 'Login Method',
-  'Ticket Code', 'Checked In', 'Attendance', 'Video Greeting URL'
+  'Ticket Code', 'Checked In', 'Attendance', 'Video Greeting URL',
+  'Wall of Love Hearts'
 ];
 
 // Column index helper (1-based → 0-based for getValues arrays)
@@ -56,7 +57,8 @@ const COL = {
   TICKET_CODE:  9,
   CHECKED_IN:   10,
   ATTENDANCE:   11,
-  VIDEO_URL:    12
+  VIDEO_URL:    12,
+  WALL_HEARTS:  13
 };
 
 /* ============================================================
@@ -174,6 +176,7 @@ function handleApiRequest(e) {
 
     if (action === 'getAllAttendees') return jsonResponse(getAllAttendees(params.force === true || params.force === 'true'));
     if (action === 'getWallOfLove') return jsonResponse(getWallOfLove());
+    if (action === 'reactToWallOfLove') return jsonResponse(reactToWallOfLove(params.rowIndex, params.delta));
     if (action === 'getLeaderboard') return jsonResponse(getLeaderboard(params.force === true || params.force === 'true'));
     if (action === 'saveLeaderboardScore') return jsonResponse(saveLeaderboardScore(params.name || '', params.score));
     if (action === 'getAdminLeaderboard') return jsonResponse(getAdminLeaderboard(params.token || ''));
@@ -241,7 +244,10 @@ function getResponsesSheet() {
     sh.appendRow(RESPONSES_HEADERS);
   } else {
     const headerRow = sh.getRange(1, 1, 1, Math.max(sh.getLastColumn(), RESPONSES_HEADERS.length)).getValues()[0];
-    if (headerRow.length < RESPONSES_HEADERS.length) {
+    const headerNeedsUpdate = RESPONSES_HEADERS.some(function(header, index) {
+      return String(headerRow[index] || '').trim() !== header;
+    });
+    if (headerNeedsUpdate) {
       sh.getRange(1, 1, 1, RESPONSES_HEADERS.length).setValues([RESPONSES_HEADERS]);
     }
   }
@@ -822,21 +828,26 @@ function cacheRemoveLeaderboard() {
 
 function getWallOfLove() {
   try {
-    const sh = getSheet(SHEET_RESPONSES, false);
-    if (!sh) {
-      return { success: false, messages: [], message: 'The Responses sheet was not found.' };
-    }
-
+    const sh = getResponsesSheet();
     const lastRow = sh.getLastRow();
     if (lastRow < 2) return { success: true, messages: [] };
 
     const firstRow = Math.max(2, lastRow - 99);
-    const greetings = sh.getRange(firstRow, COL.GREETINGS + 1, lastRow - firstRow + 1, 1).getValues();
-    const messages = greetings
-      .map(row => String(row[0] || '').trim())
-      .filter(Boolean)
-      .reverse();
+    const rows = sh.getRange(firstRow, 1, lastRow - firstRow + 1, RESPONSES_HEADERS.length).getValues();
+    const messages = [];
 
+    rows.forEach(function(row, offset) {
+      const message = String(row[COL.GREETINGS] || '').trim();
+      if (!message) return;
+      messages.push({
+        rowIndex: firstRow + offset,
+        name: String(row[COL.NAME] || '').trim() || 'Guest',
+        message: message,
+        hearts: Math.max(0, Number(row[COL.WALL_HEARTS]) || 0)
+      });
+    });
+
+    messages.reverse();
     return { success: true, messages: messages };
   } catch (e) {
     Logger.log('getWallOfLove error: ' + e.toString());
@@ -845,6 +856,33 @@ function getWallOfLove() {
       messages: [],
       message: 'Could not load greetings. Please try again.'
     };
+  }
+}
+
+function reactToWallOfLove(rowIndex, requestedDelta) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+    const sh = getResponsesSheet();
+    const targetRow = Number(rowIndex);
+    if (!Number.isInteger(targetRow) || targetRow < 2 || targetRow > sh.getLastRow()) {
+      return { success: false, message: 'That message is no longer available.' };
+    }
+
+    const message = String(sh.getRange(targetRow, COL.GREETINGS + 1).getValue() || '').trim();
+    if (!message) return { success: false, message: 'That message is no longer available.' };
+
+    const delta = Number(requestedDelta) === -1 ? -1 : 1;
+    const heartsCell = sh.getRange(targetRow, COL.WALL_HEARTS + 1);
+    const hearts = Math.max(0, (Number(heartsCell.getValue()) || 0) + delta);
+    heartsCell.setValue(hearts);
+    SpreadsheetApp.flush();
+    return { success: true, rowIndex: targetRow, hearts: hearts };
+  } catch (e) {
+    Logger.log('reactToWallOfLove error: ' + e.toString());
+    return { success: false, message: 'Could not save the heart reaction. Please try again.' };
+  } finally {
+    try { lock.releaseLock(); } catch (e) {}
   }
 }
 
