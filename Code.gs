@@ -46,6 +46,16 @@ const RESPONSES_HEADERS = [
   'Wall of Love Hearts'
 ];
 
+// FIX: getWallOfLove(), getWallOfLoveStatus(), and reactToWallOfLove()
+// use this zero-based map for the WallOfLove sheet.
+const WALL_COL = {
+  TIMESTAMP: 0,
+  NAME: 1,
+  MESSAGE: 2,
+  AVATAR_URL: 3,
+  HEARTS: 4
+};
+
 // Column index helper (1-based → 0-based for getValues arrays)
 const COL = {
   TIMESTAMP:    0,
