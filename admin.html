@@ -2100,7 +2100,7 @@
     google.script.run.withSuccessHandler(function(res) {
       if (!res || !res.success) { const msg = (res && res.message) || 'Could not load Wall of Love messages.'; status.className = 'attendee-load-status error'; status.textContent = msg; list.innerHTML = '<div class="attendee-empty">' + escapeHtml(msg) + '</div>'; return; }
       adminWallMessages = normalizeAdminWallMessages(res); renderAdminWallMessages(); status.className = 'attendee-load-status ok'; status.textContent = 'Connected — ' + adminWallMessages.length + ' message(s) loaded.';
-    }).withFailureHandler(function(err) { const msg = (err && err.message) || 'Could not contact the backend.'; status.className = 'attendee-load-status error'; status.textContent = msg; list.innerHTML = '<div class="attendee-empty">' + escapeHtml(msg) + '</div>'; }).getAdminWallOfLove(getAdminSessionToken());
+    }).withFailureHandler(function(err) { const msg = (err && err.message) || 'Could not contact the backend.'; const display = /unknown action:\s*getadminwalloflove/i.test(msg) ? 'The live Apps Script deployment is outdated. Redeploy the latest Code.gs, then refresh this page.' : msg; status.className = 'attendee-load-status error'; status.textContent = display; list.innerHTML = '<div class="attendee-empty">' + escapeHtml(display) + '</div>'; }).getAdminWallOfLove(getAdminSessionToken());
   }
   function renderAdminWallMessages() {
     const list = $('wallAdminList');
