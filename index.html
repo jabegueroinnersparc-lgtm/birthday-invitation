@@ -9,7 +9,7 @@
   <meta name="title" content="Saira, Sivy, and Simon's Birthday 🎂 | Confirm Your Attendance">
   <meta name="description" content="You're invited to Saira, Sivy, and Simon's joint birthday celebration! Confirm your attendance, get your entrance ticket, and see who's coming. Free admission.">
   <meta name="author" content="Simon Jabeguero">
-  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
 
   <meta property="og:type" content="event">
   <meta property="og:url" content="https://sairasivybirthday.vercel.app/">
@@ -101,13 +101,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@500;600;700;900&display=swap" rel="stylesheet">
 
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-HJ329XS95F"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-HJ329XS95F');
-  </script>
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -439,6 +432,29 @@
     .wall-card-toggle { display: inline-flex; align-items: center; margin-top: 9px; padding: 5px 9px; border: 1px solid var(--pearl); border-radius: 999px; background: rgba(255,255,255,.8); color: var(--steel); font: 700 10px/1.2 'Inter', sans-serif; cursor: pointer; transition: background .2s ease, color .2s ease, border-color .2s ease; }
     .wall-card-toggle:hover { background: var(--black); border-color: var(--black); color: var(--white); }
     .wall-empty { text-align: center; padding: 24px 12px; color: var(--steel); font-size: 13px; }
+    .wall-loading-state { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; min-height: 92px; padding: 6px 2px; overflow: hidden; }
+    .wall-loading-card { position: relative; display: block; min-height: 76px; border: 1px solid rgba(205,196,211,.7); border-radius: 15px; background: linear-gradient(105deg, #f3eff4 20%, #fff 38%, #f3eff4 56%); background-size: 220% 100%; animation: wallLoadingShimmer 1.45s ease-in-out infinite; box-shadow: 0 8px 18px -16px rgba(74,52,78,.45); }
+    .wall-loading-card::before, .wall-loading-card::after { content: ''; position: absolute; left: 16px; right: 18%; height: 7px; border-radius: 99px; background: rgba(191,179,198,.45); }
+    .wall-loading-card::before { top: 20px; width: 42%; }
+    .wall-loading-card::after { top: 39px; right: 12%; }
+    .wall-loading-card-two { animation-delay: -.7s; }
+    .wall-loading-hearts { position: absolute; z-index: 2; top: 1px; left: 50%; color: #d999ad; font: 700 17px/1 'Playfair Display', serif; letter-spacing: 5px; transform: translateX(-50%); animation: wallLoadingHearts 1.7s ease-in-out infinite; }
+    .wall-loading-label { position: absolute; left: 50%; bottom: 1px; z-index: 2; padding: 0 10px; background: rgba(255,255,255,.82); color: var(--steel); font: 700 9px/1.4 'Inter', sans-serif; letter-spacing: .12em; text-transform: uppercase; transform: translateX(-50%); white-space: nowrap; }
+    @keyframes wallLoadingShimmer { 0% { background-position: 180% 0; opacity: .72; } 50% { opacity: 1; } 100% { background-position: -40% 0; opacity: .72; } }
+    @keyframes wallLoadingHearts { 0%, 100% { opacity: .45; transform: translateX(-50%) translateY(3px) scale(.92); } 50% { opacity: 1; transform: translateX(-50%) translateY(-2px) scale(1.08); } }
+    .login-hero .wall-loading-card { border-color: rgba(255,255,255,.14); background: linear-gradient(105deg, rgba(255,255,255,.08) 20%, rgba(255,255,255,.2) 38%, rgba(255,255,255,.08) 56%); background-size: 220% 100%; }
+    .login-hero .wall-loading-card::before, .login-hero .wall-loading-card::after { background: rgba(255,255,255,.24); }
+    .login-hero .wall-loading-label { background: rgba(26,29,42,.75); color: var(--silver); }
+    .welcome-wall .wall-loading-card { border-color: #f0e1e8; background: linear-gradient(105deg, #fff4f8 20%, #fff 38%, #f7f4ff 56%); background-size: 220% 100%; }
+    .welcome-wall .wall-loading-label { background: rgba(255,255,255,.88); color: #8d8290; }
+    @media (max-width: 640px) {
+      .wall-loading-state { grid-template-columns: 1fr; min-height: 144px; gap: 8px; padding: 10px 2px 18px; }
+      .wall-loading-card { min-height: 64px; }
+      .wall-loading-card-two { display: block; }
+      .wall-loading-label { bottom: 0; font-size: 8px; letter-spacing: .09em; }
+      .wall-loading-hearts { top: 0; font-size: 15px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .wall-loading-card, .wall-loading-hearts { animation: none; } .wall-loading-card { background: #f3eff4; } }
     .wall-error { text-align: center; padding: 14px 10px; color: var(--steel); font-size: 12px; line-height: 1.5; }
     .wall-retry { display: inline-flex; justify-content: center; align-items: center; margin-top: 10px; padding: 8px 14px; border: 1px solid var(--mist); border-radius: 999px; background: transparent; color: inherit; font: inherit; font-weight: 600; cursor: pointer; transition: background 0.2s ease, border-color 0.2s ease; }
     .wall-retry:hover { background: rgba(255,255,255,0.08); border-color: var(--silver); }
@@ -464,6 +480,9 @@
       #wallMobileToast { display: none !important; }
       .login-mobile-wall { display: block; width: 100%; max-width: none; margin: 18px 0 22px; padding: 16px; border-radius: 18px; box-shadow: 0 10px 28px -22px rgba(15,23,42,.42); }
       .login-mobile-wall .wall-scroll { min-height: 142px; gap: 12px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+      .login-mobile-wall { contain: layout paint; }
+      .login-mobile-wall .wall-scroll { max-height: 280px; align-items: flex-start; }
+      .login-mobile-wall .wall-message { max-height: 260px; overflow-y: auto; overscroll-behavior: contain; }
       .login-mobile-wall .wall-scroll::-webkit-scrollbar { display: none; }
       .login-mobile-wall .wall-message { display: block; flex: 0 0 88%; width: 88%; scroll-snap-align: start; }
       .wall-mobile-toast { display: block; width: min(440px, 100%); max-height: 0; margin: 0 auto; padding: 0 14px; border: 0 solid var(--pearl); border-radius: 18px; background: rgba(255,255,255,0.97); box-shadow: none; opacity: 0; visibility: hidden; transform: translateY(10px); overflow: hidden; transition: max-height 0.4s ease, margin 0.4s ease, padding 0.4s ease, opacity 0.35s ease, transform 0.35s ease, visibility 0.35s, border-width 0.35s ease; }
@@ -756,6 +775,70 @@
 
     .toast.toast-success { background: linear-gradient(135deg, #285d49, #4e9475); box-shadow: 0 18px 38px -14px rgba(40,93,73,.55); font-family: 'Playfair Display', Georgia, serif; font-size: 15px; font-weight: 700; letter-spacing: .01em; }
     @media (max-width: 640px) { .toast.toast-success { max-width: calc(100vw - 28px); padding: 12px 16px; text-align: center; } }
+
+    /* ===== PREMIUM WALL EXPAND CONTROL ===== */
+    .wall-submit-toggle {
+      min-height: 118px; padding: 20px 22px 20px 26px; border-radius: 22px;
+      background: linear-gradient(135deg, rgba(255,255,255,.84), rgba(248,246,255,.92));
+      transition: background .3s ease, box-shadow .3s ease, transform .3s var(--ease-out);
+    }
+    .wall-submit-toggle:hover { background: linear-gradient(135deg, #fff, #f7f4ff); box-shadow: inset 0 1px 0 #fff, 0 12px 25px -24px rgba(81,62,117,.65); }
+    .wall-submit-toggle:active { transform: scale(.992); }
+    .wall-submit-toggle:focus-visible { outline: 3px solid rgba(126,108,171,.3); outline-offset: 3px; }
+    .wall-submit-toggle > .wall-submit-copy { padding: 0; margin: 0; border: 0; }
+    .wall-submit-kicker { color: #8b6a2c; font-size: 9px; letter-spacing: .19em; }
+    .wall-submit-title { color: #29233b; font-size: clamp(24px, 4vw, 32px); }
+    .wall-submit-description { color: #716b7d; }
+    .wall-submit-control { position: relative; z-index: 6; display: inline-flex; align-items: center; gap: 10px; flex: 0 0 auto; min-height: 48px; padding: 6px 9px 6px 15px; border: 1px solid #ded3eb; border-radius: 999px; background: linear-gradient(135deg, #fff, #f6f1fb); color: #63517e; box-shadow: 0 9px 20px -15px rgba(77,54,110,.6), inset 0 1px 0 #fff; transition: border-color .3s ease, box-shadow .3s ease, background .3s ease; }
+    .wall-submit-control-label { min-width: 82px; font: 700 10px/1 'Inter', sans-serif; letter-spacing: .08em; text-align: center; text-transform: uppercase; }
+    .wall-submit-chevron { position: static; display: grid; place-items: center; flex: 0 0 32px; width: 32px; height: 32px; margin: 0; border: 0; border-radius: 50%; background: linear-gradient(135deg, #4d426d, #8672aa); color: #fff; font-size: 19px; line-height: 1; transform: none; transition: transform .35s var(--ease-out), background .25s ease; }
+    .wall-submit-toggle:hover .wall-submit-control { border-color: #c5b3db; box-shadow: 0 12px 24px -15px rgba(77,54,110,.72), inset 0 1px 0 #fff; }
+    .wall-submit-toggle:hover .wall-submit-chevron { background: linear-gradient(135deg, #3f355d, #735f9a); }
+    .wall-submit-panel.is-open .wall-submit-toggle { background: linear-gradient(135deg, #fbf9ff, #f3effb); }
+    .wall-submit-panel.is-open .wall-submit-chevron { transform: rotate(180deg); }
+    @media (max-width: 640px) {
+      .wall-submit-toggle { min-height: 112px; padding: 17px 14px 17px 17px; border-radius: 18px; gap: 9px; }
+      .wall-submit-toggle > .wall-submit-copy { min-width: 0; }
+      .wall-submit-title { font-size: 24px; }
+      .wall-submit-description { max-width: 220px; font-size: 11px; line-height: 1.45; }
+      .wall-submit-control { gap: 6px; min-height: 43px; padding: 5px 6px 5px 9px; }
+      .wall-submit-control-label { min-width: 0; font-size: 8px; letter-spacing: .05em; }
+      .wall-submit-chevron { flex-basis: 29px; width: 29px; height: 29px; font-size: 17px; }
+    }
+    @media (max-width: 380px) {
+      .wall-submit-toggle { padding-left: 13px; padding-right: 10px; }
+      .wall-submit-control-label { display: none; }
+      .wall-submit-control { padding-left: 5px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .wall-submit-toggle, .wall-submit-control, .wall-submit-chevron { transition: none; } }
+
+    /* ===== WALL DOG / EXPAND POP-UP FIX ===== */
+    .wall-submit-panel { overflow: hidden; }
+    .wall-dog-scene { z-index: 7; pointer-events: none; }
+    .wall-submit-toggle { min-height: 132px; align-items: flex-start; }
+    .wall-submit-toggle > .wall-submit-copy { padding-top: 4px; padding-right: 176px; }
+    .wall-submit-control { position: absolute; right: 22px; bottom: 18px; z-index: 8; }
+    .wall-submit-toggle:hover .wall-dog-scene { filter: drop-shadow(0 8px 8px rgba(75,58,103,.12)); }
+    .wall-submit-panel.is-open .wall-submit-toggle { min-height: 118px; }
+    .wall-submit-panel.is-open .wall-submit-toggle > .wall-submit-copy { padding-right: 176px; }
+    .wall-submit-panel.is-open .wall-love-form { animation: wallFormPop .52s cubic-bezier(.16,1,.3,1) both; transform-origin: top center; }
+    @keyframes wallFormPop { from { opacity: 0; transform: translateY(-14px) scale(.965); } 60% { opacity: 1; transform: translateY(3px) scale(1.008); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @media (max-width: 640px) {
+      .wall-submit-toggle { min-height: 138px; padding-top: 16px; }
+      .wall-submit-toggle > .wall-submit-copy { padding-right: 108px; }
+      .wall-submit-control { right: 14px; bottom: 14px; }
+      .wall-submit-panel.is-open .wall-submit-toggle { min-height: 128px; }
+      .wall-submit-panel.is-open .wall-submit-toggle > .wall-submit-copy { padding-right: 108px; }
+      .wall-dog-scene { top: 15px; right: 1px; }
+    }
+    @media (max-width: 380px) {
+      .wall-submit-toggle { min-height: 132px; }
+      .wall-submit-toggle > .wall-submit-copy { padding-right: 86px; }
+      .wall-submit-panel.is-open .wall-submit-toggle > .wall-submit-copy { padding-right: 86px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .wall-submit-panel.is-open .wall-love-form { animation: none; }
+    }
 
     /* ===== STEP JOURNEY ===== */
     .step-journey { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 22px; padding: 14px 18px; background: var(--fog); border: 1px solid var(--pearl); border-radius: 14px; }
@@ -1961,6 +2044,8 @@ body.game-lock { overflow: hidden; }
   .leaderboard-name, .leaderboard-score { font-size: 12px; }
 }
   </style>
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(self), geolocation=(), payment=(), usb=()">
 </head>
 <body>
 
@@ -2005,7 +2090,7 @@ body.game-lock { overflow: hidden; }
             <h2 class="wall-heading" id="heroWallHeading">💌 Wall of Love</h2>
             <p class="wall-intro">Birthday wishes from your guests — tap a message to read it.</p>
             <div class="wall-scroll" role="list" aria-live="polite">
-              <div class="wall-empty">Loading messages…</div>
+              <div class="wall-loading-state" role="status" aria-label="Loading Wall of Love messages"><span class="wall-loading-hearts" aria-hidden="true">♥　♡　♥</span><span class="wall-loading-card wall-loading-card-one"></span><span class="wall-loading-card wall-loading-card-two"></span><span class="wall-loading-label">Gathering some love…</span></div>
             </div>
           </section>
           <div class="hero-bottom">
@@ -2086,18 +2171,7 @@ body.game-lock { overflow: hidden; }
             <button type="button" class="btn btn-outline" id="seeAttendeesLoginBtn" style="margin-top:12px;">See Who's Coming</button>
             <button type="button" class="btn btn-outline" id="forgotAccountBtn" style="margin-top:12px;"
                     aria-expanded="false" aria-controls="recoveryBox">Forgot account?</button>
-            <section class="wall-section login-mobile-wall" id="loginMobileWall" aria-labelledby="loginMobileWallHeading">
-              <div class="login-mobile-wall-topline">
-                <div>
-                  <h2 class="wall-heading" id="loginMobileWallHeading">💌 Wall of Love</h2>
-                  <p class="wall-intro">Swipe through birthday wishes from your guests.</p>
-                </div>
-                <span class="welcome-wall-live"><i></i> Live</span>
-              </div>
-              <div class="wall-scroll" role="list" aria-live="polite">
-                <div class="wall-empty">Loading messages…</div>
-              </div>
-            </section>
+
             <div id="recoveryBox" class="recovery-panel" role="region" aria-labelledby="recoveryTitle" aria-hidden="true">
               <div class="recovery-heading">
                 <span class="recovery-kicker">Account recovery</span>
@@ -2113,6 +2187,18 @@ body.game-lock { overflow: hidden; }
               <button type="button" class="btn btn-primary" id="recoveryBtn">Find My Account</button>
               <div class="message" id="recoveryMessage"></div>
             </div>
+            <section class="wall-section login-mobile-wall" id="loginMobileWall" aria-labelledby="loginMobileWallHeading">
+              <div class="login-mobile-wall-topline">
+                <div>
+                  <h2 class="wall-heading" id="loginMobileWallHeading">💌 Wall of Love</h2>
+                  <p class="wall-intro">Swipe through birthday wishes from your guests.</p>
+                </div>
+                <span class="welcome-wall-live"><i></i> Live</span>
+              </div>
+              <div class="wall-scroll" role="list" aria-live="polite">
+                <div class="wall-loading-state" role="status" aria-label="Loading Wall of Love messages"><span class="wall-loading-hearts" aria-hidden="true">♥　♡　♥</span><span class="wall-loading-card wall-loading-card-one"></span><span class="wall-loading-card wall-loading-card-two"></span><span class="wall-loading-label">Gathering some love…</span></div>
+              </div>
+            </section>
             <div class="login-invite-row">
               <button type="button" class="btn-copy-invite" id="copyInviteBtnLogin">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -2154,7 +2240,7 @@ body.game-lock { overflow: hidden; }
     <aside class="wall-mobile-toast" id="wallMobileToast" aria-label="Birthday wishes from guests" aria-live="polite">
       <h2 class="wall-heading">💌 Wall of Love</h2>
       <div class="wall-scroll">
-        <div class="wall-empty">Loading messages…</div>
+        <div class="wall-loading-state" role="status" aria-label="Loading Wall of Love messages"><span class="wall-loading-hearts" aria-hidden="true">♥　♡　♥</span><span class="wall-loading-card wall-loading-card-one"></span><span class="wall-loading-card wall-loading-card-two"></span><span class="wall-loading-label">Gathering some love…</span></div>
       </div>
     </aside>
 
@@ -2188,7 +2274,7 @@ body.game-lock { overflow: hidden; }
             <span class="welcome-wall-live"><i></i> Live</span>
           </div>
           <div class="wall-scroll" role="list" aria-live="polite">
-            <div class="wall-empty">Loading messages…</div>
+            <div class="wall-loading-state" role="status" aria-label="Loading Wall of Love messages"><span class="wall-loading-hearts" aria-hidden="true">♥　♡　♥</span><span class="wall-loading-card wall-loading-card-one"></span><span class="wall-loading-card wall-loading-card-two"></span><span class="wall-loading-label">Gathering some love…</span></div>
           </div>
         </section>
 
@@ -2217,7 +2303,10 @@ body.game-lock { overflow: hidden; }
                   <span class="wall-submit-title" id="wallSubmitHeading">Leave some love</span>
                   <span class="wall-submit-description">Share a birthday message without filling out the ticket form.</span>
                 </span>
-                <span class="wall-submit-chevron" aria-hidden="true">⌄</span>
+                <span class="wall-submit-control" aria-hidden="true">
+                  <span class="wall-submit-control-label" id="wallLoveToggleLabel">Write a message</span>
+                  <span class="wall-submit-chevron">⌄</span>
+                </span>
               </button>
               <form id="wallLoveForm" class="wall-love-form">
                 <div class="wall-form-grid">
@@ -3496,58 +3585,76 @@ function initLoginWallSwipeAnimations() {
   }, { root: scroll, threshold: [.55, .8] });
   scroll.querySelectorAll('.wall-message').forEach(function(card) { loginWallSwipeObserver.observe(card); });
 }
+const WALL_BROWSER_CACHE_KEY = 'birthdayWallMessagesV2';
+const WALL_BROWSER_CACHE_TTL_MS = 120000;
+function readWallBrowserCache() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(WALL_BROWSER_CACHE_KEY) || 'null');
+    if (!saved || !Array.isArray(saved.messages) || Date.now() - Number(saved.savedAt || 0) > WALL_BROWSER_CACHE_TTL_MS) return [];
+    return saved.messages;
+  } catch (e) { return []; }
+}
+function saveWallBrowserCache(messages) {
+  try { localStorage.setItem(WALL_BROWSER_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), messages: messages.slice(0, 100) })); } catch (e) {}
+}
+function normalizeWallMessages(messages) {
+  return (Array.isArray(messages) ? messages : []).filter(item => item && String(item.message || '').trim()).map(item => ({
+    rowIndex: Number(item.rowIndex), source: String(item.source || 'responses'), name: String(item.name || 'Guest').trim() || 'Guest', message: String(item.message).trim(), hearts: Number(item.hearts) || 0, timestamp: Number(item.timestamp) || 0
+  }));
+}
+function renderWallMessages(messages) {
+  const normalized = normalizeWallMessages(messages);
+  wallMessages = normalized;
+  const scrolls = document.querySelectorAll('.wall-scroll');
+  if (!normalized.length) {
+    document.querySelectorAll('.hero-wall .wall-scroll, #wallMobileToast .wall-scroll, #welcomeWall .wall-scroll, #loginMobileWall .wall-scroll').forEach(scroll => { scroll.innerHTML = '<div class="wall-empty">No messages yet — be the first to share some love! 💛</div>'; });
+    wallLoaded = true;
+    return;
+  }
+  document.querySelectorAll('.hero-wall .wall-scroll, #wallMobileToast .wall-scroll').forEach(scroll => { scroll.innerHTML = '<article class="wall-card wall-message" role="listitem"></article>'; });
+  const welcomeWallScroll = document.querySelector('#welcomeWall .wall-scroll');
+  if (welcomeWallScroll) {
+    welcomeWallScroll.innerHTML = normalized.map(function() { return '<article class="wall-card wall-message" role="listitem"></article>'; }).join('');
+    normalized.forEach(function(message, index) { const card = welcomeWallScroll.querySelectorAll('.wall-message')[index]; if (card) setWallCardContent(card, message); });
+  }
+  const loginMobileWallScroll = document.querySelector('#loginMobileWall .wall-scroll');
+  if (loginMobileWallScroll) {
+    loginMobileWallScroll.innerHTML = normalized.map(function() { return '<article class="wall-card wall-message" role="listitem"></article>'; }).join('');
+    normalized.forEach(function(message, index) { const card = loginMobileWallScroll.querySelectorAll('.wall-message')[index]; if (card) setWallCardContent(card, message); });
+  }
+  wallLoaded = true;
+  displayWallMessage(0);
+  bindWallCardEvents();
+  initLoginWallSwipeAnimations();
+}
 async function loadWallOfLove(force) {
   if (wallLoaded && !force) return;
   const scrolls = document.querySelectorAll('.wall-scroll');
   if (!scrolls.length) return;
   stopWallRotation();
-  wallMessages = [];
-  wallMessageIndex = 0;
   const mobileToast = $('wallMobileToast');
   if (mobileToast) mobileToast.classList.remove('visible');
+  // Paint the last known messages immediately, then refresh them in the background.
+  if (!force && !wallLoaded) {
+    const cached = readWallBrowserCache();
+    if (cached.length) renderWallMessages(cached);
+  }
   try {
     const res = await api('getWallOfLove');
     if (!res || !res.success || !Array.isArray(res.messages)) throw new Error(res && res.message ? res.message : 'The server returned an invalid response.');
-    const messages = res.messages.filter(item => item && String(item.message || '').trim()).map(item => ({
-      rowIndex: Number(item.rowIndex), source: String(item.source || 'responses'), name: String(item.name || 'Guest').trim() || 'Guest', message: String(item.message).trim(), hearts: Number(item.hearts) || 0
-    }));
-    if (messages.length === 0) {
-      document.querySelectorAll('.hero-wall .wall-scroll, #wallMobileToast .wall-scroll, #welcomeWall .wall-scroll, #loginMobileWall .wall-scroll').forEach(scroll => { scroll.innerHTML = '<div class="wall-empty">No messages yet — be the first to share some love! 💛</div>'; });
-      wallLoaded = true; return;
-    }
-    wallMessages = messages;
-    document.querySelectorAll('.hero-wall .wall-scroll, #wallMobileToast .wall-scroll').forEach(scroll => { scroll.innerHTML = '<article class="wall-card wall-message" role="listitem"></article>'; });
-    const welcomeWallScroll = document.querySelector('#welcomeWall .wall-scroll');
-    if (welcomeWallScroll) {
-      welcomeWallScroll.innerHTML = wallMessages.map(function(message) {
-        return '<article class="wall-card wall-message" role="listitem"></article>';
-      }).join('');
-      wallMessages.forEach(function(message, index) {
-        const card = welcomeWallScroll.querySelectorAll('.wall-message')[index];
-        if (card) setWallCardContent(card, message);
-      });
-    }
-    const loginMobileWallScroll = document.querySelector('#loginMobileWall .wall-scroll');
-    if (loginMobileWallScroll) {
-      loginMobileWallScroll.innerHTML = wallMessages.map(function() {
-        return '<article class="wall-card wall-message" role="listitem"></article>';
-      }).join('');
-      wallMessages.forEach(function(message, index) {
-        const card = loginMobileWallScroll.querySelectorAll('.wall-message')[index];
-        if (card) setWallCardContent(card, message);
-      });
-    }
-    wallLoaded = true;
-    displayWallMessage(0);
-    bindWallCardEvents();
-    initLoginWallSwipeAnimations();
+    const messages = normalizeWallMessages(res.messages);
+    saveWallBrowserCache(messages);
+    renderWallMessages(messages);
   } catch (e) {
     console.error('loadWallOfLove error:', e);
-    const errorMessage = e && e.message ? e.message : '';
-    const deploymentIsOutdated = /unknown action:\s*getwalloflove/i.test(errorMessage);
-    const helpText = deploymentIsOutdated ? 'The Wall of Love needs the latest Apps Script deployment. Update it from Code.gs, then retry.' : 'Could not load messages right now. Please try again.';
-    scrolls.forEach(scroll => { scroll.innerHTML = '<div class="wall-error">' + escapeHtml(helpText) + '<br><button type="button" class="wall-retry">Try again</button></div>'; const retryButton = scroll.querySelector('.wall-retry'); if (retryButton) retryButton.addEventListener('click', function() { loadWallOfLove(true); }); });
-    if (mobileToast) mobileToast.classList.add('visible');
+    // Keep cached content on screen if the background refresh fails.
+    if (!wallMessages.length) {
+      const errorMessage = e && e.message ? e.message : '';
+      const deploymentIsOutdated = /unknown action:\s*getwalloflove/i.test(errorMessage);
+      const helpText = deploymentIsOutdated ? 'The Wall of Love needs the latest Apps Script deployment. Update it from Code.gs, then retry.' : 'Could not load messages right now. Please try again.';
+      scrolls.forEach(scroll => { scroll.innerHTML = '<div class="wall-error">' + escapeHtml(helpText) + '<br><button type="button" class="wall-retry">Try again</button></div>'; const retryButton = scroll.querySelector('.wall-retry'); if (retryButton) retryButton.addEventListener('click', function() { loadWallOfLove(true); }); });
+      if (mobileToast) mobileToast.classList.add('visible');
+    }
   }
 }
 (function initWallDetail() {
@@ -5311,7 +5418,7 @@ function getVideoHTML() {
 /* WALL OF LOVE ELIGIBILITY */
 function setWallLovePanelVisible(visible) {
   const panel = $('wallSubmitPanel');
-  if (panel) { panel.hidden = !visible; panel.classList.toggle('is-open', false); const toggle = $('wallLoveToggle'); if (toggle) toggle.setAttribute('aria-expanded', 'false'); }
+  if (panel) { panel.hidden = !visible; panel.classList.toggle('is-open', false); const toggle = $('wallLoveToggle'); if (toggle) toggle.setAttribute('aria-expanded', 'false'); const label = $('wallLoveToggleLabel'); if (label) label.textContent = 'Write a message'; }
 }
 async function updateWallLoveEligibility(hasTicket) {
   const panel = $('wallSubmitPanel');
@@ -5332,6 +5439,8 @@ async function updateWallLoveEligibility(hasTicket) {
     const shouldOpen = !panel.classList.contains('is-open');
     panel.classList.toggle('is-open', shouldOpen);
     toggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+    const toggleLabel = $('wallLoveToggleLabel');
+    if (toggleLabel) toggleLabel.textContent = shouldOpen ? 'Close form' : 'Write a message';
     if (shouldOpen) {
       setTimeout(function() { const name = $('wallLoveName'); if (name) name.focus(); }, 180);
     }
@@ -5358,7 +5467,12 @@ async function updateWallLoveEligibility(hasTicket) {
       showToast('Your Wall of Love message was posted!', 'success');
       const panel = $('wallSubmitPanel');
       if (panel) panel.hidden = true;
-      form.reset(); if (count) count.textContent = '0'; wallLoaded = false; await loadWallOfLove(true);
+      form.reset(); if (count) count.textContent = '0';
+      const optimisticMessage = { rowIndex: Date.now(), source: 'wall', name: name, message: text, hearts: 0, timestamp: Date.now() };
+      renderWallMessages([optimisticMessage].concat(wallMessages.filter(function(item) { return !(item.source === 'wall' && item.name === name && item.message === text); })));
+      saveWallBrowserCache(wallMessages);
+      wallLoaded = false;
+      loadWallOfLove(true);
     } catch (e) { status.textContent = e.message || 'Could not publish your message.'; status.className = 'message error show'; }
     finally { btn.disabled = false; }
   });
