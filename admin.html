@@ -1562,6 +1562,41 @@
       }
     }
 
+    /* ===== WALL OF LOVE MODERATION ===== */
+    .wall-admin-panel { margin-left: 232px; padding: 28px clamp(20px, 3vw, 40px) 40px; min-height: calc(100dvh - 60px); background: var(--bg-deep); transition: margin-left var(--transition-base); }
+    .wall-admin-panel.hidden { display: none; }
+    .wall-admin-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 24px; }
+    .wall-admin-head h1 { font-family: var(--font-display); font-size: clamp(1.6rem, 3.5vw, 2.4rem); letter-spacing: -.03em; line-height: 1.05; margin: 6px 0 10px; }
+    .wall-admin-head p { color: var(--text-tertiary); font-size: 13px; line-height: 1.55; max-width: 620px; }
+    .wall-admin-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
+    .wall-admin-toolbar .attendee-search { max-width: 340px; flex: 0 1 340px; }
+    .wall-admin-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 14px; align-items: start; }
+    .wall-admin-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 18px; box-shadow: var(--shadow-sm); transition: border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast); }
+    .wall-admin-card:hover { border-color: var(--border-medium); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .wall-admin-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .wall-admin-date { color: var(--text-tertiary); font-size: 10px; letter-spacing: .06em; }
+    .wall-admin-hearts { color: #f2a7b5; font-size: 11px; white-space: nowrap; }
+    .wall-admin-fields { display: grid; gap: 10px; }
+    .wall-admin-fields label { display: grid; gap: 6px; color: var(--text-tertiary); font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    .wall-admin-fields input, .wall-admin-fields textarea { width: 100%; padding: 11px 12px; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); background: var(--bg-deep); color: var(--text-primary); font: 500 13px/1.45 var(--font-sans); transition: border-color var(--transition-fast), box-shadow var(--transition-fast); }
+    .wall-admin-fields input { min-height: 42px; }
+    .wall-admin-fields textarea { min-height: 112px; resize: vertical; }
+    .wall-admin-fields input:focus, .wall-admin-fields textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,255,255,.07); }
+    .wall-admin-card-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .wall-admin-card-actions button { flex: 1; min-height: 40px; padding: 9px 12px; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); background: var(--bg-elevated); color: var(--text-secondary); font: 700 11px var(--font-sans); cursor: pointer; transition: all var(--transition-fast); }
+    .wall-admin-card-actions button:hover { background: var(--accent); border-color: var(--accent); color: var(--accent-invert); transform: translateY(-1px); }
+    .wall-admin-card-actions button.danger { color: #fca5a5; background: transparent; border-color: rgba(239,68,68,.3); }
+    .wall-admin-card-actions button.danger:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
+    @media (max-width: 860px) { .wall-admin-panel { margin-left: 0; padding: 20px 14px 32px; } }
+    @media (max-width: 640px) {
+      .wall-admin-head { flex-direction: column; align-items: stretch; gap: 12px; }
+      .wall-admin-head .attendee-refresh { align-self: flex-start; }
+      .wall-admin-toolbar { flex-direction: column; align-items: stretch; }
+      .wall-admin-toolbar .attendee-search { max-width: none; flex-basis: auto; }
+      .wall-admin-card { padding: 16px; }
+      .wall-admin-card-actions { flex-direction: column; }
+    }
+
     /* ===== RESPONSIVE ===== */
     @media (max-width: 860px) {
       .admin-sidebar {
@@ -1656,6 +1691,8 @@
       }
     }
   </style>
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(self), geolocation=(), payment=(), usb=()">
 </head>
 <body>
 
@@ -1706,6 +1743,7 @@
     <button type="button" class="admin-side-btn" data-admin-section="manual"><span class="side-icon">⌨</span><span>Manual Code</span></button>
     <button type="button" class="admin-side-btn" data-admin-section="attendees"><span class="side-icon">♙</span><span>Attendees</span></button>
     <button type="button" class="admin-side-btn" data-admin-section="leaderboard"><span class="side-icon">🏆</span><span>Leaderboard</span></button>
+    <button type="button" class="admin-side-btn" data-admin-section="wall"><span class="side-icon">💌</span><span>Wall of Love</span></button>
   </aside>
 
   <div class="scanner-main">
@@ -1787,6 +1825,15 @@
     <div class="leaderboard-admin-list" id="leaderboardAdminList"><div class="attendee-empty">Select Leaderboard to load scores.</div></div>
   </section>
 
+  <!-- WALL OF LOVE PANEL -->
+  <section class="wall-admin-panel hidden" id="wallAdminPanel" aria-labelledby="wallAdminTitle">
+    <div class="wall-admin-head">
+      <div><div class="attendee-kicker">Protected Google Sheets controls</div><h1 id="wallAdminTitle">Wall of Love</h1><p>Edit names or messages, or remove a message from the public wall.</p></div>
+      <button type="button" class="attendee-refresh" id="refreshAdminWallBtn">Refresh messages</button>
+    </div>
+    <div class="wall-admin-toolbar"><div id="wallAdminStatus" class="attendee-load-status" role="status">Ready to load Wall of Love messages.</div><input class="attendee-search" id="wallAdminSearch" type="search" placeholder="Search name or message" autocomplete="off"></div>
+    <div class="wall-admin-list" id="wallAdminList"><div class="attendee-empty">Select Wall of Love to load messages.</div></div>
+  </section>
   <!-- ATTENDEES PANEL -->
   <section class="attendee-panel hidden" id="attendeePanel" aria-labelledby="attendeePanelTitle">
     <div class="attendee-head"><div><div class="attendee-kicker">Google Sheets records</div><h1 id="attendeePanelTitle">Attendees</h1></div><button type="button" class="attendee-refresh" id="refreshAttendeesBtn">Refresh list</button></div>
@@ -1829,8 +1876,8 @@
               if (token) body.set('token', token);
             } catch (e) {}
           }
-          if (prop === 'updateAttendee' || prop === 'updateLeaderboardScore') body.set('data', JSON.stringify(value || {}));
-          else if (prop === 'deleteAttendee' || prop === 'deleteLeaderboardScore') body.set('rowIndex', String(value || ''));
+          if (prop === 'updateAttendee' || prop === 'updateLeaderboardScore' || prop === 'updateWallOfLove') body.set('data', JSON.stringify(value || {}));
+          else if (prop === 'deleteAttendee' || prop === 'deleteLeaderboardScore' || prop === 'deleteWallOfLove') body.set('rowIndex', String(value || ''));
           else if (prop === 'submitForm' || prop === 'submitPayment') body.set('data', JSON.stringify(value || {}));
           else if (prop === 'adminLogin') body.set('password', String(value || ''));
           else if (prop === 'verifyTicket' || prop === 'checkInTicket') body.set('code', String(value || ''));
@@ -1873,12 +1920,15 @@
     const scanner = $('adminApp').querySelector('.scanner-main');
     const panel = $('attendeePanel');
     const leaderboardPanel = $('leaderboardAdminPanel');
+    const wallPanel = $('wallAdminPanel');
     if (section === 'attendees') {
-      scanner.style.display = 'none'; panel.classList.remove('hidden'); leaderboardPanel.classList.add('hidden'); stopInlineScanner(); closeCameraPopup(); loadAdminAttendees();
+      scanner.style.display = 'none'; panel.classList.remove('hidden'); leaderboardPanel.classList.add('hidden'); wallPanel.classList.add('hidden'); stopInlineScanner(); closeCameraPopup(); loadAdminAttendees();
     } else if (section === 'leaderboard') {
-      scanner.style.display = 'none'; panel.classList.add('hidden'); leaderboardPanel.classList.remove('hidden'); stopInlineScanner(); closeCameraPopup(); loadAdminLeaderboard();
+      scanner.style.display = 'none'; panel.classList.add('hidden'); leaderboardPanel.classList.remove('hidden'); wallPanel.classList.add('hidden'); stopInlineScanner(); closeCameraPopup(); loadAdminLeaderboard();
+    } else if (section === 'wall') {
+      scanner.style.display = 'none'; panel.classList.add('hidden'); leaderboardPanel.classList.add('hidden'); wallPanel.classList.remove('hidden'); stopInlineScanner(); closeCameraPopup(); loadAdminWallMessages();
     } else {
-      scanner.style.display = ''; panel.classList.add('hidden'); leaderboardPanel.classList.add('hidden');
+      scanner.style.display = ''; panel.classList.add('hidden'); leaderboardPanel.classList.add('hidden'); wallPanel.classList.add('hidden');
       if (section === 'manual') switchMode('manual'); else switchMode('camera');
     }
   }
@@ -2028,6 +2078,54 @@
     google.script.run.withSuccessHandler(res => { if (!res || !res.success) { showToast((res && res.message) || 'Could not remove attendee.'); return; } showToast('Attendee removed.'); loadAdminAttendees(); }).withFailureHandler(err => showToast('Error: ' + err.message)).deleteAttendee(rowIndex, getAdminSessionToken());
   }
 
+  /* ============================================================
+     WALL OF LOVE MODERATION
+     ============================================================ */
+  let adminWallMessages = [];
+  let adminWallFilter = '';
+  $('refreshAdminWallBtn').addEventListener('click', loadAdminWallMessages);
+  $('wallAdminSearch').addEventListener('input', function(e) { adminWallFilter = e.target.value.toLowerCase().trim(); renderAdminWallMessages(); });
+  function normalizeAdminWallMessages(payload) {
+    const list = Array.isArray(payload) ? payload : (Array.isArray(payload && payload.messages) ? payload.messages : []);
+    return list.map(function(item) { return { rowIndex: Number(item && item.rowIndex) || null, timestamp: item && item.timestamp ? item.timestamp : '', name: String(item && item.name || ''), message: String(item && item.message || ''), hearts: Number(item && item.hearts) || 0 }; }).filter(function(item) { return item.rowIndex && (item.name || item.message); });
+  }
+  function formatWallAdminDate(value) {
+    if (!value) return 'Date unavailable';
+    try { const d = new Date(value); return isNaN(d.getTime()) ? String(value) : d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { return String(value); }
+  }
+  function loadAdminWallMessages() {
+    const list = $('wallAdminList'), status = $('wallAdminStatus');
+    list.innerHTML = '<div class="attendee-empty">Loading Wall of Love messages…</div>';
+    status.className = 'attendee-load-status'; status.textContent = 'Contacting Google Sheets backend…';
+    google.script.run.withSuccessHandler(function(res) {
+      if (!res || !res.success) { const msg = (res && res.message) || 'Could not load Wall of Love messages.'; status.className = 'attendee-load-status error'; status.textContent = msg; list.innerHTML = '<div class="attendee-empty">' + escapeHtml(msg) + '</div>'; return; }
+      adminWallMessages = normalizeAdminWallMessages(res); renderAdminWallMessages(); status.className = 'attendee-load-status ok'; status.textContent = 'Connected — ' + adminWallMessages.length + ' message(s) loaded.';
+    }).withFailureHandler(function(err) { const msg = (err && err.message) || 'Could not contact the backend.'; status.className = 'attendee-load-status error'; status.textContent = msg; list.innerHTML = '<div class="attendee-empty">' + escapeHtml(msg) + '</div>'; }).getAdminWallOfLove(getAdminSessionToken());
+  }
+  function renderAdminWallMessages() {
+    const list = $('wallAdminList');
+    const rows = adminWallMessages.filter(function(item) { return (item.name + ' ' + item.message).toLowerCase().includes(adminWallFilter); });
+    if (!rows.length) { list.innerHTML = '<div class="attendee-empty">No matching Wall of Love messages.</div>'; return; }
+    list.innerHTML = rows.map(function(item) {
+      return '<article class="wall-admin-card" data-wall-row="' + item.rowIndex + '">' +
+        '<div class="wall-admin-card-head"><span class="wall-admin-date">' + escapeHtml(formatWallAdminDate(item.timestamp)) + '</span><span class="wall-admin-hearts">♥ ' + item.hearts + '</span></div>' +
+        '<div class="wall-admin-fields"><label>Name<input data-wall-name="' + item.rowIndex + '" maxlength="80" value="' + escapeHtml(item.name) + '"></label><label>Message<textarea data-wall-message="' + item.rowIndex + '" maxlength="500">' + escapeHtml(item.message) + '</textarea></label></div>' +
+        '<div class="wall-admin-card-actions"><button type="button" data-wall-save="' + item.rowIndex + '">Save changes</button><button type="button" class="danger" data-wall-delete="' + item.rowIndex + '">Remove message</button></div></article>';
+    }).join('');
+    list.querySelectorAll('[data-wall-save]').forEach(function(btn) { btn.addEventListener('click', function() { saveAdminWallMessage(Number(btn.dataset.wallSave)); }); });
+    list.querySelectorAll('[data-wall-delete]').forEach(function(btn) { btn.addEventListener('click', function() { deleteAdminWallMessage(Number(btn.dataset.wallDelete)); }); });
+  }
+  function saveAdminWallMessage(rowIndex) {
+    const nameInput = document.querySelector('[data-wall-name="' + rowIndex + '"]'), messageInput = document.querySelector('[data-wall-message="' + rowIndex + '"]');
+    if (!nameInput || !messageInput) return;
+    const btn = document.querySelector('[data-wall-save="' + rowIndex + '"]'); if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+    google.script.run.withSuccessHandler(function(res) { if (btn) { btn.disabled = false; btn.textContent = 'Save changes'; } if (!res || !res.success) { showToast((res && res.message) || 'Could not update message.'); return; } showToast('Wall of Love message updated.'); loadAdminWallMessages(); }).withFailureHandler(function(err) { if (btn) { btn.disabled = false; btn.textContent = 'Save changes'; } showToast('Error: ' + ((err && err.message) || 'Could not update message.')); }).updateWallOfLove({ rowIndex: rowIndex, name: nameInput.value.trim(), message: messageInput.value.trim() }, getAdminSessionToken());
+  }
+  function deleteAdminWallMessage(rowIndex) {
+    const item = adminWallMessages.find(function(entry) { return Number(entry.rowIndex) === rowIndex; });
+    if (!item || !confirm('Remove the Wall of Love message from ' + (item.name || 'this guest') + '? This cannot be undone.')) return;
+    google.script.run.withSuccessHandler(function(res) { if (!res || !res.success) { showToast((res && res.message) || 'Could not remove message.'); return; } showToast('Wall of Love message removed.'); loadAdminWallMessages(); }).withFailureHandler(function(err) { showToast('Error: ' + ((err && err.message) || 'Could not remove message.')); }).deleteWallOfLove(rowIndex, getAdminSessionToken());
+  }
   /* ============================================================
      LEADERBOARD MODERATION
      ============================================================ */
