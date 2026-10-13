@@ -231,7 +231,7 @@ function handleApiRequest(e) {
     if (action === 'resetLeaderboard') return jsonResponse(resetLeaderboard(params.token || ''));
     if (action === 'getAdminAttendees') return jsonResponse(getAdminAttendees(params.token || ''));
     if (action === 'getAdminWallOfLove') return jsonResponse(getAdminWallOfLove(params.token || ''));
-    if (action === 'deleteWallOfLove') return jsonResponse(deleteWallOfLove(params.rowIndex || '', params.token || ''));
+    if (action === 'deleteWallOfLove') return jsonResponse(deleteWallOfLove(params.rowIndex || '', params.token || '', params.source || 'wall'));
     if (action === 'updateWallOfLove') {
       let wallUpdateData = {};
       try { wallUpdateData = JSON.parse(params.data || '{}'); }
@@ -1137,18 +1137,27 @@ function getAdminAttendees(token) {
 function getAdminWallOfLove(token) {
   if (!isAdminSessionValid(token)) return { success: false, messages: [], message: 'Admin session expired. Please sign in again.' };
   try {
-    const sh = getWallOfLoveSheet();
-    if (sh.getLastRow() < 2) return { success: true, messages: [] };
-    const rows = sh.getRange(2, 1, sh.getLastRow() - 1, WALL_OF_LOVE_HEADERS.length).getValues();
-    const messages = rows.map(function(row, index) {
-      return {
-        rowIndex: index + 2,
-        timestamp: serializeAdminCell(row[WALL_COL.TIMESTAMP]),
-        name: serializeAdminCell(row[WALL_COL.NAME]),
-        message: serializeAdminCell(row[WALL_COL.MESSAGE]),
-        hearts: Math.max(0, Number(row[WALL_COL.HEARTS]) || 0)
-      };
-    }).filter(function(item) { return item.name || item.message; }).reverse();
+    const messages = [];
+    const wall = getWallOfLoveSheet();
+    if (wall.getLastRow() >= 2) {
+      const rows = wall.getRange(2, 1, wall.getLastRow() - 1, WALL_OF_LOVE_HEADERS.length).getValues();
+      rows.forEach(function(row, index) {
+        const name = serializeAdminCell(row[WALL_COL.NAME]);
+        const message = serializeAdminCell(row[WALL_COL.MESSAGE]);
+        if (!name && !message) return;
+        messages.push({ source: 'wall', rowIndex: index + 2, timestamp: serializeAdminCell(row[WALL_COL.TIMESTAMP]), name: name, message: message, hearts: Math.max(0, Number(row[WALL_COL.HEARTS]) || 0) });
+      });
+    }
+    const responses = getSheet(SHEET_RESPONSES, false);
+    if (responses && responses.getLastRow() >= 2) {
+      const rows = responses.getRange(2, 1, responses.getLastRow() - 1, RESPONSES_HEADERS.length).getValues();
+      rows.forEach(function(row, index) {
+        const message = String(row[COL.GREETINGS] || '').trim();
+        if (!message) return;
+        messages.push({ source: 'responses', rowIndex: index + 2, timestamp: serializeAdminCell(row[COL.TIMESTAMP]), name: serializeAdminCell(row[COL.NAME]) || 'Guest', message: message, hearts: Math.max(0, Number(row[COL.WALL_HEARTS]) || 0) });
+      });
+    }
+    messages.sort(function(a, b) { return String(b.timestamp || '').localeCompare(String(a.timestamp || '')); });
     return { success: true, messages: messages, fetchedAt: new Date().toISOString() };
   } catch (e) {
     Logger.log('getAdminWallOfLove error: ' + e.toString());
@@ -1161,14 +1170,22 @@ function updateWallOfLove(data, token) {
   try {
     data = data || {};
     const rowIndex = Number(data.rowIndex);
+    const source = String(data.source || 'wall') === 'responses' ? 'responses' : 'wall';
     const name = String(data.name || '').replace(/\s+/g, ' ').trim();
     const message = String(data.message || '').trim();
     if (!Number.isInteger(rowIndex) || rowIndex < 2) return { success: false, message: 'Invalid Wall of Love row.' };
     if (name.length < 2 || name.length > 80) return { success: false, message: 'Name must be between 2 and 80 characters.' };
     if (!message || message.length > 500) return { success: false, message: 'Message must be between 1 and 500 characters.' };
     lock.waitLock(10000);
-    const sh = getWallOfLoveSheet();
-    if (rowIndex > sh.getLastRow()) return { success: false, message: 'Wall of Love message no longer exists.' };
+    const sh = source === 'responses' ? getSheet(SHEET_RESPONSES, false) : getWallOfLoveSheet();
+    if (!sh || rowIndex > sh.getLastRow()) return { success: false, message: 'The message no longer exists.' };
+    if (source === 'responses') {
+      const existing = sh.getRange(rowIndex, 1, 1, RESPONSES_HEADERS.length).getValues()[0];
+      if (!String(existing[COL.GREETINGS] || '').trim()) return { success: false, message: 'The response greeting no longer exists.' };
+      sh.getRange(rowIndex, COL.GREETINGS + 1).setValue(message);
+      clearBirthdayCaches();
+      return { success: true, message: 'Response greeting updated.' };
+    }
     const existing = sh.getRange(rowIndex, 1, 1, WALL_OF_LOVE_HEADERS.length).getValues()[0];
     if (!String(existing[WALL_COL.NAME] || '').trim() && !String(existing[WALL_COL.MESSAGE] || '').trim()) return { success: false, message: 'Wall of Love message no longer exists.' };
     sh.getRange(rowIndex, WALL_COL.NAME + 1).setValue(name);
@@ -1182,14 +1199,23 @@ function updateWallOfLove(data, token) {
     try { lock.releaseLock(); } catch (e) {}
   }
 }
-function deleteWallOfLove(rowIndexValue, token) {
+function deleteWallOfLove(rowIndexValue, token, sourceValue) {
   if (!isAdminSessionValid(token)) return { success: false, message: 'Admin session expired. Please sign in again.' };
   const lock = LockService.getScriptLock();
   try {
     const rowIndex = Number(rowIndexValue);
-    if (!Number.isInteger(rowIndex) || rowIndex < 2) return { success: false, message: 'Invalid Wall of Love row.' };
+    const source = String(sourceValue || 'wall') === 'responses' ? 'responses' : 'wall';
+    if (!Number.isInteger(rowIndex) || rowIndex < 2) return { success: false, message: 'Invalid message row.' };
     lock.waitLock(10000);
-    const sh = getWallOfLoveSheet();
+    const sh = source === 'responses' ? getSheet(SHEET_RESPONSES, false) : getWallOfLoveSheet();
+    if (source === 'responses') {
+      if (!sh || rowIndex > sh.getLastRow()) return { success: false, message: 'Response no longer exists.' };
+      const greeting = String(sh.getRange(rowIndex, COL.GREETINGS + 1).getValue() || '').trim();
+      if (!greeting) return { success: false, message: 'Response greeting no longer exists.' };
+      sh.getRange(rowIndex, COL.GREETINGS + 1).clearContent();
+      clearBirthdayCaches();
+      return { success: true, message: 'Response greeting removed.' };
+    }
     if (rowIndex > sh.getLastRow()) return { success: false, message: 'Wall of Love message no longer exists.' };
     const name = String(sh.getRange(rowIndex, WALL_COL.NAME + 1).getValue() || '').trim();
     const message = String(sh.getRange(rowIndex, WALL_COL.MESSAGE + 1).getValue() || '').trim();
