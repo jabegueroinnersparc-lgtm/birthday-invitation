@@ -14,12 +14,15 @@
 const SHEET_RESPONSES = 'Responses';
 const SHEET_WHITELIST = 'Whitelist';
 const SHEET_SETTINGS  = 'Settings';
+const SHEET_WALL_OF_LOVE = 'WallOfLove';
 const FOLDER_NAME     = 'Birthday Selfies';
 const VIDEO_FOLDER_NAME = 'Birthday Video Greetings';
 const SHEET_PAYMENTS   = 'Payments';
 const SHEET_LEADERBOARD = 'Leaderboard';
 
 const LEADERBOARD_HEADERS = ['Timestamp', 'Name', 'Score'];
+
+const WALL_OF_LOVE_HEADERS = ['Timestamp', 'Name', 'Message', 'Avatar URL', 'Hearts'];
 
 const PAYMENT_HEADERS = [
   'Timestamp', 'Name', 'Mobile', 'Amount', 'Transaction Reference', 'Notes', 'Status'
@@ -176,7 +179,14 @@ function handleApiRequest(e) {
 
     if (action === 'getAllAttendees') return jsonResponse(getAllAttendees(params.force === true || params.force === 'true'));
     if (action === 'getWallOfLove') return jsonResponse(getWallOfLove());
-    if (action === 'reactToWallOfLove') return jsonResponse(reactToWallOfLove(params.rowIndex, params.delta));
+    if (action === 'getWallOfLoveStatus') return jsonResponse(getWallOfLoveStatus(params.name || ''));
+    if (action === 'submitWallOfLove') {
+      let wallData = {};
+      try { wallData = JSON.parse(params.data || '{}'); }
+      catch (err) { return jsonResponse({ success: false, message: 'Invalid Wall of Love data.' }); }
+      return jsonResponse(submitWallOfLove(wallData));
+    }
+    if (action === 'reactToWallOfLove') return jsonResponse(reactToWallOfLove(params.rowIndex, params.delta, params.source || 'responses'));
     if (action === 'getLeaderboard') return jsonResponse(getLeaderboard(params.force === true || params.force === 'true'));
     if (action === 'saveLeaderboardScore') return jsonResponse(saveLeaderboardScore(params.name || '', params.score));
     if (action === 'getAdminLeaderboard') return jsonResponse(getAdminLeaderboard(params.token || ''));
@@ -307,6 +317,17 @@ function getOrCreateFolder() {
 function getOrCreateVideoFolder() {
   const folders = DriveApp.getFoldersByName(VIDEO_FOLDER_NAME);
   return folders.hasNext() ? folders.next() : DriveApp.createFolder(VIDEO_FOLDER_NAME);
+}
+
+function getWallOfLoveSheet() {
+  const sh = getSheet(SHEET_WALL_OF_LOVE, true);
+  if (!sh) throw new Error('Could not create \"' + SHEET_WALL_OF_LOVE + '\".');
+  if (sh.getLastRow() === 0) {
+    sh.getRange(1, 1, 1, WALL_OF_LOVE_HEADERS.length).setValues([WALL_OF_LOVE_HEADERS]);
+  } else {
+    sh.getRange(1, 1, 1, WALL_OF_LOVE_HEADERS.length).setValues([WALL_OF_LOVE_HEADERS]);
+  }
+  return sh;
 }
 
 function normalizeName(value) {
@@ -828,56 +849,100 @@ function cacheRemoveLeaderboard() {
 
 function getWallOfLove() {
   try {
-    const sh = getResponsesSheet();
-    const lastRow = sh.getLastRow();
-    if (lastRow < 2) return { success: true, messages: [] };
-
-    const firstRow = Math.max(2, lastRow - 99);
-    const rows = sh.getRange(firstRow, 1, lastRow - firstRow + 1, RESPONSES_HEADERS.length).getValues();
     const messages = [];
-
-    rows.forEach(function(row, offset) {
-      const message = String(row[COL.GREETINGS] || '').trim();
-      if (!message) return;
-      messages.push({
-        rowIndex: firstRow + offset,
-        name: String(row[COL.NAME] || '').trim() || 'Guest',
-        message: message,
-        hearts: Math.max(0, Number(row[COL.WALL_HEARTS]) || 0)
+    const responses = getResponsesSheet();
+    if (responses.getLastRow() >= 2) {
+      const firstRow = Math.max(2, responses.getLastRow() - 99);
+      const rows = responses.getRange(firstRow, 1, responses.getLastRow() - firstRow + 1, RESPONSES_HEADERS.length).getValues();
+      rows.forEach(function(row, offset) {
+        const message = String(row[COL.GREETINGS] || '').trim();
+        if (!message) return;
+        messages.push({
+          source: 'responses', rowIndex: firstRow + offset,
+          timestamp: row[COL.TIMESTAMP] instanceof Date ? row[COL.TIMESTAMP].getTime() : 0,
+          name: String(row[COL.NAME] || '').trim() || 'Guest', message: message,
+          hearts: Math.max(0, Number(row[COL.WALL_HEARTS]) || 0)
+        });
       });
-    });
+    }
 
-    messages.reverse();
-    return { success: true, messages: messages };
+    const wall = getWallOfLoveSheet();
+    if (wall.getLastRow() >= 2) {
+      const firstRow = Math.max(2, wall.getLastRow() - 99);
+      const rows = wall.getRange(firstRow, 1, wall.getLastRow() - firstRow + 1, WALL_OF_LOVE_HEADERS.length).getValues();
+      rows.forEach(function(row, offset) {
+        const message = String(row[WALL_COL.MESSAGE] || '').trim();
+        if (!message) return;
+        messages.push({
+          source: 'wall', rowIndex: firstRow + offset,
+          timestamp: row[WALL_COL.TIMESTAMP] instanceof Date ? row[WALL_COL.TIMESTAMP].getTime() : 0,
+          name: String(row[WALL_COL.NAME] || '').trim() || 'Guest', message: message,
+          hearts: Math.max(0, Number(row[WALL_COL.HEARTS]) || 0)
+        });
+      });
+    }
+    messages.sort(function(a, b) { return (b.timestamp || 0) - (a.timestamp || 0); });
+    return { success: true, messages: messages.slice(0, 100) };
   } catch (e) {
     Logger.log('getWallOfLove error: ' + e.toString());
-    return {
-      success: false,
-      messages: [],
-      message: 'Could not load greetings. Please try again.'
-    };
+    return { success: false, messages: [], message: 'Could not load greetings. Please try again.' };
   }
 }
 
-function reactToWallOfLove(rowIndex, requestedDelta) {
+function getWallOfLoveStatus(nameValue) {
+  try {
+    const target = normalizeName(nameValue);
+    if (!target) return { success: true, exists: false };
+    const sh = getWallOfLoveSheet();
+    if (sh.getLastRow() < 2) return { success: true, exists: false };
+    const names = sh.getRange(2, WALL_COL.NAME + 1, sh.getLastRow() - 1, 1).getValues();
+    for (let i = 0; i < names.length; i++) {
+      if (normalizeName(names[i][0]) === target) return { success: true, exists: true };
+    }
+    return { success: true, exists: false };
+  } catch (e) {
+    Logger.log('getWallOfLoveStatus error: ' + e.toString());
+    return { success: false, exists: false, message: 'Could not check Wall of Love status.' };
+  }
+}
+
+function submitWallOfLove(data) {
+  const lock = LockService.getScriptLock();
+  try {
+    data = data || {};
+    const name = String(data.name || '').replace(/\s+/g, ' ').trim();
+    const message = String(data.message || '').trim();
+    if (name.length < 2 || name.length > 80) return { success: false, message: 'Please enter a name from 2 to 80 characters.' };
+    if (!message || message.length > 500) return { success: false, message: 'Please enter a message up to 500 characters.' };
+    lock.waitLock(30000);
+    const sh = getWallOfLoveSheet();
+    sh.appendRow([new Date(), name, message, '', 0]);
+    return { success: true, message: 'Your message is now on the Wall of Love.' };
+  } catch (e) {
+    Logger.log('submitWallOfLove error: ' + e.toString());
+    return { success: false, message: 'Could not publish your message. Please try again.' };
+  } finally {
+    try { lock.releaseLock(); } catch (e) {}
+  }
+}
+
+function reactToWallOfLove(rowIndex, requestedDelta, source) {
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(10000);
-    const sh = getResponsesSheet();
+    const isWall = String(source || 'responses') === 'wall';
+    const sh = isWall ? getWallOfLoveSheet() : getResponsesSheet();
     const targetRow = Number(rowIndex);
-    if (!Number.isInteger(targetRow) || targetRow < 2 || targetRow > sh.getLastRow()) {
-      return { success: false, message: 'That message is no longer available.' };
-    }
-
-    const message = String(sh.getRange(targetRow, COL.GREETINGS + 1).getValue() || '').trim();
-    if (!message) return { success: false, message: 'That message is no longer available.' };
-
+    if (!Number.isInteger(targetRow) || targetRow < 2 || targetRow > sh.getLastRow()) return { success: false, message: 'That message is no longer available.' };
+    const messageCol = isWall ? WALL_COL.MESSAGE + 1 : COL.GREETINGS + 1;
+    const heartsCol = isWall ? WALL_COL.HEARTS + 1 : COL.WALL_HEARTS + 1;
+    if (!String(sh.getRange(targetRow, messageCol).getValue() || '').trim()) return { success: false, message: 'That message is no longer available.' };
     const delta = Number(requestedDelta) === -1 ? -1 : 1;
-    const heartsCell = sh.getRange(targetRow, COL.WALL_HEARTS + 1);
+    const heartsCell = sh.getRange(targetRow, heartsCol);
     const hearts = Math.max(0, (Number(heartsCell.getValue()) || 0) + delta);
     heartsCell.setValue(hearts);
     SpreadsheetApp.flush();
-    return { success: true, rowIndex: targetRow, hearts: hearts };
+    return { success: true, rowIndex: targetRow, source: source || 'responses', hearts: hearts };
   } catch (e) {
     Logger.log('reactToWallOfLove error: ' + e.toString());
     return { success: false, message: 'Could not save the heart reaction. Please try again.' };
@@ -1509,6 +1574,10 @@ function setupSheets() {
     Logger.log('✓ Created "' + SHEET_SETTINGS + '"');
   }
 
+  const wallOfLove = spreadsheet.getSheetByName(SHEET_WALL_OF_LOVE) || spreadsheet.insertSheet(SHEET_WALL_OF_LOVE);
+  wallOfLove.getRange(1, 1, 1, WALL_OF_LOVE_HEADERS.length).setValues([WALL_OF_LOVE_HEADERS]);
+  Logger.log('✓ Wall of Love sheet is ready.');
+
   let leaderboard = spreadsheet.getSheetByName(SHEET_LEADERBOARD);
   if (!leaderboard) {
     leaderboard = spreadsheet.insertSheet(SHEET_LEADERBOARD);
@@ -1593,7 +1662,8 @@ function resetAllData() {
     selfiesDeleted: 0,
     videosDeleted: 0,
     settingsReset: false,
-    leaderboardDeleted: 0
+    leaderboardDeleted: 0,
+    wallMessagesDeleted: 0
   };
 
   try {
@@ -1672,6 +1742,15 @@ function resetAllData() {
   }
 
   try {
+    const wallOfLove = spreadsheet.getSheetByName(SHEET_WALL_OF_LOVE);
+    if (wallOfLove) {
+      const lastRow = wallOfLove.getLastRow();
+      if (lastRow > 1) { summary.wallMessagesDeleted = lastRow - 1; wallOfLove.deleteRows(2, lastRow - 1); }
+      wallOfLove.getRange(1, 1, 1, WALL_OF_LOVE_HEADERS.length).setValues([WALL_OF_LOVE_HEADERS]);
+    }
+  } catch (e) { Logger.log('Could not reset Wall of Love: ' + e.toString()); }
+
+  try {
     const leaderboard = spreadsheet.getSheetByName(SHEET_LEADERBOARD);
     if (leaderboard) {
       const lastRow = leaderboard.getLastRow();
@@ -1712,6 +1791,7 @@ function resetAllData() {
     'Selfie files deleted: ' + summary.selfiesDeleted + '\n' +
     'Video files deleted: ' + summary.videosDeleted + '\n' +
     'Leaderboard rows deleted: ' + summary.leaderboardDeleted + '\n' +
+    'Wall messages deleted: ' + summary.wallMessagesDeleted + '\n' +
     'Settings reset: ' + (summary.settingsReset ? 'yes' : 'no'),
     ui.ButtonSet.OK
   );
