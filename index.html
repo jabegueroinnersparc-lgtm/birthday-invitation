@@ -496,6 +496,267 @@
     body.wall-detail-open { overflow: hidden; }
     @media (prefers-reduced-motion: reduce) { .wall-message, .wall-mobile-toast { transition: none; } .login-mobile-wall .wall-message, .login-mobile-wall .wall-message.is-swipe-visible { animation: none; opacity: 1; transform: none; } }
 
+    /* ===== WALL OF LOVE SUBMISSION ===== */
+    .wall-submit-panel[hidden] { display: none; }
+    .wall-submit-panel { max-width: 980px; margin: 18px auto 0; padding: 22px 24px; background: linear-gradient(145deg, #fff, #fafafa); border: 1px solid var(--pearl); border-radius: 20px; box-shadow: 0 14px 32px -24px rgba(0,0,0,.28); }
+    .wall-submit-copy { margin-bottom: 16px; }
+    .wall-submit-kicker { display: block; margin-bottom: 5px; color: #b17820; font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    .wall-submit-copy h2 { font: 700 clamp(22px, 4vw, 30px)/1.1 'Playfair Display', serif; color: var(--black); }
+    .wall-submit-copy p { margin-top: 7px; color: var(--steel); font-size: 13px; line-height: 1.5; }
+    .wall-love-form { display: grid; gap: 14px; }
+    .wall-form-grid { display: grid; grid-template-columns: minmax(150px, .7fr) minmax(0, 1.5fr); gap: 12px; }
+    .wall-love-form .field { margin-bottom: 0; position: relative; }
+    .wall-love-form textarea { min-height: 104px; resize: vertical; }
+    .wall-char-count { position: absolute; right: 11px; bottom: 8px; color: var(--silver); font-size: 10px; pointer-events: none; }
+    @media (max-width: 640px) { .wall-submit-panel { margin: 14px 0 0; padding: 18px 14px; border-radius: 16px; } .wall-form-grid { grid-template-columns: 1fr; } .wall-love-form textarea { min-height: 112px; } }
+
+    /* ===== MODERN WALL OF LOVE DESIGN ===== */
+    .welcome-wall {
+      position: relative; overflow: hidden; isolation: isolate;
+      background: linear-gradient(145deg, #171923 0%, #24283b 58%, #303651 100%);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 24px 55px -28px rgba(15,23,42,.72), inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    .welcome-wall::before {
+      content: ''; position: absolute; width: 280px; height: 280px; top: -170px; right: -80px;
+      border-radius: 50%; background: radial-gradient(circle, rgba(236,190,91,.22), transparent 68%);
+      pointer-events: none; z-index: -1;
+    }
+    .welcome-wall::after {
+      content: '✦'; position: absolute; top: 22px; right: 30px; color: rgba(255,255,255,.18);
+      font-size: 72px; line-height: 1; transform: rotate(15deg); pointer-events: none; z-index: -1;
+    }
+    .welcome-wall .wall-heading { color: #fff; font-size: clamp(25px, 4vw, 34px); letter-spacing: -.035em; }
+    .welcome-wall .wall-intro { color: rgba(255,255,255,.64); max-width: 430px; }
+    .welcome-wall-live { color: rgba(255,255,255,.72); border-color: rgba(255,255,255,.18); background: rgba(255,255,255,.06); }
+    .welcome-wall .wall-scroll { gap: 16px; }
+    .welcome-wall .wall-card {
+      background: rgba(255,255,255,.095); border-color: rgba(255,255,255,.14);
+      box-shadow: 0 16px 30px -22px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.08);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    }
+    .welcome-wall .wall-card::before { width: 4px; background: linear-gradient(180deg, #f2c96b, #e88a9a); }
+    .welcome-wall .wall-card-label { color: rgba(255,255,255,.68); }
+    .welcome-wall .wall-card-label::before { color: #f2c96b; }
+    .welcome-wall .wall-card-msg { color: rgba(255,255,255,.92); }
+    .welcome-wall .wall-card-hint { color: rgba(255,255,255,.5); }
+    .welcome-wall .wall-heart-btn { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.2); }
+    .welcome-wall .wall-heart-btn:hover, .welcome-wall .wall-heart-btn.is-reacted { background: rgba(255,219,225,.18); border-color: rgba(246,164,179,.8); }
+    .welcome-wall .wall-empty { color: rgba(255,255,255,.68); }
+
+    .wall-submit-panel {
+      position: relative; overflow: hidden; max-width: none; margin: 18px 32px 0; padding: 0;
+      border: 1px solid rgba(255,255,255,.13); border-radius: 24px;
+      background: linear-gradient(135deg, #fff 0%, #f8f8fc 52%, #eef0f8 100%);
+      box-shadow: 0 22px 46px -30px rgba(15,23,42,.55), inset 0 1px 0 rgba(255,255,255,.9);
+    }
+    .wall-submit-panel::before { content: ''; position: absolute; width: 220px; height: 220px; right: -90px; top: -110px; border-radius: 50%; background: radial-gradient(circle, rgba(98,108,170,.16), transparent 70%); pointer-events: none; }
+    .wall-submit-copy { position: relative; padding: 24px 26px 18px; margin: 0; border-bottom: 1px solid rgba(97,106,151,.12); }
+    .wall-submit-kicker { color: #6570b1; letter-spacing: .18em; }
+    .wall-submit-copy h2 { color: #171923; font-size: clamp(25px, 4vw, 34px); letter-spacing: -.035em; }
+    .wall-submit-copy p { max-width: 520px; color: #62687a; }
+    .wall-love-form { position: relative; display: grid; gap: 18px; padding: 20px 26px 24px; }
+    .wall-form-grid { display: grid; grid-template-columns: minmax(180px, .72fr) minmax(0, 1.28fr); align-items: start; gap: 16px; }
+    .wall-love-form .field { display: flex; flex-direction: column; align-items: stretch; min-width: 0; margin: 0; }
+    .wall-love-form .field-label { min-height: 17px; margin-bottom: 8px; color: #68708b; }
+    .wall-love-form .field input, .wall-love-form .field textarea { width: 100%; border-color: #d8dbea; background: rgba(255,255,255,.86); box-shadow: 0 6px 18px -16px rgba(20,28,70,.55); }
+    .wall-love-form .field input { min-height: 52px; }
+    .wall-love-form .field textarea { min-height: 124px; }
+    .wall-love-form .field input:hover, .wall-love-form .field textarea:hover { border-color: #9ba4d2; }
+    .wall-love-form .field input:focus, .wall-love-form .field textarea:focus { border-color: #6672bd; box-shadow: 0 0 0 4px rgba(102,114,189,.14), 0 8px 20px -16px rgba(45,56,130,.45); }
+    .wall-love-form .btn-primary { min-height: 50px; border-radius: 14px; background: linear-gradient(135deg, #1b1d2a, #4b527f); box-shadow: 0 14px 25px -16px rgba(32,40,96,.8); }
+    .wall-love-form .btn-primary:hover:not(:disabled) { background: linear-gradient(135deg, #10111a, #5c66a0); }
+    .wall-love-form .message { margin: -4px 0 0; }
+    @media (max-width: 640px) {
+      .welcome-wall { margin: 18px 14px 0; padding: 18px 16px; border-radius: 20px; }
+      .welcome-wall::after { top: 18px; right: 18px; font-size: 52px; }
+      .welcome-wall .wall-heading { font-size: 25px; }
+      .welcome-wall .wall-scroll { gap: 12px; }
+      .wall-submit-panel { margin: 14px 14px 0; border-radius: 20px; }
+      .wall-submit-copy { padding: 20px 17px 15px; }
+      .wall-love-form { padding: 16px 17px 19px; gap: 15px; }
+      .wall-form-grid { grid-template-columns: 1fr; gap: 14px; }
+      .wall-love-form .field input { min-height: 50px; }
+      .wall-love-form .field textarea { min-height: 118px; }
+    }
+
+    /* ===== CUTE WHITE WALL OF LOVE OVERRIDES ===== */
+    .welcome-wall {
+      background: linear-gradient(145deg, #fff 0%, #fffafc 58%, #f7f8ff 100%);
+      border: 1px solid #eee4ea;
+      box-shadow: 0 22px 52px -30px rgba(93,65,92,.32), inset 0 1px 0 #fff;
+    }
+    .welcome-wall::before {
+      width: 300px; height: 300px; top: -190px; right: -75px;
+      background: radial-gradient(circle, rgba(255,202,215,.33), transparent 68%);
+    }
+    .welcome-wall::after { color: rgba(221,164,184,.22); }
+    .welcome-wall .wall-heading { color: #24202a; }
+    .welcome-wall .wall-intro { color: #7b7480; }
+    .welcome-wall-live { color: #777080; border-color: #eadfe7; background: rgba(255,255,255,.8); }
+    .welcome-wall .wall-card {
+      background: linear-gradient(145deg, #fff, #fff8fb);
+      border-color: #f0e1e8;
+      box-shadow: 0 14px 28px -21px rgba(91,59,82,.34), inset 0 1px 0 #fff;
+      backdrop-filter: none; -webkit-backdrop-filter: none;
+    }
+    .welcome-wall .wall-card::before { background: linear-gradient(180deg, #efb2c5, #e9c978); }
+    .welcome-wall .wall-card-label { color: #807480; }
+    .welcome-wall .wall-card-label::before { color: #d9a83f; }
+    .welcome-wall .wall-card-msg { color: #332d36; }
+    .welcome-wall .wall-card-hint { color: #aaa0aa; }
+    .welcome-wall .wall-heart-btn { color: #c85f79; background: #fff; border-color: #f0d8df; }
+    .welcome-wall .wall-heart-btn:hover, .welcome-wall .wall-heart-btn.is-reacted { background: #fff0f4; border-color: #e9a7b8; }
+
+    .wall-submit-panel {
+      background: linear-gradient(145deg, #fff 0%, #fffdfd 60%, #fbf8ff 100%);
+      border: 1px solid #eee5ef;
+      box-shadow: 0 22px 48px -30px rgba(80,63,101,.28), inset 0 1px 0 #fff;
+    }
+    .wall-submit-panel::before { background: radial-gradient(circle, rgba(205,193,245,.2), transparent 70%); }
+    .wall-submit-copy { padding-right: 210px; border-bottom-color: #f0e8ef; }
+    .wall-submit-kicker { color: #8072ad; }
+    .wall-submit-copy h2 { color: #29232d; }
+    .wall-submit-copy p { color: #77717c; }
+    .wall-love-form { padding-top: 22px; }
+    .wall-form-grid { grid-template-columns: minmax(190px, .78fr) minmax(0, 1.22fr); gap: 18px; }
+    .wall-love-form .field-label { color: #786f7c; }
+    .wall-love-form .field input, .wall-love-form .field textarea {
+      border-color: #e6dfe8; background: #fff; box-shadow: 0 7px 18px -17px rgba(82,56,86,.55);
+    }
+    .wall-love-form .field input { min-height: 54px; }
+    .wall-love-form .field textarea { min-height: 126px; }
+    .wall-love-form .field input:focus, .wall-love-form .field textarea:focus {
+      border-color: #c3a8d6; box-shadow: 0 0 0 4px rgba(195,168,214,.17), 0 8px 20px -16px rgba(99,70,113,.4);
+    }
+    .wall-love-form .btn-primary {
+      color: #fff; background: linear-gradient(135deg, #3b3445, #8874a6);
+      box-shadow: 0 13px 25px -17px rgba(85,64,111,.72);
+    }
+    .wall-love-form .btn-primary:hover:not(:disabled) { background: linear-gradient(135deg, #292330, #9b82bd); }
+
+    .wall-dog-scene { position: absolute; top: 15px; right: 24px; width: 180px; height: 88px; pointer-events: none; }
+    .wall-dog { position: absolute; bottom: 0; display: inline-block; font-size: 48px; line-height: 1; filter: drop-shadow(0 8px 5px rgba(80,55,75,.15)); transform-origin: 50% 90%; animation: wallDogDance 1.25s ease-in-out infinite; }
+    .wall-dog::after { content: '⌣'; position: absolute; left: 50%; bottom: -8px; color: #e7a1b7; font: 800 25px/1 'Inter', sans-serif; transform: translateX(-50%); }
+    .wall-dog i { position: absolute; top: -12px; left: 11px; color: #e6b957; font-size: 23px; font-style: normal; transform: rotate(-18deg); }
+    .wall-dog-left { left: 13px; animation-delay: -.2s; }
+    .wall-dog-right { right: 12px; font-size: 43px; animation-delay: -.78s; transform: scaleX(-1); }
+    .wall-sparkle { position: absolute; color: #e2b74f; font: 800 22px/1 'Playfair Display', serif; animation: wallSparkle 1.6s ease-in-out infinite; }
+    .sparkle-one { top: 4px; left: 3px; }
+    .sparkle-two { top: 20px; right: 0; animation-delay: -.8s; color: #e5a7ba; }
+    @keyframes wallDogDance { 0%, 100% { transform: translateY(2px) rotate(-7deg); } 25% { transform: translateY(-8px) rotate(8deg); } 50% { transform: translateY(0) rotate(-2deg); } 75% { transform: translateY(-6px) rotate(7deg); } }
+    @keyframes wallSparkle { 0%, 100% { opacity: .45; transform: scale(.75) rotate(0); } 50% { opacity: 1; transform: scale(1.2) rotate(18deg); } }
+    .wall-dog-right { animation-name: wallDogDanceRight; }
+    @keyframes wallDogDanceRight { 0%, 100% { transform: scaleX(-1) translateY(2px) rotate(-5deg); } 25% { transform: scaleX(-1) translateY(-7px) rotate(8deg); } 50% { transform: scaleX(-1) translateY(0) rotate(-2deg); } 75% { transform: scaleX(-1) translateY(-5px) rotate(6deg); } }
+    @media (max-width: 640px) {
+      .welcome-wall { background: linear-gradient(145deg, #fff 0%, #fff9fc 100%); }
+      .welcome-wall::after { top: 16px; right: 16px; font-size: 48px; }
+      .wall-submit-panel { margin: 14px 14px 0; }
+      .wall-submit-copy { padding: 20px 17px 18px; padding-right: 112px; min-height: 132px; }
+      .wall-submit-copy h2 { font-size: 26px; }
+      .wall-submit-copy p { font-size: 12px; }
+      .wall-love-form { padding: 17px; }
+      .wall-form-grid { grid-template-columns: 1fr; gap: 14px; }
+      .wall-love-form .field input { min-height: 52px; }
+      .wall-love-form .field textarea { min-height: 118px; }
+      .wall-dog-scene { top: 22px; right: 7px; width: 105px; height: 78px; }
+      .wall-dog { font-size: 35px; }
+      .wall-dog-right { font-size: 31px; right: 2px; }
+      .wall-dog i { top: -9px; left: 7px; font-size: 17px; }
+      .wall-dog::after { bottom: -6px; font-size: 18px; }
+      .wall-sparkle { font-size: 15px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .wall-dog, .wall-sparkle { animation: none; } }
+
+    /* Privacy-section dog models reused in the Wall of Love */
+    .wall-dog-scene { width: 154px; height: 86px; top: 8px; right: 18px; }
+    .wall-dog-model { top: 22px; width: 54px; height: 60px; z-index: 2; animation: wallModelDance 1.35s ease-in-out infinite; }
+    .wall-dog-model-left { left: 8px; animation-delay: -.15s; }
+    .wall-dog-model-right { right: 8px; animation-delay: -.72s; }
+    @keyframes wallModelDance { 0%, 100% { transform: translateY(2px) rotate(-5deg); } 25% { transform: translateY(-8px) rotate(6deg); } 50% { transform: translateY(0) rotate(-2deg); } 75% { transform: translateY(-6px) rotate(5deg); } }
+    .wall-dog-model .dog-ear-flap { animation-duration: 1.35s; }
+    .wall-dog-model-right .dog-ear-flap-left { animation-delay: -.45s; }
+    .wall-dog-model-right .dog-ear-flap-right { animation-delay: -.2s; }
+    @media (max-width: 640px) {
+      .wall-dog-scene { width: 116px; height: 72px; top: 19px; right: 2px; transform: scale(.72); transform-origin: top right; }
+      .wall-submit-copy { padding-right: 112px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .wall-dog-model { animation: none; } }
+
+    /* ===== WALL INTERACTIONS + MINI-GAME MOTION ===== */
+    .wall-submit-panel { transition: box-shadow .35s ease, transform .35s var(--ease-out); }
+    .wall-submit-panel:not(.is-open) { cursor: pointer; }
+    .wall-submit-panel:not(.is-open):hover { transform: translateY(-2px); box-shadow: 0 26px 52px -28px rgba(80,63,101,.38), inset 0 1px 0 #fff; }
+    .wall-submit-toggle { position: relative; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; padding: 0; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; font: inherit; }
+    .wall-submit-copy { flex: 1; min-width: 0; text-align: left; }
+    .wall-submit-title { display: block; color: #29232d; font: 700 clamp(25px, 4vw, 34px)/1.1 'Playfair Display', serif; letter-spacing: -.035em; }
+    .wall-submit-description { display: block; max-width: 520px; margin-top: 7px; color: #77717c; font-size: 13px; line-height: 1.5; }
+    .wall-submit-chevron { display: grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; margin-right: 26px; border: 1px solid #e5d8eb; border-radius: 50%; background: #fff; color: #806da4; font-size: 24px; line-height: 1; transform: translateY(-1px); transition: transform .3s var(--ease-out), background .25s ease, color .25s ease; }
+    .wall-submit-toggle:hover .wall-submit-chevron { background: #f8f0fc; color: #5e4d7f; }
+    .wall-submit-panel:not(.is-open) .wall-love-form { display: none; }
+    .wall-submit-panel.is-open .wall-submit-chevron { transform: rotate(180deg) translateY(1px); background: #f8f0fc; }
+    .wall-submit-panel.is-open .wall-submit-toggle { cursor: default; }
+    .welcome-wall .wall-message { transition: transform .34s var(--ease-out), filter .34s ease, opacity .45s ease; will-change: transform; }
+    .welcome-wall .wall-card-msg, .login-mobile-wall .wall-card-msg { font-family: 'Playfair Display', Georgia, serif; font-style: normal; letter-spacing: -.01em; }
+    .welcome-wall .wall-card-msg { font-size: 17px; line-height: 1.65; }
+    @media (hover: hover) and (pointer: fine) {
+      .welcome-wall .wall-message:hover { transform: translateY(-7px) rotate(-.6deg); filter: drop-shadow(0 15px 16px rgba(115,75,102,.16)); }
+      .welcome-wall .wall-message:nth-child(even):hover { transform: translateY(-7px) rotate(.6deg); }
+      .welcome-wall .wall-message:hover .wall-card { border-color: #e8b5c5; }
+      .welcome-wall .wall-message:hover .wall-card::before { width: 5px; }
+    }
+    .welcome-wall .wall-message:active { transform: scale(.985); }
+    .wall-submit-panel.is-open .wall-submit-toggle:focus-visible, .wall-submit-panel:not(.is-open):focus-within { outline: 3px solid rgba(195,168,214,.34); outline-offset: 3px; }
+
+    .quiz-card.game-fs.game-opening { animation: gameCardEnter .7s cubic-bezier(.16,1,.3,1) both; }
+    .quiz-card.game-fs.game-opening .game-topbar { animation: gameContentIn .55s .08s both; }
+    .quiz-card.game-fs.game-opening .quiz-title { animation: gameContentIn .55s .14s both; }
+    .quiz-card.game-fs.game-opening .quiz-game { animation: gameContentIn .55s .2s both; }
+    @keyframes gameCardEnter { from { opacity: 0; transform: scale(.92) translateY(28px); } 55% { opacity: 1; transform: scale(1.015) translateY(-3px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    @keyframes gameContentIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 640px) {
+      .wall-submit-toggle { gap: 10px; }
+      .wall-submit-title { font-size: 26px; }
+      .wall-submit-description { font-size: 12px; }
+      .wall-submit-chevron { flex-basis: 36px; width: 36px; height: 36px; margin-right: 17px; font-size: 21px; }
+      .welcome-wall .wall-card-msg { font-size: 15px; line-height: 1.6; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .welcome-wall .wall-message, .wall-submit-panel, .wall-submit-chevron { transition: none; }
+      .quiz-card.game-fs.game-opening, .quiz-card.game-fs.game-opening .game-topbar, .quiz-card.game-fs.game-opening .quiz-title, .quiz-card.game-fs.game-opening .quiz-game { animation: none; }
+    }
+
+    /* ===== WALL BUTTON / OPEN MESSAGE POLISH ===== */
+    .wall-submit-toggle { position: relative; z-index: 4; min-height: 106px; padding-right: 190px; }
+    .wall-dog-scene { z-index: 2; }
+    .wall-submit-chevron { position: absolute; z-index: 5; top: 50%; right: 190px; margin: 0; transform: translateY(-50%); }
+    .wall-submit-panel.is-open .wall-submit-chevron { transform: translateY(-50%) rotate(180deg); }
+    .wall-submit-toggle:hover .wall-submit-chevron { box-shadow: 0 7px 16px -10px rgba(90,64,118,.55); }
+    .wall-submit-panel:not(.is-open) .wall-submit-toggle { cursor: pointer; }
+    .wall-detail-card { background: linear-gradient(145deg, #fff 0%, #fffafd 100%); border-color: #ebdfe8; }
+    .wall-detail-message {
+      position: relative; margin: 24px 0 26px; padding: 22px 20px 22px 24px;
+      border: 1px solid #f0e2e9; border-radius: 18px; background: linear-gradient(145deg, #fff8fb, #fbf8ff);
+      color: #342b37; font-family: 'Playfair Display', Georgia, serif; font-size: clamp(19px, 3vw, 25px);
+      font-style: normal; font-weight: 500; line-height: 1.7; letter-spacing: -.012em;
+      box-shadow: inset 0 1px 0 #fff, 0 14px 28px -24px rgba(100,68,93,.4);
+    }
+    .wall-detail-message::before { content: '“'; position: absolute; top: -16px; left: 14px; color: #dda5b8; font: 700 58px/.8 'Playfair Display', Georgia, serif; }
+    .wall-detail-message::after { content: '”'; position: absolute; right: 16px; bottom: -26px; color: #c9b4e2; font: 700 52px/.8 'Playfair Display', Georgia, serif; }
+    .wall-detail-footer { border-top-color: #efe3eb; }
+    @media (max-width: 640px) {
+      .wall-submit-toggle { min-height: 112px; padding-right: 106px; }
+      .wall-submit-chevron { right: 102px; width: 36px; height: 36px; font-size: 21px; }
+      .wall-detail-card { width: min(94vw, 560px); padding: 26px 18px 20px; border-radius: 20px; }
+      .wall-detail-message { margin: 21px 0 24px; padding: 20px 16px 20px 20px; font-size: clamp(18px, 5.2vw, 22px); line-height: 1.62; border-radius: 16px; }
+      .wall-detail-message::before { top: -13px; left: 10px; font-size: 48px; }
+      .wall-detail-message::after { right: 10px; bottom: -23px; font-size: 44px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .wall-submit-chevron { transition: none; } }
+
+    .toast.toast-success { background: linear-gradient(135deg, #285d49, #4e9475); box-shadow: 0 18px 38px -14px rgba(40,93,73,.55); font-family: 'Playfair Display', Georgia, serif; font-size: 15px; font-weight: 700; letter-spacing: .01em; }
+    @media (max-width: 640px) { .toast.toast-success { max-width: calc(100vw - 28px); padding: 12px 16px; text-align: center; } }
+
     /* ===== STEP JOURNEY ===== */
     .step-journey { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 22px; padding: 14px 18px; background: var(--fog); border: 1px solid var(--pearl); border-radius: 14px; }
     .step-dot { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; transition: all 0.35s var(--ease-out); }
@@ -1931,6 +2192,42 @@ body.game-lock { overflow: hidden; }
           </div>
         </section>
 
+            <section class="wall-submit-panel" id="wallSubmitPanel" aria-labelledby="wallSubmitHeading" hidden>
+              <div class="wall-dog-scene" aria-hidden="true">
+                <span class="wall-sparkle sparkle-one">✦</span>
+                <span class="wall-sparkle sparkle-two">✧</span>
+                <div class="dog-model dog-model-merle wall-dog-model wall-dog-model-left">
+                  <span class="dog-ear-flap dog-ear-flap-left"></span><span class="dog-ear-flap dog-ear-flap-right"></span>
+                  <span class="dog-spot dog-spot-a"></span><span class="dog-spot dog-spot-b"></span>
+                  <span class="dog-brow dog-brow-left"></span><span class="dog-brow dog-brow-right"></span>
+                  <span class="dog-eye-model dog-eye-model-left"></span><span class="dog-eye-model dog-eye-model-right"></span>
+                  <span class="dog-tan-mask"></span><span class="dog-nose"></span><span class="dog-mouth"></span>
+                </div>
+                <div class="dog-model dog-model-black wall-dog-model wall-dog-model-right">
+                  <span class="dog-ear-flap dog-ear-flap-left"></span><span class="dog-ear-flap dog-ear-flap-right"></span>
+                  <span class="dog-spot dog-spot-a"></span><span class="dog-spot dog-spot-b"></span>
+                  <span class="dog-brow dog-brow-left"></span><span class="dog-brow dog-brow-right"></span>
+                  <span class="dog-eye-model dog-eye-model-left"></span><span class="dog-eye-model dog-eye-model-right"></span>
+                  <span class="dog-tan-mask"></span><span class="dog-nose"></span><span class="dog-mouth"></span>
+                </div>
+              </div>
+              <button type="button" class="wall-submit-toggle" id="wallLoveToggle" aria-expanded="false" aria-controls="wallLoveForm">
+                <span class="wall-submit-copy">
+                  <span class="wall-submit-kicker">No RSVP needed</span>
+                  <span class="wall-submit-title" id="wallSubmitHeading">Leave some love</span>
+                  <span class="wall-submit-description">Share a birthday message without filling out the ticket form.</span>
+                </span>
+                <span class="wall-submit-chevron" aria-hidden="true">⌄</span>
+              </button>
+              <form id="wallLoveForm" class="wall-love-form">
+                <div class="wall-form-grid">
+                  <div class="field"><label class="field-label" for="wallLoveName">Name</label><input id="wallLoveName" type="text" maxlength="80" required placeholder="Your name" autocomplete="name"></div>
+                  <div class="field"><label class="field-label" for="wallLoveMessage">Message</label><textarea id="wallLoveMessage" maxlength="500" required rows="4" placeholder="Write a birthday message…"></textarea><div class="wall-char-count"><span id="wallLoveCharCount">0</span>/500</div></div>
+                </div>
+                <button type="submit" class="btn btn-primary" id="wallLoveSubmitBtn">Post to Wall <span class="btn-arrow">→</span></button>
+                <div class="message" id="wallLoveStatus" role="status" aria-live="polite"></div>
+              </form>
+            </section>
         <div class="welcome-actions">
           <button type="button" class="action-btn primary" id="goRsvpBtn">
             <div class="action-icon">🎟️</div>
@@ -2661,7 +2958,9 @@ async function api(action, params) {
       checkExistingRSVP: [params.name || params.email || '', params.mobile || ''],
       getAllAttendees: [!!params.force],
       getWallOfLove: [],
-      reactToWallOfLove: [Number(params.rowIndex || 0), Number(params.delta || 1)],
+      getWallOfLoveStatus: [params.name || ''],
+      submitWallOfLove: [JSON.parse(params.data || '{}')],
+      reactToWallOfLove: [Number(params.rowIndex || 0), Number(params.delta || 1), params.source || 'responses'],
       getLeaderboard: [!!params.force],
       saveLeaderboardScore: [params.name || '', Number(params.score || 0)],
       submitPayment: [JSON.parse(params.data || '{}')]
@@ -2693,7 +2992,9 @@ async function api(action, params) {
       else if (action === 'checkExistingRSVP') runner.checkExistingRSVP(serverArgs[0], serverArgs[1]);
       else if (action === 'getAllAttendees') runner.getAllAttendees(serverArgs[0]);
       else if (action === 'getWallOfLove') runner.getWallOfLove();
-      else if (action === 'reactToWallOfLove') runner.reactToWallOfLove(serverArgs[0], serverArgs[1]);
+      else if (action === 'getWallOfLoveStatus') runner.getWallOfLoveStatus(serverArgs[0]);
+      else if (action === 'submitWallOfLove') runner.submitWallOfLove(serverArgs[0]);
+      else if (action === 'reactToWallOfLove') runner.reactToWallOfLove(serverArgs[0], serverArgs[1], serverArgs[2]);
       else if (action === 'getLeaderboard') runner.getLeaderboard(serverArgs[0]);
       else if (action === 'saveLeaderboardScore') runner.saveLeaderboardScore(serverArgs[0], serverArgs[1]);
       else if (action === 'submitPayment') runner.submitPayment(serverArgs[0]);
@@ -2876,12 +3177,13 @@ function startCountdown() {
 
 /* TOAST */
 let toastTimer = null;
-function showToast(msg) {
+function showToast(msg, type) {
   const el = $('toast');
   el.textContent = msg;
+  el.classList.toggle('toast-success', type === 'success');
   el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+  toastTimer = setTimeout(() => { el.classList.remove('show'); el.classList.remove('toast-success'); }, 3200);
 }
 
 /* DOWNLOAD SUCCESS FLASH */
@@ -2991,16 +3293,18 @@ const WALL_REACTED_KEY = 'birthdayWallHeartedMessages';
 function getWallReactedRows() {
   try { return JSON.parse(localStorage.getItem(WALL_REACTED_KEY) || '{}'); } catch (e) { return {}; }
 }
-function setWallReactedRow(rowIndex, isReacted) {
+function wallReactionKey(source, rowIndex) { return String(source || 'responses') + ':' + String(rowIndex); }
+function setWallReactedRow(source, rowIndex, isReacted) {
   const reacted = getWallReactedRows();
+  const key = wallReactionKey(source, rowIndex);
   if (isReacted) {
-    reacted[String(rowIndex)] = true;
+    reacted[key] = true;
   } else {
-    delete reacted[String(rowIndex)];
+    delete reacted[key];
   }
   try { localStorage.setItem(WALL_REACTED_KEY, JSON.stringify(reacted)); } catch (e) {}
 }
-function isWallReacted(rowIndex) { return !!getWallReactedRows()[String(rowIndex)]; }
+function isWallReacted(source, rowIndex) { return !!getWallReactedRows()[wallReactionKey(source, rowIndex)]; }
 function stopWallRotation() {
   clearTimeout(wallCycleTimer);
   clearTimeout(wallFadeTimer);
@@ -3025,29 +3329,29 @@ function animateWallHeartCount(btn, target) {
 }
 function updateWallHeartButtons(message, animateCount) {
   if (!message) return;
-  document.querySelectorAll('.wall-heart-btn[data-row-index="' + String(message.rowIndex) + '"]').forEach(function(btn) {
+  document.querySelectorAll('.wall-heart-btn[data-source="' + String(message.source || 'responses') + '"][data-row-index="' + String(message.rowIndex) + '"]').forEach(function(btn) {
     const count = btn.querySelector('.wall-heart-count');
     if (count) {
       if (animateCount) animateWallHeartCount(btn, message.hearts);
       else count.textContent = String(Number(message.hearts) || 0);
     }
-    const reacted = isWallReacted(message.rowIndex);
+    const reacted = isWallReacted(message.source || 'responses', message.rowIndex);
     btn.classList.toggle('is-reacted', reacted);
     btn.setAttribute('aria-pressed', reacted ? 'true' : 'false');
     btn.setAttribute('aria-label', reacted ? 'Remove heart from this message' : 'Heart this message');
   });
 }
-function animateWallHeartButtons(rowIndex) {
-  document.querySelectorAll('.wall-heart-btn[data-row-index="' + String(rowIndex) + '"]').forEach(function(btn) {
+function animateWallHeartButtons(rowIndex, source) {
+  document.querySelectorAll('.wall-heart-btn[data-source="' + String(source || 'responses') + '"][data-row-index="' + String(rowIndex) + '"]').forEach(function(btn) {
     btn.classList.remove('is-bursting');
     void btn.offsetWidth;
     btn.classList.add('is-bursting');
     setTimeout(function() { btn.classList.remove('is-bursting'); }, 720);
   });
 }
-function burstWallHeartParticles(rowIndex) {
+function burstWallHeartParticles(rowIndex, source) {
   if (!window.matchMedia || !window.matchMedia('(max-width: 899px)').matches) return;
-  document.querySelectorAll('.wall-heart-btn[data-row-index="' + String(rowIndex) + '"]').forEach(function(btn) {
+  document.querySelectorAll('.wall-heart-btn[data-source="' + String(source || 'responses') + '"][data-row-index="' + String(rowIndex) + '"]').forEach(function(btn) {
     for (let i = 0; i < 9; i++) {
       const particle = document.createElement('span');
       const angle = (Math.PI * 2 * i / 9) - Math.PI / 2;
@@ -3065,12 +3369,14 @@ function burstWallHeartParticles(rowIndex) {
 function setWallCardContent(card, message) {
   const text = String(message && message.message || '').trim();
   const name = String(message && message.name || 'Guest').trim() || 'Guest';
-  const isLong = text.length > 240 || text.split('\n').length > 6;
+  const isLoginPreview = !!(card && card.closest && card.closest('#loginMobileWall'));
+  const isLong = !isLoginPreview && (text.length > 240 || text.split('\n').length > 6);
   const rowIndex = Number(message && message.rowIndex || 0);
   card.dataset.rowIndex = String(rowIndex);
   card.setAttribute('aria-label', 'Read a message from ' + name);
+  card.dataset.source = String(message && message.source || 'responses');
   card.innerHTML = '<div class="wall-card-label"><span class="wall-author">' + escapeHtml(name) + '</span>' +
-    '<button type="button" class="wall-heart-btn" data-row-index="' + rowIndex + '" aria-label="Heart this message" aria-pressed="false">♥ <span class="wall-heart-count">' + (Number(message.hearts) || 0) + '</span></button></div>' +
+    '<button type="button" class="wall-heart-btn" data-source="' + String(message.source || 'responses') + '" data-row-index="' + rowIndex + '" aria-label="Heart this message" aria-pressed="false">♥ <span class="wall-heart-count">' + (Number(message.hearts) || 0) + '</span></button></div>' +
     '<div class="wall-card-msg' + (isLong ? ' is-clamped' : '') + '">' + escapeHtml(text) + '</div>' +
     (isLong ? '<button type="button" class="wall-card-toggle" aria-expanded="false">Read full message</button>' : '') +
     '<div class="wall-card-hint">Tap to read</div>';
@@ -3089,9 +3395,10 @@ function openWallDetail(message, trigger) {
   const heart = $('wallDetailHeartBtn');
   if (heart) {
     heart.dataset.rowIndex = String(message.rowIndex);
-    heart.classList.toggle('is-reacted', isWallReacted(message.rowIndex));
-    heart.setAttribute('aria-pressed', isWallReacted(message.rowIndex) ? 'true' : 'false');
-    heart.setAttribute('aria-label', isWallReacted(message.rowIndex) ? 'Remove heart from this message' : 'Heart this message');
+    heart.dataset.source = String(message.source || 'responses');
+    heart.classList.toggle('is-reacted', isWallReacted(message.source || 'responses', message.rowIndex));
+    heart.setAttribute('aria-pressed', isWallReacted(message.source || 'responses', message.rowIndex) ? 'true' : 'false');
+    heart.setAttribute('aria-label', isWallReacted(message.source || 'responses', message.rowIndex) ? 'Remove heart from this message' : 'Heart this message');
     const count = heart.querySelector('.wall-heart-count');
     if (count) count.textContent = String(Number(message.hearts) || 0);
   }
@@ -3114,16 +3421,16 @@ function closeWallDetail() {
 }
 async function reactToWallMessage(message, sourceButton) {
   if (!message) return;
-  const wasReacted = isWallReacted(message.rowIndex);
+  const wasReacted = isWallReacted(message.source || 'responses', message.rowIndex);
   const nextReacted = !wasReacted;
-  animateWallHeartButtons(message.rowIndex);
-  burstWallHeartParticles(message.rowIndex);
+  animateWallHeartButtons(message.rowIndex, message.source);
+  burstWallHeartParticles(message.rowIndex, message.source);
   if (sourceButton) sourceButton.disabled = true;
   try {
-    const result = await api('reactToWallOfLove', { rowIndex: message.rowIndex, delta: nextReacted ? 1 : -1 });
+    const result = await api('reactToWallOfLove', { rowIndex: message.rowIndex, source: message.source || 'responses', delta: nextReacted ? 1 : -1 });
     if (!result || !result.success) throw new Error(result && result.message || 'Could not save reaction.');
     message.hearts = Number(result.hearts) || 0;
-    setWallReactedRow(message.rowIndex, nextReacted);
+    setWallReactedRow(message.source || 'responses', message.rowIndex, nextReacted);
     updateWallHeartButtons(message, true);
     if (wallDetailMessage && Number(wallDetailMessage.rowIndex) === Number(message.rowIndex)) {
       wallDetailMessage.hearts = message.hearts;
@@ -3161,12 +3468,12 @@ function bindWallCardEvents() {
       const toggle = event.target.closest('.wall-card-toggle');
       if (heartButton) {
         event.preventDefault(); event.stopPropagation();
-        const message = wallMessages.find(item => Number(item.rowIndex) === Number(card.dataset.rowIndex));
+        const message = wallMessages.find(item => String(item.source || 'responses') === String(card.dataset.source || 'responses') && Number(item.rowIndex) === Number(card.dataset.rowIndex));
         reactToWallMessage(message, heartButton);
         return;
       }
       if (toggle) { event.preventDefault(); event.stopPropagation(); }
-      const message = wallMessages.find(item => Number(item.rowIndex) === Number(card.dataset.rowIndex));
+      const message = wallMessages.find(item => String(item.source || 'responses') === String(card.dataset.source || 'responses') && Number(item.rowIndex) === Number(card.dataset.rowIndex));
       openWallDetail(message, card);
     });
     card.addEventListener('keydown', function(event) {
@@ -3202,7 +3509,7 @@ async function loadWallOfLove(force) {
     const res = await api('getWallOfLove');
     if (!res || !res.success || !Array.isArray(res.messages)) throw new Error(res && res.message ? res.message : 'The server returned an invalid response.');
     const messages = res.messages.filter(item => item && String(item.message || '').trim()).map(item => ({
-      rowIndex: Number(item.rowIndex), name: String(item.name || 'Guest').trim() || 'Guest', message: String(item.message).trim(), hearts: Number(item.hearts) || 0
+      rowIndex: Number(item.rowIndex), source: String(item.source || 'responses'), name: String(item.name || 'Guest').trim() || 'Guest', message: String(item.message).trim(), hearts: Number(item.hearts) || 0
     }));
     if (messages.length === 0) {
       document.querySelectorAll('.hero-wall .wall-scroll, #wallMobileToast .wall-scroll, #welcomeWall .wall-scroll, #loginMobileWall .wall-scroll').forEach(scroll => { scroll.innerHTML = '<div class="wall-empty">No messages yet — be the first to share some love! 💛</div>'; });
@@ -3523,7 +3830,11 @@ async function completeLogin(loginTicket) {
       $('ticketCode').textContent = ticket.code;
       $('ticketName').textContent = ticket.name;
       $('ticketGuests').textContent = ticket.guests + (ticket.guests === 1 ? ' person' : ' people');
-    } else updateMobileNavHome(false);
+      await updateWallLoveEligibility(true);
+    } else {
+      updateMobileNavHome(false);
+      await updateWallLoveEligibility(false);
+    }
   } catch (e) { console.log('Existing RSVP check failed:', e); }
 }
 
@@ -4218,6 +4529,7 @@ function logout() {
   setTimeout(function() {
     safeStorageRemove('birthdayUser');
     currentUser = null; selfieData = null; videoData = null; guests = 1; currentTicket = null;
+    setWallLovePanelVisible(false);
     updateMobileNavHome(false);
     selectedAttendance = 'going';
     const attGridReset = $('attendanceGrid');
@@ -4995,6 +5307,62 @@ function getVideoHTML() {
 </body>
 </html>`;
 }
+
+/* WALL OF LOVE ELIGIBILITY */
+function setWallLovePanelVisible(visible) {
+  const panel = $('wallSubmitPanel');
+  if (panel) { panel.hidden = !visible; panel.classList.toggle('is-open', false); const toggle = $('wallLoveToggle'); if (toggle) toggle.setAttribute('aria-expanded', 'false'); }
+}
+async function updateWallLoveEligibility(hasTicket) {
+  const panel = $('wallSubmitPanel');
+  if (!panel) return;
+  setWallLovePanelVisible(false);
+  if (hasTicket || !currentUser || !currentUser.name) return;
+  try {
+    const result = await api('getWallOfLoveStatus', { name: currentUser.name });
+    if (result && result.success && !result.exists) setWallLovePanelVisible(true);
+  } catch (e) { console.log('Wall of Love status check failed:', e); }
+}
+
+/* WALL OF LOVE EXPAND/COLLAPSE */
+(function initWallLoveToggle() {
+  const panel = $('wallSubmitPanel'), toggle = $('wallLoveToggle');
+  if (!panel || !toggle) return;
+  toggle.addEventListener('click', function() {
+    const shouldOpen = !panel.classList.contains('is-open');
+    panel.classList.toggle('is-open', shouldOpen);
+    toggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+    if (shouldOpen) {
+      setTimeout(function() { const name = $('wallLoveName'); if (name) name.focus(); }, 180);
+    }
+  });
+})();
+
+/* STANDALONE WALL OF LOVE SUBMISSION */
+(function initWallLoveForm() {
+  const form = $('wallLoveForm');
+  if (!form) return;
+  const messageInput = $('wallLoveMessage'), count = $('wallLoveCharCount');
+  if (messageInput && count) messageInput.addEventListener('input', function() { count.textContent = String(this.value.length); });
+  form.addEventListener('submit', async function(event) {
+    event.preventDefault();
+    const btn = $('wallLoveSubmitBtn'), status = $('wallLoveStatus');
+    const name = $('wallLoveName').value.trim(), text = messageInput.value.trim();
+    if (name.length < 2) { status.textContent = 'Please enter your name.'; status.className = 'message error show'; return; }
+    if (!text) { status.textContent = 'Please write a message.'; status.className = 'message error show'; return; }
+    btn.disabled = true; status.textContent = 'Publishing…'; status.className = 'message show';
+    try {
+      const result = await api('submitWallOfLove', { data: JSON.stringify({ name: name, message: text }) });
+      if (!result || !result.success) throw new Error(result && result.message || 'Could not publish your message.');
+      status.textContent = 'Your message is on the Wall of Love!'; status.className = 'message success show';
+      showToast('Your Wall of Love message was posted!', 'success');
+      const panel = $('wallSubmitPanel');
+      if (panel) panel.hidden = true;
+      form.reset(); if (count) count.textContent = '0'; wallLoaded = false; await loadWallOfLove(true);
+    } catch (e) { status.textContent = e.message || 'Could not publish your message.'; status.className = 'message error show'; }
+    finally { btn.disabled = false; }
+  });
+})();
 
 /* SUBMIT */
 $('rsvpForm').addEventListener('submit', async function(e) {
@@ -6022,8 +6390,9 @@ $('downloadQrBtn').addEventListener('click', async () => {
     placeholder = document.createComment('quiz-card-home');
     card.parentNode.insertBefore(placeholder, card);
     document.body.appendChild(card);
-    card.classList.add('game-fs');
+    card.classList.add('game-fs', 'game-opening');
     document.body.classList.add('game-lock');
+    setTimeout(function() { card.classList.remove('game-opening'); }, 850);
     requestNative();   // real full screen where the browser allows it
     syncToggle();
   }
@@ -6033,7 +6402,7 @@ $('downloadQrBtn').addEventListener('click', async () => {
     active = false;
     if (typeof window.stopCatchTheTreats === 'function') window.stopCatchTheTreats();
     exitNative();
-    card.classList.remove('game-fs');
+    card.classList.remove('game-fs', 'game-opening');
     document.body.classList.remove('game-lock');
     if (placeholder && placeholder.parentNode) {
       placeholder.parentNode.insertBefore(card, placeholder);
