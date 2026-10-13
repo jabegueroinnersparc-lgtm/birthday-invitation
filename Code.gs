@@ -23,6 +23,13 @@ const SHEET_LEADERBOARD = 'Leaderboard';
 const LEADERBOARD_HEADERS = ['Timestamp', 'Name', 'Score'];
 
 const WALL_OF_LOVE_HEADERS = ['Timestamp', 'Name', 'Message', 'Avatar URL', 'Hearts'];
+const WALL_COL = {
+  TIMESTAMP: 0,
+  NAME: 1,
+  MESSAGE: 2,
+  AVATAR_URL: 3,
+  HEARTS: 4
+};
 
 const PAYMENT_HEADERS = [
   'Timestamp', 'Name', 'Mobile', 'Amount', 'Transaction Reference', 'Notes', 'Status'
@@ -33,8 +40,11 @@ const PAYMENT_HEADERS = [
 const CACHE_TTL_SECONDS = 30;
 const ADMIN_SESSION_TTL_SECONDS = 21600;
 const ADMIN_SESSION_PREFIX = 'birthday_admin_session_';
+const RATE_LIMIT_PREFIX = 'birthday_rate_limit_';
+const RATE_LIMIT_WINDOW_SECONDS = 300;
 const WHITELIST_CACHE_KEY = 'birthday_whitelist_v1';
 const ATTENDEES_CACHE_KEY = 'birthday_attendees_v1';
+const WALL_CACHE_KEY = 'birthday_wall_of_love_v2';
 const SETTINGS_CACHE_KEY = 'birthday_settings_v1';
 const LEADERBOARD_CACHE_KEY = 'birthday_leaderboard_v1';
 
@@ -45,16 +55,6 @@ const RESPONSES_HEADERS = [
   'Ticket Code', 'Checked In', 'Attendance', 'Video Greeting URL',
   'Wall of Love Hearts'
 ];
-
-// FIX: getWallOfLove(), getWallOfLoveStatus(), and reactToWallOfLove()
-// use this zero-based map for the WallOfLove sheet.
-const WALL_COL = {
-  TIMESTAMP: 0,
-  NAME: 1,
-  MESSAGE: 2,
-  AVATAR_URL: 3,
-  HEARTS: 4
-};
 
 // Column index helper (1-based → 0-based for getValues arrays)
 const COL = {
@@ -77,6 +77,27 @@ const COL = {
 /* ============================================================
    WEB APP ENTRY (GET)
    ============================================================ */
+function rateLimitKey(action, identifier) {
+  const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(action) + '|' + String(identifier), Utilities.Charset.UTF_8);
+  return RATE_LIMIT_PREFIX + digest.map(function(byte) { const n = byte < 0 ? byte + 256 : byte; return ('0' + n.toString(16)).slice(-2); }).join('');
+}
+function allowRateLimit(action, identifier, maxAttempts, ttlSeconds) {
+  try {
+    const cache = CacheService.getScriptCache();
+    const key = rateLimitKey(action, identifier);
+    const current = Number(cache.get(key) || 0);
+    if (current >= maxAttempts) return false;
+    cache.put(key, String(current + 1), ttlSeconds || RATE_LIMIT_WINDOW_SECONDS);
+    return true;
+  } catch (e) {
+    // A cache outage should not make the public site unavailable.
+    return true;
+  }
+}
+function genericLoginFailure() {
+  return 'The details could not be verified. Please check your information and try again.';
+}
+
 function doGet(e) {
   if (e && e.parameter && e.parameter.action) {
     return handleApiRequest(e);
@@ -88,13 +109,13 @@ function doGet(e) {
     return HtmlService.createHtmlOutputFromFile('Scanner')
       .setTitle('Admin • Check-In Scanner')
       .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
-      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
   }
 
   return HtmlService.createHtmlOutputFromFile('Index')
     .setTitle('Simon Jabeguero')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
 }
 
 /* ============================================================
@@ -209,6 +230,14 @@ function handleApiRequest(e) {
     if (action === 'deleteLeaderboardScore') return jsonResponse(deleteLeaderboardScore(params.rowIndex || '', params.token || ''));
     if (action === 'resetLeaderboard') return jsonResponse(resetLeaderboard(params.token || ''));
     if (action === 'getAdminAttendees') return jsonResponse(getAdminAttendees(params.token || ''));
+    if (action === 'getAdminWallOfLove') return jsonResponse(getAdminWallOfLove(params.token || ''));
+    if (action === 'deleteWallOfLove') return jsonResponse(deleteWallOfLove(params.rowIndex || '', params.token || ''));
+    if (action === 'updateWallOfLove') {
+      let wallUpdateData = {};
+      try { wallUpdateData = JSON.parse(params.data || '{}'); }
+      catch (err) { return jsonResponse({ success: false, message: 'Invalid Wall of Love data.' }); }
+      return jsonResponse(updateWallOfLove(wallUpdateData, params.token || ''));
+    }
     if (action === 'updateAttendee') {
       let attendeeData = {};
       try { attendeeData = JSON.parse(params.data || '{}'); }
@@ -230,7 +259,7 @@ function handleApiRequest(e) {
     return jsonResponse({ success: false, message: 'Unknown action: ' + action });
   } catch (err) {
     Logger.log('handleApiRequest error: ' + err.toString());
-    return jsonResponse({ success: false, message: err.toString() });
+    return jsonResponse({ success: false, message: 'The request could not be completed. Please try again.' });
   }
 }
 
@@ -300,7 +329,8 @@ function clearBirthdayCaches() {
       WHITELIST_CACHE_KEY,
       ATTENDEES_CACHE_KEY,
       SETTINGS_CACHE_KEY,
-      LEADERBOARD_CACHE_KEY
+      LEADERBOARD_CACHE_KEY,
+      WALL_CACHE_KEY
     ]);
   } catch (e) {}
 }
@@ -491,6 +521,7 @@ function simpleLogin(name, mobile) {
     if (!/^\d{7,15}$/.test(mobile)) {
       return { success: false, message: 'Please enter a valid mobile number using 7 to 15 digits.' };
     }
+    if (!allowRateLimit('simpleLogin', normalizeName(name) + '|' + mobile, 8)) return { success: false, message: genericLoginFailure() };
 
     const lock = LockService.getScriptLock();
     lock.waitLock(10000);
@@ -579,10 +610,11 @@ function loginByMobile(mobile) {
     if (!/^\d{7,15}$/.test(mobile)) {
       return { success: false, message: 'Please enter a valid mobile number using 7 to 15 digits.' };
     }
+    if (!allowRateLimit('loginByMobile', mobile, 5)) return { success: false, message: genericLoginFailure() };
 
     const account = findWhitelistMobile(mobile);
     if (!account || !account.name) {
-      return { success: false, message: 'No account was found for that mobile number.' };
+      return { success: false, message: genericLoginFailure() };
     }
 
     const existingRsvp = checkExistingRSVP(account.name, mobile);
@@ -857,8 +889,16 @@ function cacheRemoveLeaderboard() {
   CacheService.getScriptCache().remove(LEADERBOARD_CACHE_KEY);
 }
 
+function cacheRemoveWallOfLove() {
+  try { CacheService.getScriptCache().remove(WALL_CACHE_KEY); } catch (e) {}
+}
+
 function getWallOfLove() {
   try {
+    const cached = CacheService.getScriptCache().get(WALL_CACHE_KEY);
+    if (cached) {
+      try { return JSON.parse(cached); } catch (cacheError) { cacheRemoveWallOfLove(); }
+    }
     const messages = [];
     const responses = getResponsesSheet();
     if (responses.getLastRow() >= 2) {
@@ -892,7 +932,9 @@ function getWallOfLove() {
       });
     }
     messages.sort(function(a, b) { return (b.timestamp || 0) - (a.timestamp || 0); });
-    return { success: true, messages: messages.slice(0, 100) };
+    const result = { success: true, messages: messages.slice(0, 100) };
+    try { CacheService.getScriptCache().put(WALL_CACHE_KEY, JSON.stringify(result), 20); } catch (cacheError) {}
+    return result;
   } catch (e) {
     Logger.log('getWallOfLove error: ' + e.toString());
     return { success: false, messages: [], message: 'Could not load greetings. Please try again.' };
@@ -924,9 +966,11 @@ function submitWallOfLove(data) {
     const message = String(data.message || '').trim();
     if (name.length < 2 || name.length > 80) return { success: false, message: 'Please enter a name from 2 to 80 characters.' };
     if (!message || message.length > 500) return { success: false, message: 'Please enter a message up to 500 characters.' };
+    if (!allowRateLimit('submitWallOfLove', normalizeName(name) + '|' + message, 4)) return { success: false, message: 'Please wait a few minutes before posting again.' };
     lock.waitLock(30000);
     const sh = getWallOfLoveSheet();
     sh.appendRow([new Date(), name, message, '', 0]);
+    cacheRemoveWallOfLove();
     return { success: true, message: 'Your message is now on the Wall of Love.' };
   } catch (e) {
     Logger.log('submitWallOfLove error: ' + e.toString());
@@ -951,6 +995,7 @@ function reactToWallOfLove(rowIndex, requestedDelta, source) {
     const heartsCell = sh.getRange(targetRow, heartsCol);
     const hearts = Math.max(0, (Number(heartsCell.getValue()) || 0) + delta);
     heartsCell.setValue(hearts);
+    if (isWall) cacheRemoveWallOfLove();
     SpreadsheetApp.flush();
     return { success: true, rowIndex: targetRow, source: source || 'responses', hearts: hearts };
   } catch (e) {
@@ -1089,6 +1134,76 @@ function getAdminAttendees(token) {
   }
 }
 
+function getAdminWallOfLove(token) {
+  if (!isAdminSessionValid(token)) return { success: false, messages: [], message: 'Admin session expired. Please sign in again.' };
+  try {
+    const sh = getWallOfLoveSheet();
+    if (sh.getLastRow() < 2) return { success: true, messages: [] };
+    const rows = sh.getRange(2, 1, sh.getLastRow() - 1, WALL_OF_LOVE_HEADERS.length).getValues();
+    const messages = rows.map(function(row, index) {
+      return {
+        rowIndex: index + 2,
+        timestamp: serializeAdminCell(row[WALL_COL.TIMESTAMP]),
+        name: serializeAdminCell(row[WALL_COL.NAME]),
+        message: serializeAdminCell(row[WALL_COL.MESSAGE]),
+        hearts: Math.max(0, Number(row[WALL_COL.HEARTS]) || 0)
+      };
+    }).filter(function(item) { return item.name || item.message; }).reverse();
+    return { success: true, messages: messages, fetchedAt: new Date().toISOString() };
+  } catch (e) {
+    Logger.log('getAdminWallOfLove error: ' + e.toString());
+    return { success: false, messages: [], message: 'Could not load Wall of Love messages.' };
+  }
+}
+function updateWallOfLove(data, token) {
+  if (!isAdminSessionValid(token)) return { success: false, message: 'Admin session expired. Please sign in again.' };
+  const lock = LockService.getScriptLock();
+  try {
+    data = data || {};
+    const rowIndex = Number(data.rowIndex);
+    const name = String(data.name || '').replace(/\s+/g, ' ').trim();
+    const message = String(data.message || '').trim();
+    if (!Number.isInteger(rowIndex) || rowIndex < 2) return { success: false, message: 'Invalid Wall of Love row.' };
+    if (name.length < 2 || name.length > 80) return { success: false, message: 'Name must be between 2 and 80 characters.' };
+    if (!message || message.length > 500) return { success: false, message: 'Message must be between 1 and 500 characters.' };
+    lock.waitLock(10000);
+    const sh = getWallOfLoveSheet();
+    if (rowIndex > sh.getLastRow()) return { success: false, message: 'Wall of Love message no longer exists.' };
+    const existing = sh.getRange(rowIndex, 1, 1, WALL_OF_LOVE_HEADERS.length).getValues()[0];
+    if (!String(existing[WALL_COL.NAME] || '').trim() && !String(existing[WALL_COL.MESSAGE] || '').trim()) return { success: false, message: 'Wall of Love message no longer exists.' };
+    sh.getRange(rowIndex, WALL_COL.NAME + 1).setValue(name);
+    sh.getRange(rowIndex, WALL_COL.MESSAGE + 1).setValue(message);
+    cacheRemoveWallOfLove();
+    return { success: true, message: 'Wall of Love message updated.' };
+  } catch (e) {
+    Logger.log('updateWallOfLove error: ' + e.toString());
+    return { success: false, message: 'Could not update Wall of Love message.' };
+  } finally {
+    try { lock.releaseLock(); } catch (e) {}
+  }
+}
+function deleteWallOfLove(rowIndexValue, token) {
+  if (!isAdminSessionValid(token)) return { success: false, message: 'Admin session expired. Please sign in again.' };
+  const lock = LockService.getScriptLock();
+  try {
+    const rowIndex = Number(rowIndexValue);
+    if (!Number.isInteger(rowIndex) || rowIndex < 2) return { success: false, message: 'Invalid Wall of Love row.' };
+    lock.waitLock(10000);
+    const sh = getWallOfLoveSheet();
+    if (rowIndex > sh.getLastRow()) return { success: false, message: 'Wall of Love message no longer exists.' };
+    const name = String(sh.getRange(rowIndex, WALL_COL.NAME + 1).getValue() || '').trim();
+    const message = String(sh.getRange(rowIndex, WALL_COL.MESSAGE + 1).getValue() || '').trim();
+    if (!name && !message) return { success: false, message: 'Wall of Love message no longer exists.' };
+    sh.deleteRow(rowIndex);
+    cacheRemoveWallOfLove();
+    return { success: true, message: 'Wall of Love message deleted.' };
+  } catch (e) {
+    Logger.log('deleteWallOfLove error: ' + e.toString());
+    return { success: false, message: 'Could not delete Wall of Love message.' };
+  } finally {
+    try { lock.releaseLock(); } catch (e) {}
+  }
+}
 function updateAttendee(attendeeData, token) {
   if (!isAdminSessionValid(token)) {
     return { success: false, message: 'Admin session expired. Please sign in again.' };
@@ -1192,6 +1307,7 @@ function submitForm(formData) {
     if (!/^\d{7,15}$/.test(mobile)) {
       return { success: false, message: 'Please enter a valid mobile number using numbers only.' };
     }
+    if (!allowRateLimit('submitForm', normalizeName(submittedName) + '|' + mobile, 3)) return { success: false, message: 'Please wait a few minutes before submitting again.' };
 
     if (!formData.address || !String(formData.address).trim()) return { success: false, message: 'Address is required.' };
     if (!formData.greetings || !String(formData.greetings).trim()) return { success: false, message: 'Greetings are required.' };
@@ -1414,6 +1530,7 @@ function getAdminPassword() {
 function adminLogin(password) {
   try {
     password = String(password || '');
+    if (!allowRateLimit('adminLogin', 'global', 5)) return { success: false, message: 'Too many sign-in attempts. Please wait a few minutes and try again.' };
     const expected = getAdminPassword();
 
     if (!expected) {
