@@ -1877,7 +1877,7 @@
             } catch (e) {}
           }
           if (prop === 'updateAttendee' || prop === 'updateLeaderboardScore' || prop === 'updateWallOfLove') body.set('data', JSON.stringify(value || {}));
-          else if (prop === 'deleteAttendee' || prop === 'deleteLeaderboardScore' || prop === 'deleteWallOfLove') body.set('rowIndex', String(value || ''));
+          else if (prop === 'deleteAttendee' || prop === 'deleteLeaderboardScore' || prop === 'deleteWallOfLove') { body.set('rowIndex', String(value || '')); if (prop === 'deleteWallOfLove' && args[2] !== undefined) body.set('source', String(args[2])); }
           else if (prop === 'submitForm' || prop === 'submitPayment') body.set('data', JSON.stringify(value || {}));
           else if (prop === 'adminLogin') body.set('password', String(value || ''));
           else if (prop === 'verifyTicket' || prop === 'checkInTicket') body.set('code', String(value || ''));
@@ -2087,8 +2087,9 @@
   $('wallAdminSearch').addEventListener('input', function(e) { adminWallFilter = e.target.value.toLowerCase().trim(); renderAdminWallMessages(); });
   function normalizeAdminWallMessages(payload) {
     const list = Array.isArray(payload) ? payload : (Array.isArray(payload && payload.messages) ? payload.messages : []);
-    return list.map(function(item) { return { rowIndex: Number(item && item.rowIndex) || null, timestamp: item && item.timestamp ? item.timestamp : '', name: String(item && item.name || ''), message: String(item && item.message || ''), hearts: Number(item && item.hearts) || 0 }; }).filter(function(item) { return item.rowIndex && (item.name || item.message); });
+    return list.map(function(item) { return { source: String(item && item.source || 'wall') === 'responses' ? 'responses' : 'wall', rowIndex: Number(item && item.rowIndex) || null, timestamp: item && item.timestamp ? item.timestamp : '', name: String(item && item.name || ''), message: String(item && item.message || ''), hearts: Number(item && item.hearts) || 0 }; }).filter(function(item) { return item.rowIndex && (item.name || item.message); });
   }
+  function wallAdminKey(item) { return item.source + '-' + item.rowIndex; }
   function formatWallAdminDate(value) {
     if (!value) return 'Date unavailable';
     try { const d = new Date(value); return isNaN(d.getTime()) ? String(value) : d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { return String(value); }
@@ -2099,32 +2100,34 @@
     status.className = 'attendee-load-status'; status.textContent = 'Contacting Google Sheets backend…';
     google.script.run.withSuccessHandler(function(res) {
       if (!res || !res.success) { const msg = (res && res.message) || 'Could not load Wall of Love messages.'; status.className = 'attendee-load-status error'; status.textContent = msg; list.innerHTML = '<div class="attendee-empty">' + escapeHtml(msg) + '</div>'; return; }
-      adminWallMessages = normalizeAdminWallMessages(res); renderAdminWallMessages(); status.className = 'attendee-load-status ok'; status.textContent = 'Connected — ' + adminWallMessages.length + ' message(s) loaded.';
+      adminWallMessages = normalizeAdminWallMessages(res); renderAdminWallMessages(); status.className = 'attendee-load-status ok'; status.textContent = 'Connected — ' + adminWallMessages.length + ' message(s) loaded, including Responses greetings.';
     }).withFailureHandler(function(err) { const msg = (err && err.message) || 'Could not contact the backend.'; const display = /unknown action:\s*getadminwalloflove/i.test(msg) ? 'The live Apps Script deployment is outdated. Redeploy the latest Code.gs, then refresh this page.' : msg; status.className = 'attendee-load-status error'; status.textContent = display; list.innerHTML = '<div class="attendee-empty">' + escapeHtml(display) + '</div>'; }).getAdminWallOfLove(getAdminSessionToken());
   }
   function renderAdminWallMessages() {
     const list = $('wallAdminList');
     const rows = adminWallMessages.filter(function(item) { return (item.name + ' ' + item.message).toLowerCase().includes(adminWallFilter); });
-    if (!rows.length) { list.innerHTML = '<div class="attendee-empty">No matching Wall of Love messages.</div>'; return; }
+    if (!rows.length) { list.innerHTML = '<div class="attendee-empty">No matching messages.</div>'; return; }
     list.innerHTML = rows.map(function(item) {
-      return '<article class="wall-admin-card" data-wall-row="' + item.rowIndex + '">' +
-        '<div class="wall-admin-card-head"><span class="wall-admin-date">' + escapeHtml(formatWallAdminDate(item.timestamp)) + '</span><span class="wall-admin-hearts">♥ ' + item.hearts + '</span></div>' +
-        '<div class="wall-admin-fields"><label>Name<input data-wall-name="' + item.rowIndex + '" maxlength="80" value="' + escapeHtml(item.name) + '"></label><label>Message<textarea data-wall-message="' + item.rowIndex + '" maxlength="500">' + escapeHtml(item.message) + '</textarea></label></div>' +
-        '<div class="wall-admin-card-actions"><button type="button" data-wall-save="' + item.rowIndex + '">Save changes</button><button type="button" class="danger" data-wall-delete="' + item.rowIndex + '">Remove message</button></div></article>';
+      const key = wallAdminKey(item), sourceLabel = item.source === 'responses' ? 'Responses · Greetings' : 'Wall of Love sheet';
+      return '<article class="wall-admin-card" data-wall-row="' + key + '">' +
+        '<div class="wall-admin-card-head"><span class="wall-admin-date">' + escapeHtml(sourceLabel) + ' · ' + escapeHtml(formatWallAdminDate(item.timestamp)) + '</span><span class="wall-admin-hearts">♥ ' + item.hearts + '</span></div>' +
+        '<div class="wall-admin-fields"><label>Name<input data-wall-name="' + key + '" maxlength="80" value="' + escapeHtml(item.name) + '"' + (item.source === 'responses' ? ' readonly title="Edit the attendee name from Attendees instead"' : '') + '></label><label>Message<textarea data-wall-message="' + key + '" maxlength="500">' + escapeHtml(item.message) + '</textarea></label></div>' +
+        '<div class="wall-admin-card-actions"><button type="button" data-wall-save="' + key + '">Save changes</button><button type="button" class="danger" data-wall-delete="' + key + '">Remove message</button></div></article>';
     }).join('');
-    list.querySelectorAll('[data-wall-save]').forEach(function(btn) { btn.addEventListener('click', function() { saveAdminWallMessage(Number(btn.dataset.wallSave)); }); });
-    list.querySelectorAll('[data-wall-delete]').forEach(function(btn) { btn.addEventListener('click', function() { deleteAdminWallMessage(Number(btn.dataset.wallDelete)); }); });
+    list.querySelectorAll('[data-wall-save]').forEach(function(btn) { btn.addEventListener('click', function() { saveAdminWallMessage(btn.dataset.wallSave); }); });
+    list.querySelectorAll('[data-wall-delete]').forEach(function(btn) { btn.addEventListener('click', function() { deleteAdminWallMessage(btn.dataset.wallDelete); }); });
   }
-  function saveAdminWallMessage(rowIndex) {
-    const nameInput = document.querySelector('[data-wall-name="' + rowIndex + '"]'), messageInput = document.querySelector('[data-wall-message="' + rowIndex + '"]');
-    if (!nameInput || !messageInput) return;
-    const btn = document.querySelector('[data-wall-save="' + rowIndex + '"]'); if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
-    google.script.run.withSuccessHandler(function(res) { if (btn) { btn.disabled = false; btn.textContent = 'Save changes'; } if (!res || !res.success) { showToast((res && res.message) || 'Could not update message.'); return; } showToast('Wall of Love message updated.'); loadAdminWallMessages(); }).withFailureHandler(function(err) { if (btn) { btn.disabled = false; btn.textContent = 'Save changes'; } showToast('Error: ' + ((err && err.message) || 'Could not update message.')); }).updateWallOfLove({ rowIndex: rowIndex, name: nameInput.value.trim(), message: messageInput.value.trim() }, getAdminSessionToken());
+  function findAdminWallMessage(key) { return adminWallMessages.find(function(item) { return wallAdminKey(item) === key; }); }
+  function saveAdminWallMessage(key) {
+    const item = findAdminWallMessage(key), nameInput = document.querySelector('[data-wall-name="' + key + '"]'), messageInput = document.querySelector('[data-wall-message="' + key + '"]');
+    if (!item || !nameInput || !messageInput) return;
+    const btn = document.querySelector('[data-wall-save="' + key + '"]'); if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+    google.script.run.withSuccessHandler(function(res) { if (btn) { btn.disabled = false; btn.textContent = 'Save changes'; } if (!res || !res.success) { showToast((res && res.message) || 'Could not update message.'); return; } showToast(item.source === 'responses' ? 'Response greeting updated.' : 'Wall of Love message updated.'); loadAdminWallMessages(); }).withFailureHandler(function(err) { if (btn) { btn.disabled = false; btn.textContent = 'Save changes'; } showToast('Error: ' + ((err && err.message) || 'Could not update message.')); }).updateWallOfLove({ rowIndex: item.rowIndex, source: item.source, name: nameInput.value.trim(), message: messageInput.value.trim() }, getAdminSessionToken());
   }
-  function deleteAdminWallMessage(rowIndex) {
-    const item = adminWallMessages.find(function(entry) { return Number(entry.rowIndex) === rowIndex; });
-    if (!item || !confirm('Remove the Wall of Love message from ' + (item.name || 'this guest') + '? This cannot be undone.')) return;
-    google.script.run.withSuccessHandler(function(res) { if (!res || !res.success) { showToast((res && res.message) || 'Could not remove message.'); return; } showToast('Wall of Love message removed.'); loadAdminWallMessages(); }).withFailureHandler(function(err) { showToast('Error: ' + ((err && err.message) || 'Could not remove message.')); }).deleteWallOfLove(rowIndex, getAdminSessionToken());
+  function deleteAdminWallMessage(key) {
+    const item = findAdminWallMessage(key);
+    if (!item || !confirm('Remove this ' + (item.source === 'responses' ? 'Responses greeting' : 'Wall of Love message') + ' from ' + (item.name || 'this guest') + '?')) return;
+    google.script.run.withSuccessHandler(function(res) { if (!res || !res.success) { showToast((res && res.message) || 'Could not remove message.'); return; } showToast(item.source === 'responses' ? 'Response greeting removed.' : 'Wall of Love message removed.'); loadAdminWallMessages(); }).withFailureHandler(function(err) { showToast('Error: ' + ((err && err.message) || 'Could not remove message.')); }).deleteWallOfLove(item.rowIndex, getAdminSessionToken(), item.source);
   }
   /* ============================================================
      LEADERBOARD MODERATION
