@@ -72,7 +72,7 @@ const COL = {
   ATTENDANCE:   11,
   VIDEO_URL:    12,
   WALL_HEARTS:  13
-};
+}
 
 /* ============================================================
    WEB APP ENTRY (GET)
