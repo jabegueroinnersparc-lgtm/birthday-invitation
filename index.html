@@ -3368,6 +3368,7 @@ if (copyInviteBtnWelcome) copyInviteBtnWelcome.addEventListener('click', functio
 })();
 
 let wallLoaded = false;
+let wallLoadPromise = null;
 let wallMessages = [];
 let wallMessageIndex = 0;
 let wallCycleTimer = null;
@@ -3629,6 +3630,7 @@ function renderWallMessages(messages) {
 }
 async function loadWallOfLove(force) {
   if (wallLoaded && !force) return;
+  if (wallLoadPromise) return wallLoadPromise;
   const scrolls = document.querySelectorAll('.wall-scroll');
   if (!scrolls.length) return;
   stopWallRotation();
@@ -3639,23 +3641,28 @@ async function loadWallOfLove(force) {
     const cached = readWallBrowserCache();
     if (cached.length) renderWallMessages(cached);
   }
-  try {
-    const res = await api('getWallOfLove');
-    if (!res || !res.success || !Array.isArray(res.messages)) throw new Error(res && res.message ? res.message : 'The server returned an invalid response.');
-    const messages = normalizeWallMessages(res.messages);
-    saveWallBrowserCache(messages);
-    renderWallMessages(messages);
-  } catch (e) {
-    console.error('loadWallOfLove error:', e);
-    // Keep cached content on screen if the background refresh fails.
-    if (!wallMessages.length) {
-      const errorMessage = e && e.message ? e.message : '';
-      const deploymentIsOutdated = /unknown action:\s*getwalloflove/i.test(errorMessage);
-      const helpText = deploymentIsOutdated ? 'The Wall of Love needs the latest Apps Script deployment. Update it from Code.gs, then retry.' : 'Could not load messages right now. Please try again.';
-      scrolls.forEach(scroll => { scroll.innerHTML = '<div class="wall-error">' + escapeHtml(helpText) + '<br><button type="button" class="wall-retry">Try again</button></div>'; const retryButton = scroll.querySelector('.wall-retry'); if (retryButton) retryButton.addEventListener('click', function() { loadWallOfLove(true); }); });
-      if (mobileToast) mobileToast.classList.add('visible');
+  wallLoadPromise = (async function() {
+    try {
+      const res = await api('getWallOfLove');
+      if (!res || !res.success || !Array.isArray(res.messages)) throw new Error(res && res.message ? res.message : 'The server returned an invalid response.');
+      const messages = normalizeWallMessages(res.messages);
+      saveWallBrowserCache(messages);
+      renderWallMessages(messages);
+    } catch (e) {
+      console.error('loadWallOfLove error:', e);
+      // Keep cached content on screen if the background refresh fails.
+      if (!wallMessages.length) {
+        const errorMessage = e && e.message ? e.message : '';
+        const deploymentIsOutdated = /unknown action:\s*getwalloflove/i.test(errorMessage);
+        const helpText = deploymentIsOutdated ? 'The Wall of Love needs the latest Apps Script deployment. Update it from Code.gs, then retry.' : 'Could not load messages right now. Please try again.';
+        scrolls.forEach(scroll => { scroll.innerHTML = '<div class="wall-error">' + escapeHtml(helpText) + '<br><button type="button" class="wall-retry">Try again</button></div>'; const retryButton = scroll.querySelector('.wall-retry'); if (retryButton) retryButton.addEventListener('click', function() { loadWallOfLove(true); }); });
+        if (mobileToast) mobileToast.classList.add('visible');
+      }
+    } finally {
+      wallLoadPromise = null;
     }
-  }
+  })();
+  return wallLoadPromise;
 }
 (function initWallDetail() {
   const modal = $('wallDetailModal');
@@ -3721,6 +3728,8 @@ async function loadLoginAttendeePreview() {
 
 /* BOOTSTRAP */
 async function initApp() {
+  loadLoginAttendeePreview();
+  loadWallOfLove();
   try {
     const res = await api('bootstrap');
     if (res && res.success) {
@@ -3728,8 +3737,6 @@ async function initApp() {
       appConfig.isPastDeadline = !!res.isPastDeadline;
     }
   } catch (e) { console.log('Bootstrap failed', e); }
-  loadLoginAttendeePreview();
-  loadWallOfLove();
 }
 
 /* LOGIN */

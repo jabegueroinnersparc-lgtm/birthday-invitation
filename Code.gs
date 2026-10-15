@@ -365,7 +365,13 @@ function getWallOfLoveSheet() {
   if (sh.getLastRow() === 0) {
     sh.getRange(1, 1, 1, WALL_OF_LOVE_HEADERS.length).setValues([WALL_OF_LOVE_HEADERS]);
   } else {
-    sh.getRange(1, 1, 1, WALL_OF_LOVE_HEADERS.length).setValues([WALL_OF_LOVE_HEADERS]);
+    const headers = sh.getRange(1, 1, 1, WALL_OF_LOVE_HEADERS.length).getValues()[0];
+    const headerNeedsUpdate = WALL_OF_LOVE_HEADERS.some(function(header, index) {
+      return String(headers[index] || '').trim() !== header;
+    });
+    if (headerNeedsUpdate) {
+      sh.getRange(1, 1, 1, WALL_OF_LOVE_HEADERS.length).setValues([WALL_OF_LOVE_HEADERS]);
+    }
   }
   return sh;
 }
@@ -533,7 +539,6 @@ function simpleLogin(name, mobile) {
     try {
       const existing = findWhitelistAccount(name, mobile);
       if (existing) {
-        const existingRsvp = checkExistingRSVP(name, mobile);
         return {
           success: true,
           exists: true,
@@ -544,7 +549,7 @@ function simpleLogin(name, mobile) {
             mobile: existing.mobile,
             method: 'name'
           },
-          ticket: existingRsvp && existingRsvp.exists ? existingRsvp.ticket : null,
+          ticket: null,
           message: 'Welcome back.'
         };
       }
@@ -555,7 +560,6 @@ function simpleLogin(name, mobile) {
           const whitelist = getSheet(SHEET_WHITELIST, false);
           whitelist.getRange(existingName.row, 3).setValue(mobile);
           clearBirthdayCaches();
-          const existingRsvp = checkExistingRSVP(name, mobile);
           return {
             success: true,
             created: false,
@@ -565,7 +569,7 @@ function simpleLogin(name, mobile) {
               mobile: mobile,
               method: 'name_mobile'
             },
-            ticket: existingRsvp && existingRsvp.exists ? existingRsvp.ticket : null,
+            ticket: null,
             message: 'Account updated. Welcome back.'
           };
         }
@@ -622,7 +626,6 @@ function loginByMobile(mobile) {
       return { success: false, message: genericLoginFailure() };
     }
 
-    const existingRsvp = checkExistingRSVP(account.name, mobile);
     return {
       success: true,
       recovered: true,
@@ -632,7 +635,7 @@ function loginByMobile(mobile) {
         mobile: account.mobile,
         method: 'mobile'
       },
-      ticket: existingRsvp && existingRsvp.exists ? existingRsvp.ticket : null,
+      ticket: null,
       message: 'Account found. Welcome back.'
     };
   } catch (e) {
