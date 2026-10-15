@@ -9,6 +9,7 @@
  * ⭐ UPDATED: Supports video greetings for guests who can't attend.
  * ⭐ UPDATED: getAllAttendees now returns fast, caches reliably,
  *            and never fails silently.
+ * ⭐ UPDATED: Login history is now tracked in a "LoginHistory" sheet.
  */
 
 const SHEET_RESPONSES = 'Responses';
@@ -19,8 +20,10 @@ const FOLDER_NAME     = 'Birthday Selfies';
 const VIDEO_FOLDER_NAME = 'Birthday Video Greetings';
 const SHEET_PAYMENTS   = 'Payments';
 const SHEET_LEADERBOARD = 'Leaderboard';
+const SHEET_LOGIN_HISTORY = 'LoginHistory'; /* ⭐ NEW */
 
 const LEADERBOARD_HEADERS = ['Timestamp', 'Name', 'Score'];
+const LOGIN_HISTORY_HEADERS = ['Timestamp', 'Name', 'Mobile', 'Method', 'Status']; /* ⭐ NEW */
 
 const WALL_OF_LOVE_HEADERS = ['Timestamp', 'Name', 'Message', 'Avatar URL', 'Hearts'];
 const WALL_COL = {
@@ -48,6 +51,7 @@ const ATTENDEES_CACHE_KEY = 'birthday_attendees_v1';
 const WALL_CACHE_KEY = 'birthday_wall_of_love_v2';
 const SETTINGS_CACHE_KEY = 'birthday_settings_v1';
 const LEADERBOARD_CACHE_KEY = 'birthday_leaderboard_v1';
+const LOGIN_HISTORY_CACHE_KEY = 'birthday_login_history_v1'; /* ⭐ NEW */
 
 // ⭐ CHANGED: Added "Video Greeting URL" column.
 const RESPONSES_HEADERS = [
@@ -247,6 +251,10 @@ function handleApiRequest(e) {
     }
     if (action === 'deleteAttendee') return jsonResponse(deleteAttendee(params.rowIndex || '', params.token || ''));
 
+    /* ⭐ NEW: Admin login history actions */
+    if (action === 'getAdminLoginHistory') return jsonResponse(getAdminLoginHistory(params.token || ''));
+    if (action === 'clearLoginHistory')    return jsonResponse(clearLoginHistory(params.token || ''));
+
     if (action === 'submitPayment') {
       let paymentData = {};
       try {
@@ -324,6 +332,7 @@ function getSettings() {
   return map;
 }
 
+/* ⭐ CHANGED: also clears login history cache */
 function clearBirthdayCaches() {
   try {
     CacheService.getScriptCache().removeAll([
@@ -331,7 +340,8 @@ function clearBirthdayCaches() {
       ATTENDEES_CACHE_KEY,
       SETTINGS_CACHE_KEY,
       LEADERBOARD_CACHE_KEY,
-      WALL_CACHE_KEY
+      WALL_CACHE_KEY,
+      LOGIN_HISTORY_CACHE_KEY
     ]);
   } catch (e) {}
 }
@@ -375,6 +385,45 @@ function getWallOfLoveSheet() {
     }
   }
   return sh;
+}
+
+/* ⭐ NEW: Login history sheet + logger */
+function getLoginHistorySheet() {
+  const sh = getSheet(SHEET_LOGIN_HISTORY, true);
+  if (!sh) throw new Error('Could not create "' + SHEET_LOGIN_HISTORY + '".');
+  if (sh.getLastRow() === 0) {
+    sh.getRange(1, 1, 1, LOGIN_HISTORY_HEADERS.length).setValues([LOGIN_HISTORY_HEADERS]);
+  } else {
+    const headers = sh.getRange(1, 1, 1, LOGIN_HISTORY_HEADERS.length).getValues()[0];
+    const needsUpdate = LOGIN_HISTORY_HEADERS.some(function(h, i) {
+      return String(headers[i] || '').trim() !== h;
+    });
+    if (needsUpdate) {
+      sh.getRange(1, 1, 1, LOGIN_HISTORY_HEADERS.length).setValues([LOGIN_HISTORY_HEADERS]);
+    }
+  }
+  return sh;
+}
+
+/**
+ * ⭐ NEW
+ * Append a login event to the LoginHistory sheet.
+ * Never throws — logging must not break login flows.
+ */
+function logLogin(name, mobile, method, status) {
+  try {
+    const sh = getLoginHistorySheet();
+    sh.appendRow([
+      new Date(),
+      String(name || '').replace(/\s+/g, ' ').trim().substring(0, 100),
+      normalizeMobile(mobile),
+      String(method || 'unknown').substring(0, 40),
+      String(status || 'unknown').substring(0, 40)
+    ]);
+    try { CacheService.getScriptCache().remove(LOGIN_HISTORY_CACHE_KEY); } catch (e) {}
+  } catch (e) {
+    Logger.log('logLogin failed (non-fatal): ' + e.toString());
+  }
 }
 
 function normalizeName(value) {
@@ -545,6 +594,7 @@ function findWhitelistMobile(mobile) {
   return null;
 }
 
+/* ⭐ CHANGED: logs login events */
 function simpleLogin(name, mobile) {
   try {
     name = String(name || '').replace(/\s+/g, ' ').trim();
@@ -555,10 +605,14 @@ function simpleLogin(name, mobile) {
     if (!/^\d{7,15}$/.test(mobile)) {
       return { success: false, message: 'Please enter a valid mobile number using 7 to 15 digits.' };
     }
-    if (!allowRateLimit('simpleLogin', normalizeName(name) + '|' + mobile, 8)) return { success: false, message: genericLoginFailure() };
+    if (!allowRateLimit('simpleLogin', normalizeName(name) + '|' + mobile, 8)) {
+      logLogin(name, mobile, 'simpleLogin', 'rate_limited');
+      return { success: false, message: genericLoginFailure() };
+    }
 
     const existingAccount = findWhitelistAccount(name, mobile);
     if (existingAccount) {
+      logLogin(existingAccount.name, existingAccount.mobile, 'simpleLogin', 'existing');
       return {
         success: true,
         exists: true,
@@ -579,6 +633,7 @@ function simpleLogin(name, mobile) {
     try {
       const existing = findWhitelistAccount(name, mobile);
       if (existing) {
+        logLogin(existing.name, existing.mobile, 'simpleLogin', 'existing');
         return {
           success: true,
           exists: true,
@@ -600,6 +655,7 @@ function simpleLogin(name, mobile) {
           const whitelist = getSheet(SHEET_WHITELIST, false);
           whitelist.getRange(existingName.row, 3).setValue(mobile);
           clearBirthdayCaches();
+          logLogin(existingName.name, mobile, 'simpleLogin', 'account_updated');
           return {
             success: true,
             created: false,
@@ -614,6 +670,7 @@ function simpleLogin(name, mobile) {
           };
         }
 
+        logLogin(name, mobile, 'simpleLogin', 'mismatch');
         return {
           success: false,
           message: 'Your name or mobile number does not match your existing account. Please enter the same name and mobile number you used during sign-up.'
@@ -622,6 +679,7 @@ function simpleLogin(name, mobile) {
 
       const existingMobile = findWhitelistMobile(mobile);
       if (existingMobile && normalizeName(existingMobile.name) !== normalizeName(name)) {
+        logLogin(name, mobile, 'simpleLogin', 'mismatch');
         return {
           success: false,
           message: 'Your name or mobile number does not match your existing account. Please enter the same name and mobile number you used during sign-up.'
@@ -637,6 +695,7 @@ function simpleLogin(name, mobile) {
       clearBirthdayCaches();
 
       Logger.log('Created guest account for ' + name + '.');
+      logLogin(name, mobile, 'simpleLogin', 'created');
 
       return {
         success: true,
@@ -653,18 +712,25 @@ function simpleLogin(name, mobile) {
   }
 }
 
+/* ⭐ CHANGED: logs login events */
 function loginByMobile(mobile) {
   try {
     mobile = normalizeMobile(mobile);
     if (!/^\d{7,15}$/.test(mobile)) {
       return { success: false, message: 'Please enter a valid mobile number using 7 to 15 digits.' };
     }
-    if (!allowRateLimit('loginByMobile', mobile, 5)) return { success: false, message: genericLoginFailure() };
+    if (!allowRateLimit('loginByMobile', mobile, 5)) {
+      logLogin('', mobile, 'loginByMobile', 'rate_limited');
+      return { success: false, message: genericLoginFailure() };
+    }
 
     const account = findWhitelistMobile(mobile);
     if (!account || !account.name) {
+      logLogin('', mobile, 'loginByMobile', 'failed');
       return { success: false, message: genericLoginFailure() };
     }
+
+    logLogin(account.name, account.mobile, 'loginByMobile', 'success');
 
     return {
       success: true,
@@ -693,6 +759,7 @@ function checkExistingRSVP(nameOrEmail, mobile) {
     if (!target) return { success: false, message: 'No name provided.' };
 
     if (!findWhitelistAccount(nameOrEmail, mobile)) {
+      logLogin(nameOrEmail, mobile, 'checkExistingRSVP', 'mismatch');
       return {
         success: false,
         message: 'Your name or mobile number does not match your existing account. Please enter the same name and mobile number you used during sign-up.'
@@ -745,7 +812,6 @@ function getAllAttendees(forceRefresh) {
   try {
     const cache = CacheService.getScriptCache();
 
-    // 1. Try cache first — return immediately if hit
     if (!forceRefresh) {
       try {
         const cached = cache.get(ATTENDEES_CACHE_KEY);
@@ -761,7 +827,6 @@ function getAllAttendees(forceRefresh) {
       }
     }
 
-    // 2. Get the sheet
     const sh = getSheet(SHEET_RESPONSES, false);
     if (!sh) {
       Logger.log('getAllAttendees: Responses sheet not found');
@@ -775,8 +840,7 @@ function getAllAttendees(forceRefresh) {
       return empty;
     }
 
-    // Read the name, guest count, and attendance columns in one spreadsheet call.
-    const nameCol = COL.NAME + 1;             // 1-based
+    const nameCol = COL.NAME + 1;
     const guestsCol = COL.GUESTS + 1;
     const attendanceCol = COL.ATTENDANCE + 1;
 
@@ -798,7 +862,6 @@ function getAllAttendees(forceRefresh) {
       const guests = parseInt(row[guestsCol - nameCol] || 1, 10) || 1;
       const attendance = String(row[attendanceCol - nameCol] || 'going').trim().toLowerCase();
 
-      // Shorten to "First L." format for privacy
       const nameParts = rawName.split(/\s+/);
       const firstName = nameParts[0];
       const lastInitial = nameParts.length > 1
@@ -817,7 +880,6 @@ function getAllAttendees(forceRefresh) {
       }
     }
 
-    // Newest responses first
     attendees.reverse();
 
     const result = {
@@ -827,7 +889,6 @@ function getAllAttendees(forceRefresh) {
       totalParties: attendees.length
     };
 
-    // 4. Cache the result (best-effort — don't fail if it doesn't stick)
     try {
       cache.put(ATTENDEES_CACHE_KEY, JSON.stringify(result), CACHE_TTL_SECONDS);
       Logger.log('getAllAttendees: cached ' + attendees.length + ' attendees');
@@ -1353,6 +1414,75 @@ function deleteAttendee(rowIndexValue, token) {
 }
 
 /* ============================================================
+   ⭐ NEW: ADMIN LOGIN HISTORY
+   ============================================================ */
+function getAdminLoginHistory(token) {
+  if (!isAdminSessionValid(token)) {
+    return { success: false, entries: [], message: 'Admin session expired. Please sign in again.' };
+  }
+  try {
+    const cache = CacheService.getScriptCache();
+    const cached = cache.get(LOGIN_HISTORY_CACHE_KEY);
+    if (cached) {
+      try { return JSON.parse(cached); } catch (e) {}
+    }
+
+    const sh = getLoginHistorySheet();
+    const lastRow = sh.getLastRow();
+    if (lastRow < 2) {
+      const empty = { success: true, entries: [], fetchedAt: new Date().toISOString() };
+      try { cache.put(LOGIN_HISTORY_CACHE_KEY, JSON.stringify(empty), CACHE_TTL_SECONDS); } catch (e) {}
+      return empty;
+    }
+
+    // Only read the most recent 500 rows for speed
+    const firstRow = Math.max(2, lastRow - 499);
+    const rows = sh.getRange(firstRow, 1, lastRow - firstRow + 1, LOGIN_HISTORY_HEADERS.length).getValues();
+
+    const entries = rows.map(function(row, i) {
+      return {
+        rowIndex: firstRow + i,
+        timestamp: row[0] instanceof Date ? row[0].toISOString() : String(row[0] || ''),
+        name: String(row[1] || ''),
+        mobile: String(row[2] || ''),
+        method: String(row[3] || ''),
+        status: String(row[4] || '')
+      };
+    });
+
+    entries.reverse(); // newest first
+
+    const result = { success: true, entries: entries, fetchedAt: new Date().toISOString() };
+    try { cache.put(LOGIN_HISTORY_CACHE_KEY, JSON.stringify(result), CACHE_TTL_SECONDS); } catch (e) {}
+    return result;
+  } catch (e) {
+    Logger.log('getAdminLoginHistory error: ' + e.toString());
+    return { success: false, entries: [], message: 'Could not load login history.' };
+  }
+}
+
+function clearLoginHistory(token) {
+  if (!isAdminSessionValid(token)) {
+    return { success: false, message: 'Admin session expired. Please sign in again.' };
+  }
+  try {
+    const sh = getLoginHistorySheet();
+    const lastRow = sh.getLastRow();
+    let deleted = 0;
+    if (lastRow > 1) {
+      deleted = lastRow - 1;
+      sh.deleteRows(2, deleted);
+    }
+    sh.getRange(1, 1, 1, LOGIN_HISTORY_HEADERS.length).setValues([LOGIN_HISTORY_HEADERS]);
+    try { CacheService.getScriptCache().remove(LOGIN_HISTORY_CACHE_KEY); } catch (e) {}
+    return { success: true, deleted: deleted, message: 'Login history cleared.' };
+  } catch (e) {
+    Logger.log('clearLoginHistory error: ' + e.toString());
+    return { success: false, message: 'Could not clear login history.' };
+  }
+}
+
+/* ============================================================
    RSVP SUBMISSION
    ============================================================ */
 function submitForm(formData) {
@@ -1422,6 +1552,7 @@ function submitForm(formData) {
     try {
       const authorizedGuest = findWhitelistAccount(submittedName, mobile);
       if (!authorizedGuest) {
+        logLogin(submittedName, mobile, 'submitForm', 'unauthorized');
         return {
           success: false,
           message: 'Your name or mobile number does not match your existing account. Please enter the same name and mobile number you used during sign-up.'
@@ -1469,6 +1600,7 @@ function submitForm(formData) {
       if (!findWhitelistAccount(submittedName, mobile)) {
         trashUploadedMedia(uploadedMediaUrls);
         uploadedMediaUrls.length = 0;
+        logLogin(submittedName, mobile, 'submitForm', 'unauthorized');
         return {
           success: false,
           message: 'Your name or mobile number does not match your existing account. Please enter the same name and mobile number you used during sign-up.'
@@ -1506,6 +1638,8 @@ function submitForm(formData) {
         : ticketCode;
       const qrCodeUrl = getQrCodeUrl(qrData, 400);
       clearBirthdayCaches();
+
+      logLogin(submittedName, mobile, 'submitForm', attendance);
 
       const successMessage = attendance === 'not_going'
         ? 'Thank you! We received your video greeting. 💌'
@@ -1837,6 +1971,18 @@ function setupSheets() {
   } else {
     leaderboard.getRange(1, 1, 1, LEADERBOARD_HEADERS.length).setValues([LEADERBOARD_HEADERS]);
   }
+
+  /* ⭐ NEW: LoginHistory sheet */
+  const loginHistory = spreadsheet.getSheetByName(SHEET_LOGIN_HISTORY);
+  if (!loginHistory) {
+    const lh = spreadsheet.insertSheet(SHEET_LOGIN_HISTORY);
+    lh.appendRow(LOGIN_HISTORY_HEADERS);
+    Logger.log('✓ Created "' + SHEET_LOGIN_HISTORY + '"');
+  } else {
+    loginHistory.getRange(1, 1, 1, LOGIN_HISTORY_HEADERS.length).setValues([LOGIN_HISTORY_HEADERS]);
+    Logger.log('✓ Updated headers on "' + SHEET_LOGIN_HISTORY + '"');
+  }
+
   let whitelist = spreadsheet.getSheetByName(SHEET_WHITELIST);
   if (!whitelist) {
     whitelist = spreadsheet.insertSheet(SHEET_WHITELIST);
@@ -1894,6 +2040,7 @@ function resetAllData() {
     'This will permanently delete:\n\n' +
     '• All rows in the "Responses" sheet\n' +
     '• All rows in the "Whitelist" sheet\n' +
+    '• All rows in the "LoginHistory" sheet\n' +
     '• All files in the "Birthday Selfies" Drive folder\n' +
     '• All files in the "Birthday Video Greetings" Drive folder\n' +
     '• Reset the "Settings" sheet to defaults\n\n' +
@@ -1910,6 +2057,7 @@ function resetAllData() {
   const summary = {
     responsesDeleted: 0,
     whitelistDeleted: 0,
+    loginHistoryDeleted: 0,
     selfiesDeleted: 0,
     videosDeleted: 0,
     settingsReset: false,
@@ -1946,6 +2094,23 @@ function resetAllData() {
     }
   } catch (e) {
     Logger.log('Could not clear Whitelist: ' + e.toString());
+  }
+
+  /* ⭐ NEW: Clear login history */
+  try {
+    const loginHistory = spreadsheet.getSheetByName(SHEET_LOGIN_HISTORY);
+    if (loginHistory) {
+      const lastRow = loginHistory.getLastRow();
+      if (lastRow > 1) {
+        summary.loginHistoryDeleted = lastRow - 1;
+        loginHistory.deleteRows(2, lastRow - 1);
+      }
+      loginHistory.getRange(1, 1, 1, LOGIN_HISTORY_HEADERS.length).setValues([LOGIN_HISTORY_HEADERS]);
+      try { CacheService.getScriptCache().remove(LOGIN_HISTORY_CACHE_KEY); } catch (e) {}
+      Logger.log('✓ Cleared LoginHistory sheet (' + summary.loginHistoryDeleted + ' rows).');
+    }
+  } catch (e) {
+    Logger.log('Could not clear LoginHistory: ' + e.toString());
   }
 
   try {
@@ -2039,6 +2204,7 @@ function resetAllData() {
     'Reset complete',
     'Responses deleted: ' + summary.responsesDeleted + '\n' +
     'Whitelist entries deleted: ' + summary.whitelistDeleted + '\n' +
+    'Login history entries deleted: ' + summary.loginHistoryDeleted + '\n' +
     'Selfie files deleted: ' + summary.selfiesDeleted + '\n' +
     'Video files deleted: ' + summary.videosDeleted + '\n' +
     'Leaderboard rows deleted: ' + summary.leaderboardDeleted + '\n' +
