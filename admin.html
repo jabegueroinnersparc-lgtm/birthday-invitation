@@ -8,7 +8,7 @@
   <title>Admin · Check-In Scanner</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Playfair+Display:wght@600;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
   <style>
     /* ===== MODERN RESET & GLOBAL TOKENS ===== */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -38,7 +38,7 @@
       --shadow-md: 0 12px 28px -8px rgba(0,0,0,0.6);
       --shadow-lg: 0 24px 48px -12px rgba(0,0,0,0.7);
       --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      --font-display: 'Playfair Display', Georgia, serif;
+      --font-display: var(--font-sans);
       --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
       --transition-fast: 0.18s var(--ease-out);
       --transition-base: 0.28s var(--ease-out);
@@ -1682,6 +1682,12 @@
     @media (max-width: 400px) {
       .admin-attendee-details { grid-template-columns: 1fr; }
       .admin-attendee-media { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      input:not([type="checkbox"]):not([type="radio"]),
+      select,
+      textarea { font-size: 16px !important; }
     }
 
     @media (prefers-reduced-motion: reduce) {
