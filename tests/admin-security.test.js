@@ -22,6 +22,7 @@ function createBackend() {
     Utilities: { getUuid: () => 'test-session-token' }
   });
   vm.runInContext(source, context, { filename: 'Code.gs' });
+  context.recordSuccessfulLogin = () => true;
   return context;
 }
 
@@ -32,7 +33,8 @@ test('admin operations reject requests without a valid session token', () => {
     backend.updateAttendee({}),
     backend.deleteAttendee(2),
     backend.verifyTicket('ticket-code'),
-    backend.checkInTicket('ticket-code')
+    backend.checkInTicket('ticket-code'),
+    backend.getAdminLoginHistory()
   ];
 
   for (const result of denied) {

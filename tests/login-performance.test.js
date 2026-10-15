@@ -26,6 +26,7 @@ function createBackend() {
     Logger: { log: () => {} }
   });
   vm.runInContext(source, context, { filename: 'Code.gs' });
+  context.recordSuccessfulLogin = () => true;
   context.getLockWaits = () => lockWaits;
   return context;
 }

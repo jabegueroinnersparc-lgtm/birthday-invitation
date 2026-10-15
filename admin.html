@@ -1597,6 +1597,18 @@
       .wall-admin-card-actions { flex-direction: column; }
     }
 
+    /* ===== LOGIN HISTORY ===== */
+    .login-history-panel { margin-left: 232px; padding: 28px clamp(20px, 3vw, 40px) 40px; min-height: calc(100dvh - 60px); background: var(--bg-deep); }
+    .login-history-panel.hidden { display: none; }
+    .login-history-card { display: grid; gap: 10px; padding: 18px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); }
+    .login-history-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .login-history-name { color: var(--text-primary); font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
+    .login-history-date { color: var(--text-tertiary); font-size: 11px; text-align: right; }
+    .login-history-details { display: flex; flex-wrap: wrap; gap: 8px 18px; color: var(--text-secondary); font-size: 12px; }
+    .login-history-type { color: var(--text-tertiary); font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    @media (max-width: 860px) { .login-history-panel { margin-left: 0; padding: 20px 14px 32px; } }
+    @media (max-width: 640px) { .login-history-card-head { flex-direction: column; } .login-history-date { text-align: left; } }
+
     /* ===== RESPONSIVE ===== */
     @media (max-width: 860px) {
       .admin-sidebar {
@@ -1625,11 +1637,13 @@
       }
       .scanner-main,
       .attendee-panel,
-      .leaderboard-admin-panel {
+      .leaderboard-admin-panel,
+      .login-history-panel {
         margin-left: 0;
       }
       .attendee-panel,
-      .leaderboard-admin-panel {
+      .leaderboard-admin-panel,
+      .login-history-panel {
         padding: 20px 14px 32px;
       }
       .scanner-main { padding: 20px 14px 32px; }
@@ -1744,6 +1758,7 @@
     <button type="button" class="admin-side-btn" data-admin-section="attendees"><span class="side-icon">♙</span><span>Attendees</span></button>
     <button type="button" class="admin-side-btn" data-admin-section="leaderboard"><span class="side-icon">🏆</span><span>Leaderboard</span></button>
     <button type="button" class="admin-side-btn" data-admin-section="wall"><span class="side-icon">💌</span><span>Wall of Love</span></button>
+    <button type="button" class="admin-side-btn" data-admin-section="login-history"><span class="side-icon">◷</span><span>Login History</span></button>
   </aside>
 
   <div class="scanner-main">
@@ -1842,6 +1857,12 @@
     <div class="attendee-list" id="attendeeList"><div class="attendee-empty">Loading attendees…</div></div>
   </section>
 
+  <section class="login-history-panel hidden" id="loginHistoryPanel" aria-labelledby="loginHistoryTitle">
+    <div class="attendee-head"><div><div class="attendee-kicker">Successful account sign-ins</div><h1 id="loginHistoryTitle">Login History</h1></div><button type="button" class="attendee-refresh" id="refreshLoginHistoryBtn">Refresh history</button></div>
+    <div class="attendee-toolbar"><div id="loginHistoryStatus" class="attendee-load-status" role="status">Ready to load login history.</div><input class="attendee-search" id="loginHistorySearch" type="search" placeholder="Search name, mobile, account type, or method" autocomplete="off"></div>
+    <div class="attendee-list" id="loginHistoryList"><div class="attendee-empty">Select Login History to load sign-ins.</div></div>
+  </section>
+
   <div class="attendee-editor" id="attendeeEditor" aria-hidden="true"><div class="attendee-editor-card" role="dialog" aria-modal="true" aria-labelledby="attendeeEditorTitle"><div class="attendee-editor-head"><h2 id="attendeeEditorTitle">Edit attendee</h2><button type="button" class="attendee-editor-close" id="closeAttendeeEditor" aria-label="Close">×</button></div><form id="attendeeForm"><input type="hidden" id="editRowIndex"><div class="attendee-form-grid"><label>Name<input id="editName" required></label><label>Mobile<input id="editMobile" required inputmode="tel"></label><label>Email<input id="editEmail" type="email"></label><label>Guests<input id="editGuests" type="number" min="1" max="20" required></label><label>Attendance<select id="editAttendance"><option value="going">Going</option><option value="planning">Planning</option><option value="not_going">Not going</option></select></label><label>Ticket code<input id="editTicketCode" disabled></label><label class="full">Address<input id="editAddress"></label><label class="full">Greetings<textarea id="editGreetings"></textarea></label></div><div class="attendee-editor-actions"><button type="button" class="cancel" id="cancelAttendeeEdit">Cancel</button><button type="submit" class="save" id="saveAttendeeBtn">Save changes</button></div></form></div></div>
 
 </div>
@@ -1915,26 +1936,33 @@
      ============================================================ */
   let adminAttendees = [];
   let attendeeFilter = '';
+  let adminLoginHistory = [];
+  let loginHistoryFilter = '';
   function setAdminSection(section) {
     document.querySelectorAll('[data-admin-section]').forEach(btn => btn.classList.toggle('active', btn.dataset.adminSection === section));
     const scanner = $('adminApp').querySelector('.scanner-main');
     const panel = $('attendeePanel');
     const leaderboardPanel = $('leaderboardAdminPanel');
     const wallPanel = $('wallAdminPanel');
+    const loginHistoryPanel = $('loginHistoryPanel');
     if (section === 'attendees') {
-      scanner.style.display = 'none'; panel.classList.remove('hidden'); leaderboardPanel.classList.add('hidden'); wallPanel.classList.add('hidden'); stopInlineScanner(); closeCameraPopup(); loadAdminAttendees();
+      scanner.style.display = 'none'; panel.classList.remove('hidden'); leaderboardPanel.classList.add('hidden'); wallPanel.classList.add('hidden'); loginHistoryPanel.classList.add('hidden'); stopInlineScanner(); closeCameraPopup(); loadAdminAttendees();
     } else if (section === 'leaderboard') {
-      scanner.style.display = 'none'; panel.classList.add('hidden'); leaderboardPanel.classList.remove('hidden'); wallPanel.classList.add('hidden'); stopInlineScanner(); closeCameraPopup(); loadAdminLeaderboard();
+      scanner.style.display = 'none'; panel.classList.add('hidden'); leaderboardPanel.classList.remove('hidden'); wallPanel.classList.add('hidden'); loginHistoryPanel.classList.add('hidden'); stopInlineScanner(); closeCameraPopup(); loadAdminLeaderboard();
     } else if (section === 'wall') {
-      scanner.style.display = 'none'; panel.classList.add('hidden'); leaderboardPanel.classList.add('hidden'); wallPanel.classList.remove('hidden'); stopInlineScanner(); closeCameraPopup(); loadAdminWallMessages();
+      scanner.style.display = 'none'; panel.classList.add('hidden'); leaderboardPanel.classList.add('hidden'); wallPanel.classList.remove('hidden'); loginHistoryPanel.classList.add('hidden'); stopInlineScanner(); closeCameraPopup(); loadAdminWallMessages();
+    } else if (section === 'login-history') {
+      scanner.style.display = 'none'; panel.classList.add('hidden'); leaderboardPanel.classList.add('hidden'); wallPanel.classList.add('hidden'); loginHistoryPanel.classList.remove('hidden'); stopInlineScanner(); closeCameraPopup(); loadAdminLoginHistory();
     } else {
-      scanner.style.display = ''; panel.classList.add('hidden'); leaderboardPanel.classList.add('hidden'); wallPanel.classList.add('hidden');
+      scanner.style.display = ''; panel.classList.add('hidden'); leaderboardPanel.classList.add('hidden'); wallPanel.classList.add('hidden'); loginHistoryPanel.classList.add('hidden');
       if (section === 'manual') switchMode('manual'); else switchMode('camera');
     }
   }
   document.querySelectorAll('[data-admin-section]').forEach(btn => btn.addEventListener('click', () => setAdminSection(btn.dataset.adminSection)));
   $('refreshAttendeesBtn').addEventListener('click', loadAdminAttendees);
   $('attendeeSearch').addEventListener('input', e => { attendeeFilter = e.target.value.toLowerCase().trim(); renderAdminAttendees(); });
+  $('refreshLoginHistoryBtn').addEventListener('click', loadAdminLoginHistory);
+  $('loginHistorySearch').addEventListener('input', e => { loginHistoryFilter = e.target.value.toLowerCase().trim(); renderAdminLoginHistory(); });
   $('closeAttendeeEditor').addEventListener('click', closeAttendeeEditor);
   $('cancelAttendeeEdit').addEventListener('click', closeAttendeeEditor);
   $('attendeeEditor').addEventListener('click', e => { if (e.target === $('attendeeEditor')) closeAttendeeEditor(); });
@@ -1987,6 +2015,58 @@
       $('attendeeList').innerHTML = '<div class="attendee-empty">' + escapeHtml(message) + '</div>';
       if (status) { status.className = 'attendee-load-status error'; status.textContent = 'Connection failed: ' + message; }
     }).getAdminAttendees(getAdminSessionToken());
+  }
+  function loadAdminLoginHistory() {
+    const list = $('loginHistoryList');
+    const status = $('loginHistoryStatus');
+    list.innerHTML = '<div class="attendee-empty">Loading login history…</div>';
+    status.className = 'attendee-load-status';
+    status.textContent = 'Contacting Google Sheets backend…';
+    if (!hasAppsScriptBridge()) {
+      const message = 'API bridge is unavailable on this deployment.';
+      list.innerHTML = '<div class="attendee-empty">' + escapeHtml(message) + '</div>';
+      status.className = 'attendee-load-status error';
+      status.textContent = message;
+      return;
+    }
+
+    google.script.run.withSuccessHandler(function(res) {
+      if (!res || !res.success) {
+        const message = (res && res.message) || 'Could not load login history.';
+        list.innerHTML = '<div class="attendee-empty">' + escapeHtml(message) + '</div>';
+        status.className = 'attendee-load-status error';
+        status.textContent = 'Load failed: ' + message;
+        return;
+      }
+      adminLoginHistory = Array.isArray(res.entries) ? res.entries : [];
+      renderAdminLoginHistory();
+      status.className = 'attendee-load-status ok';
+      status.textContent = 'Connected — ' + adminLoginHistory.length + ' sign-in record(s) loaded.';
+    }).withFailureHandler(function(err) {
+      const message = (err && err.message) || 'Could not contact the backend.';
+      list.innerHTML = '<div class="attendee-empty">' + escapeHtml(message) + '</div>';
+      status.className = 'attendee-load-status error';
+      status.textContent = 'Connection failed: ' + message;
+    }).getAdminLoginHistory(getAdminSessionToken());
+  }
+  function renderAdminLoginHistory() {
+    const rows = adminLoginHistory.filter(function(entry) {
+      return [entry.name, entry.mobile, entry.method, entry.status, entry.timestamp]
+        .join(' ').toLowerCase().includes(loginHistoryFilter);
+    });
+    const list = $('loginHistoryList');
+    if (!rows.length) {
+      list.innerHTML = '<div class="attendee-empty">' + (adminLoginHistory.length ? 'No matching sign-ins.' : 'No login history recorded yet.') + '</div>';
+      return;
+    }
+    list.innerHTML = rows.map(function(entry) {
+      const timestamp = new Date(entry.timestamp);
+      const dateLabel = Number.isNaN(timestamp.getTime()) ? entry.timestamp : timestamp.toLocaleString();
+      return '<article class="login-history-card">' +
+        '<div class="login-history-card-head"><div><div class="login-history-name">' + escapeHtml(entry.name || 'Unknown user') + '</div><div class="login-history-type">Result: ' + escapeHtml(entry.status || 'unknown') + '</div></div><time class="login-history-date">' + escapeHtml(dateLabel) + '</time></div>' +
+        '<div class="login-history-details"><span>Mobile: ' + escapeHtml(entry.mobile || '—') + '</span><span>Method: ' + escapeHtml(entry.method || '—') + '</span></div>' +
+        '</article>';
+    }).join('');
   }
   function driveFileId(url) {
     if (!url) return null;
