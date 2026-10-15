@@ -43,6 +43,7 @@ const ADMIN_SESSION_PREFIX = 'birthday_admin_session_';
 const RATE_LIMIT_PREFIX = 'birthday_rate_limit_';
 const RATE_LIMIT_WINDOW_SECONDS = 300;
 const WHITELIST_CACHE_KEY = 'birthday_whitelist_v1';
+const WHITELIST_MOBILE_CACHE_PREFIX = 'birthday_whitelist_mobile_v1_';
 const ATTENDEES_CACHE_KEY = 'birthday_attendees_v1';
 const WALL_CACHE_KEY = 'birthday_wall_of_love_v2';
 const SETTINGS_CACHE_KEY = 'birthday_settings_v1';
@@ -500,19 +501,46 @@ function findWhitelistName(name) {
 }
 
 function findWhitelistMobile(mobile) {
-  const values = getWhitelistValues();
-  if (!values.length) return null;
   const targetMobile = normalizeMobile(mobile);
+  if (!targetMobile) return null;
 
-  for (let i = 0; i < values.length; i++) {
-    if (normalizeMobile(values[i][2]) === targetMobile) {
-      return {
-        row: i + 2,
-        email: String(values[i][0] || '').trim().toLowerCase(),
-        name: String(values[i][1] || '').trim(),
-        mobile: targetMobile
-      };
+  let cache = null;
+  const cacheKey = WHITELIST_MOBILE_CACHE_PREFIX + targetMobile;
+  try {
+    cache = CacheService.getScriptCache();
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      const account = JSON.parse(cached);
+      if (account && account.name && account.mobile === targetMobile) return account;
     }
+  } catch (e) {
+    Logger.log('findWhitelistMobile cache read failed: ' + e.toString());
+  }
+
+  const whitelistSheet = getSheet(SHEET_WHITELIST, false);
+  if (!whitelistSheet || whitelistSheet.getLastRow() < 2) return null;
+
+  const mobileValues = whitelistSheet
+    .getRange(2, 3, whitelistSheet.getLastRow() - 1, 1)
+    .getValues();
+
+  for (let i = 0; i < mobileValues.length; i++) {
+    if (normalizeMobile(mobileValues[i][0]) !== targetMobile) continue;
+
+    const accountValues = whitelistSheet.getRange(i + 2, 1, 1, 2).getValues()[0];
+    const account = {
+      row: i + 2,
+      email: String(accountValues[0] || '').trim().toLowerCase(),
+      name: String(accountValues[1] || '').trim(),
+      mobile: targetMobile
+    };
+    try {
+      if (!cache) cache = CacheService.getScriptCache();
+      cache.put(cacheKey, JSON.stringify(account), CACHE_TTL_SECONDS);
+    } catch (e) {
+      Logger.log('findWhitelistMobile cache write failed: ' + e.toString());
+    }
+    return account;
   }
   return null;
 }
@@ -528,6 +556,23 @@ function simpleLogin(name, mobile) {
       return { success: false, message: 'Please enter a valid mobile number using 7 to 15 digits.' };
     }
     if (!allowRateLimit('simpleLogin', normalizeName(name) + '|' + mobile, 8)) return { success: false, message: genericLoginFailure() };
+
+    const existingAccount = findWhitelistAccount(name, mobile);
+    if (existingAccount) {
+      return {
+        success: true,
+        exists: true,
+        created: false,
+        user: {
+          name: existingAccount.name,
+          email: existingAccount.email || existingAccount.name,
+          mobile: existingAccount.mobile,
+          method: 'name'
+        },
+        ticket: null,
+        message: 'Welcome back.'
+      };
+    }
 
     const lock = LockService.getScriptLock();
     lock.waitLock(10000);
