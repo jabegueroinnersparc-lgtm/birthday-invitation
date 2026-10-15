@@ -392,18 +392,13 @@ function findResponseByName(name) {
   const lastRow = sh.getLastRow();
   if (lastRow < 2) return null;
 
-  const data = sh.getRange(
-    2,
-    COL.NAME + 1,
-    lastRow - 1,
-    COL.TICKET_CODE - COL.NAME + 1
-  ).getValues();
+  const data = sh.getRange(2, 1, lastRow - 1, RESPONSES_HEADERS.length).getValues();
   for (let i = 0; i < data.length; i++) {
-    if (normalizeName(data[i][0]) === target) {
+    if (normalizeName(data[i][COL.NAME]) === target) {
       return {
         row: i + 2,
-        name: String(data[i][0] || '').trim(),
-        code: String(data[i][COL.TICKET_CODE - COL.NAME] || '').trim()
+        name: String(data[i][COL.NAME] || '').trim(),
+        code: String(data[i][COL.TICKET_CODE] || '').trim()
       };
     }
   }
@@ -660,21 +655,15 @@ function checkExistingRSVP(nameOrEmail, mobile) {
     const lastRow = sh.getLastRow();
     if (lastRow < 2) return { success: true, exists: false };
 
-    const data = sh.getRange(
-      2,
-      COL.NAME + 1,
-      lastRow - 1,
-      COL.ATTENDANCE - COL.NAME + 1
-    ).getValues();
+    const data = sh.getRange(2, 1, lastRow - 1, RESPONSES_HEADERS.length).getValues();
 
     for (let i = 0; i < data.length; i++) {
-      const row = data[i];
-      const rowEmail = String(row[COL.EMAIL - COL.NAME] || '').trim().toLowerCase();
-      const rowName = normalizeName(row[0]);
+      const rowEmail = String(data[i][COL.EMAIL] || '').trim().toLowerCase();
+      const rowName = normalizeName(data[i][COL.NAME]);
 
       if ((rowName && rowName === target) || (rowEmail && rowEmail === target)) {
         const scriptUrl = ScriptApp.getService().getUrl() || '';
-        const ticketCode = String(row[COL.TICKET_CODE - COL.NAME] || '').trim();
+        const ticketCode = String(data[i][COL.TICKET_CODE] || '').trim();
         const qrData = scriptUrl
           ? scriptUrl + '?page=scan&code=' + encodeURIComponent(ticketCode)
           : ticketCode;
@@ -685,10 +674,10 @@ function checkExistingRSVP(nameOrEmail, mobile) {
           ticket: {
             code: ticketCode,
             qrCodeUrl: getQrCodeUrl(qrData, 400),
-            name: String(row[0] || ''),
-            guests: parseInt(row[COL.GUESTS - COL.NAME] || 1, 10),
+            name: String(data[i][COL.NAME] || ''),
+            guests: parseInt(data[i][COL.GUESTS] || 1, 10),
             qrData: qrData,
-            attendance: String(row[COL.ATTENDANCE - COL.NAME] || 'going').trim().toLowerCase()
+            attendance: String(data[i][COL.ATTENDANCE] || 'going').trim().toLowerCase()
           }
         };
       }
@@ -744,23 +733,19 @@ function getAllAttendees(forceRefresh) {
     const guestsCol = COL.GUESTS + 1;
     const attendanceCol = COL.ATTENDANCE + 1;
 
-    const responseRows = sh.getRange(
-      2,
-      nameCol,
-      lastRow - 1,
-      attendanceCol - nameCol + 1
-    ).getValues();
+    const nameRange = sh.getRange(2, nameCol, lastRow - 1, 1).getValues();
+    const guestsRange = sh.getRange(2, guestsCol, lastRow - 1, 1).getValues();
+    const attendanceRange = sh.getRange(2, attendanceCol, lastRow - 1, 1).getValues();
 
     const attendees = [];
     let totalGuests = 0;
 
-    for (let i = 0; i < responseRows.length; i++) {
-      const row = responseRows[i];
-      const rawName = String(row[0] || '').trim();
+    for (let i = 0; i < nameRange.length; i++) {
+      const rawName = String(nameRange[i][0] || '').trim();
       if (!rawName) continue;
 
-      const guests = parseInt(row[guestsCol - nameCol] || 1, 10) || 1;
-      const attendance = String(row[attendanceCol - nameCol] || 'going').trim().toLowerCase();
+      const guests = parseInt(guestsRange[i][0] || 1, 10) || 1;
+      const attendance = String(attendanceRange[i][0] || 'going').trim().toLowerCase();
 
       // Shorten to "First L." format for privacy
       const nameParts = rawName.split(/\s+/);
@@ -1321,7 +1306,6 @@ function deleteAttendee(rowIndexValue, token) {
    ============================================================ */
 function submitForm(formData) {
   const lock = LockService.getScriptLock();
-  const uploadedMediaUrls = [];
 
   try {
     Logger.log('=== submitForm called ===');
@@ -1382,135 +1366,99 @@ function submitForm(formData) {
       return { success: false, message: 'Please enter a whole number of guests from 1 to 20.' };
     }
 
-    if (!findWhitelistAccount(submittedName, mobile)) {
-      return {
-        success: false,
-        message: 'Your name or mobile number does not match your existing account. Please enter the same name and mobile number you used during sign-up.'
-      };
-    }
-    if (findResponseByName(submittedName)) {
-      return duplicateSubmissionResult(submittedName, mobile);
-    }
-
-    let selfieUrl = '';
-    let videoUrl = '';
-    if (hasSelfie) {
-      selfieUrl = uploadDataUrlToDrive(
-        formData.selfie.data,
-        formData.selfie.name || 'selfie.jpg',
-        getOrCreateFolder()
-      );
-      uploadedMediaUrls.push(selfieUrl);
-    }
-    if (hasVideo) {
-      videoUrl = uploadDataUrlToDrive(
-        formData.videoGreeting.data,
-        formData.videoGreeting.name || 'video_greeting.webm',
-        getOrCreateVideoFolder()
-      );
-      uploadedMediaUrls.push(videoUrl);
-    }
-
-    let rejectedSubmission = null;
-    let ticketCode = '';
-    lock.waitLock(10000);
+    lock.waitLock(30000);
     try {
-      if (!findWhitelistAccount(submittedName, mobile)) {
-        rejectedSubmission = {
+      const authorizedGuest = findWhitelistAccount(submittedName, mobile);
+      if (!authorizedGuest) {
+        return {
           success: false,
           message: 'Your name or mobile number does not match your existing account. Please enter the same name and mobile number you used during sign-up.'
         };
-      } else if (findResponseByName(submittedName)) {
-        rejectedSubmission = { duplicate: true };
-      } else {
-        const sheet = getResponsesSheet();
-        ticketCode = generateTicketCode();
-        const identifier = String(formData.email || submittedName).trim();
-
-        sheet.appendRow([
-          new Date(),
-          submittedName,
-          mobile,
-          String(formData.address).trim(),
-          String(formData.greetings).trim(),
-          selfieUrl,
-          identifier,
-          guests,
-          formData.loginMethod || 'name',
-          ticketCode,
-          '',
-          attendance,
-          videoUrl
-        ]);
       }
+
+      const duplicate = findResponseByName(submittedName);
+      if (duplicate) {
+        const existingRsvp = checkExistingRSVP(submittedName, mobile);
+        return {
+          success: false,
+          duplicate: true,
+          ticket: existingRsvp && existingRsvp.success ? existingRsvp.ticket : null,
+          message: 'This name has already submitted an RSVP. Each player may submit only once.'
+        };
+      }
+
+      const sheet = getResponsesSheet();
+
+      let selfieUrl = '';
+      let videoUrl = '';
+
+      if (hasSelfie) {
+        const folder = getOrCreateFolder();
+        selfieUrl = uploadDataUrlToDrive(
+          formData.selfie.data,
+          formData.selfie.name || 'selfie.jpg',
+          folder
+        );
+      }
+
+      if (hasVideo) {
+        const videoFolder = getOrCreateVideoFolder();
+        videoUrl = uploadDataUrlToDrive(
+          formData.videoGreeting.data,
+          formData.videoGreeting.name || 'video_greeting.webm',
+          videoFolder
+        );
+      }
+
+      const ticketCode = generateTicketCode();
+      const identifier = String(formData.email || submittedName).trim();
+
+      sheet.appendRow([
+        new Date(),
+        submittedName,
+        mobile,
+        String(formData.address).trim(),
+        String(formData.greetings).trim(),
+        selfieUrl,
+        identifier,
+        guests,
+        formData.loginMethod || 'name',
+        ticketCode,
+        '',
+        attendance,
+        videoUrl
+      ]);
+
+      const scriptUrl = ScriptApp.getService().getUrl() || '';
+      const qrData = scriptUrl
+        ? scriptUrl + '?page=scan&code=' + encodeURIComponent(ticketCode)
+        : ticketCode;
+      const qrCodeUrl = getQrCodeUrl(qrData, 400);
+      clearBirthdayCaches();
+
+      const successMessage = attendance === 'not_going'
+        ? 'Thank you! We received your video greeting. 💌'
+        : 'Thank you! Your attendance is confirmed. 🎉';
+
+      return {
+        success: true,
+        message: successMessage,
+        ticket: {
+          code: ticketCode,
+          qrCodeUrl: qrCodeUrl,
+          name: submittedName,
+          guests: guests,
+          qrData: qrData,
+          attendance: attendance
+        }
+      };
     } finally {
       lock.releaseLock();
     }
-
-    if (rejectedSubmission) {
-      trashUploadedMedia(uploadedMediaUrls);
-      uploadedMediaUrls.length = 0;
-      if (rejectedSubmission.duplicate) {
-        return duplicateSubmissionResult(submittedName, mobile);
-      }
-      return rejectedSubmission;
-    }
-    uploadedMediaUrls.length = 0;
-
-    const scriptUrl = ScriptApp.getService().getUrl() || '';
-    const qrData = scriptUrl
-      ? scriptUrl + '?page=scan&code=' + encodeURIComponent(ticketCode)
-      : ticketCode;
-    const qrCodeUrl = getQrCodeUrl(qrData, 400);
-    clearBirthdayCaches();
-
-    const successMessage = attendance === 'not_going'
-      ? 'Thank you! We received your video greeting. 💌'
-      : 'Thank you! Your attendance is confirmed. 🎉';
-
-    return {
-      success: true,
-      message: successMessage,
-      ticket: {
-        code: ticketCode,
-        qrCodeUrl: qrCodeUrl,
-        name: submittedName,
-        guests: guests,
-        qrData: qrData,
-        attendance: attendance
-      }
-    };
   } catch (error) {
-    trashUploadedMedia(uploadedMediaUrls);
     Logger.log('submitForm FATAL: ' + error.toString());
     return { success: false, message: 'Error: ' + error.toString() };
   }
-}
-
-function duplicateSubmissionResult(name, mobile) {
-  const existingRsvp = checkExistingRSVP(name, mobile);
-  return {
-    success: false,
-    duplicate: true,
-    ticket: existingRsvp && existingRsvp.success ? existingRsvp.ticket : null,
-    message: 'This name has already submitted an RSVP. Each player may submit only once.'
-  };
-}
-
-function trashUploadedMedia(urls) {
-  (urls || []).forEach(function(url) {
-    const match = String(url || '').match(/\/d\/([a-zA-Z0-9_-]+)/) ||
-      String(url || '').match(/[?&]id=([a-zA-Z0-9_-]+)/);
-    if (!match) {
-      Logger.log('Could not extract uploaded Drive file ID for cleanup.');
-      return;
-    }
-    try {
-      DriveApp.getFileById(match[1]).setTrashed(true);
-    } catch (error) {
-      Logger.log('Could not clean up uploaded media: ' + error.toString());
-    }
-  });
 }
 
 /* ============================================================
@@ -2003,3 +1951,4 @@ function resetAllData() {
 
   return 'Reset complete.';
 }
+
