@@ -3920,6 +3920,8 @@ async function completeLogin(loginTicket) {
   $('welcomeView').classList.add('active');
   document.body.classList.add('app-authenticated');
   updateMobileNavHome(!!loginTicket);
+  setWallLovePanelVisible(false);
+  const wallLoveEligibility = loginTicket ? null : checkWallLoveEligibility();
   if (typeof loadWallOfLove === 'function') loadWallOfLove(true);
   showToast('Welcome, ' + currentUser.name.split(' ')[0] + '!');
   const mascot = $('privacyMascot');
@@ -3955,7 +3957,7 @@ async function completeLogin(loginTicket) {
       await updateWallLoveEligibility(true);
     } else {
       updateMobileNavHome(false);
-      await updateWallLoveEligibility(false);
+      await updateWallLoveEligibility(false, wallLoveEligibility);
     }
   } catch (e) { console.log('Existing RSVP check failed:', e); }
 }
@@ -5435,15 +5437,21 @@ function setWallLovePanelVisible(visible) {
   const panel = $('wallSubmitPanel');
   if (panel) { panel.hidden = !visible; panel.classList.toggle('is-open', false); const toggle = $('wallLoveToggle'); if (toggle) toggle.setAttribute('aria-expanded', 'false'); const label = $('wallLoveToggleLabel'); if (label) label.textContent = 'Write a message'; }
 }
-async function updateWallLoveEligibility(hasTicket) {
+async function updateWallLoveEligibility(hasTicket, eligibilityCheck) {
   const panel = $('wallSubmitPanel');
   if (!panel) return;
   setWallLovePanelVisible(false);
   if (hasTicket || !currentUser || !currentUser.name) return;
-  try {
-    const result = await api('getWallOfLoveStatus', { name: currentUser.name });
-    if (result && result.success && !result.exists) setWallLovePanelVisible(true);
-  } catch (e) { console.log('Wall of Love status check failed:', e); }
+  if (await (eligibilityCheck || checkWallLoveEligibility())) setWallLovePanelVisible(true);
+}
+function checkWallLoveEligibility() {
+  if (!currentUser || !currentUser.name) return Promise.resolve(false);
+  return api('getWallOfLoveStatus', { name: currentUser.name }).then(function(result) {
+    return !!(result && result.success && !result.exists);
+  }).catch(function(e) {
+    console.log('Wall of Love status check failed:', e);
+    return false;
+  });
 }
 
 /* WALL OF LOVE EXPAND/COLLAPSE */
