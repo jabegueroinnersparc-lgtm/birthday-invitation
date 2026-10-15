@@ -3032,6 +3032,15 @@ function playAttendanceSound(attendance) {
 }
 
 /* API CALL */
+const RETRYABLE_API_ACTIONS = new Set([
+  'bootstrap',
+  'checkExistingRSVP',
+  'getAllAttendees',
+  'getWallOfLove',
+  'getWallOfLoveStatus',
+  'getLeaderboard'
+]);
+
 async function api(action, params) {
   params = params || {};
 
@@ -3092,7 +3101,7 @@ async function api(action, params) {
   }
 
   const payload = Object.assign({ action: action }, params || {});
-  const attempts = action === 'submitForm' ? 2 : 2;
+  const attempts = RETRYABLE_API_ACTIONS.has(action) ? 2 : 1;
   const timeoutMs = action === 'submitForm' ? 180000 : 60000;
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
@@ -3107,7 +3116,6 @@ async function api(action, params) {
         body: JSON.stringify(payload),
         signal: controller.signal
       });
-      clearTimeout(timeoutId);
 
       const text = await res.text();
       const responsePreview = text.slice(0, 400).replace(/\s+/g, ' ').trim();
@@ -3135,8 +3143,6 @@ async function api(action, params) {
         throw new Error('Invalid response from server. The Apps Script endpoint may be unreachable or not returning JSON.');
       }
     } catch (err) {
-      clearTimeout(timeoutId);
-
       if (err && err.name === 'AbortError' && attempt < attempts) {
         continue;
       }
@@ -3146,6 +3152,8 @@ async function api(action, params) {
       }
 
       throw err;
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 
@@ -6634,4 +6642,3 @@ $('viewLeaderboardBtn').addEventListener('click', openLeaderboard);
   </script>
 </body>
 </html>
-
