@@ -35,10 +35,18 @@ test('attendee reads return current response rows when bypassing cache', () => {
     8: [[2], [1]],
     12: [['going'], ['not_going']]
   };
+  let reads = 0;
   const sheet = {
     getLastRow: () => 3,
-    getRange: (row, column, count) => ({
-      getValues: () => columns[column].slice(row - 2, row - 2 + count)
+    getRange: (row, column, count, width) => ({
+      getValues: () => {
+        reads++;
+        return Array.from({ length: count }, (_, rowIndex) =>
+          Array.from({ length: width }, (__, columnIndex) =>
+            (columns[column + columnIndex] || [])[row - 2 + rowIndex]?.[0] || ''
+          )
+        );
+      }
     })
   };
   const backend = createBackend(sheet, {
@@ -57,6 +65,7 @@ test('attendee reads return current response rows when bypassing cache', () => {
   ]);
   assert.equal(result.totalGuests, 2);
   assert.equal(result.totalParties, 2);
+  assert.equal(reads, 1, 'Attendee rows should be fetched with one spreadsheet read');
 });
 
 test('a missing Responses sheet is reported as an error, not an empty attendee list', () => {
@@ -68,24 +77,32 @@ test('a missing Responses sheet is reported as an error, not an empty attendee l
   assert.match(result.message, /Responses sheet was not found/i);
 });
 
-test('wall of love returns only non-empty greetings without guest identity data', () => {
+test('wall of love returns recent greetings with source and reaction metadata', () => {
   const columns = {
     5: [['Happy birthday!'], ['  '], ['Wishing you all the best.']]
   };
   const sheet = {
     getLastRow: () => 4,
-    getRange: (row, column, count) => ({
-      getValues: () => columns[column].slice(row - 2, row - 2 + count)
+    getRange: (row, column, count, width) => ({
+      getValues: () => Array.from({ length: count }, (_, rowIndex) =>
+        Array.from({ length: width }, (__, columnIndex) =>
+          (columns[column + columnIndex] || [])[row - 2 + rowIndex]?.[0] || ''
+        )
+      )
     })
   };
   const backend = createBackend(sheet);
+  backend.getResponsesSheet = () => sheet;
+  backend.getWallOfLoveSheet = () => ({ getLastRow: () => 0 });
 
   const result = backend.getWallOfLove();
 
   assert.equal(result.success, true);
   assert.deepEqual(JSON.parse(JSON.stringify(result)), {
     success: true,
-    messages: ['Wishing you all the best.', 'Happy birthday!']
+    messages: [
+      { source: 'responses', rowIndex: 2, timestamp: 0, name: 'Guest', message: 'Happy birthday!', hearts: 0 },
+      { source: 'responses', rowIndex: 4, timestamp: 0, name: 'Guest', message: 'Wishing you all the best.', hearts: 0 }
+    ]
   });
-  assert.equal(Object.hasOwn(result.messages[0], 'name'), false);
 });
