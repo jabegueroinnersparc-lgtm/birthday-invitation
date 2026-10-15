@@ -2043,6 +2043,185 @@ body.game-lock { overflow: hidden; }
   .leaderboard-title { font-size: 15px; }
   .leaderboard-name, .leaderboard-score { font-size: 12px; }
 }
+
+/* ===== ADMIN PANEL ===== */
+.admin-wrap {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10005;
+  background: #0a0a0a;
+  color: #fff;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.admin-wrap.open { display: block; }
+.admin-inner { max-width: 1200px; margin: 0 auto; padding: 24px 18px 80px; }
+
+.admin-topbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 16px 20px;
+  background: rgba(10,10,10,0.96); backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin: -24px -18px 20px;
+  padding-left: 20px; padding-right: 20px;
+}
+.admin-brand { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #e2e8f0; }
+.admin-brand .dot-mark { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 0 4px rgba(34,197,94,0.18); }
+.admin-close {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.06); color: #fff;
+  font-size: 20px; line-height: 1; cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+.admin-close:hover { background: rgba(255,255,255,0.16); transform: rotate(90deg); }
+
+/* Login gate */
+.admin-gate {
+  max-width: 420px; margin: 60px auto 0;
+  padding: 32px 28px; border-radius: 20px;
+  background: #141414; border: 1px solid rgba(255,255,255,0.08);
+  text-align: center;
+}
+.admin-gate h2 { font-family: 'Playfair Display', serif; font-size: 26px; margin-bottom: 6px; }
+.admin-gate p { color: #94a3b8; font-size: 13px; margin-bottom: 22px; }
+.admin-gate input {
+  width: 100%; padding: 14px 16px; border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04); color: #fff;
+  font-size: 15px; font-family: inherit; margin-bottom: 12px;
+}
+.admin-gate input:focus { outline: none; border-color: #22c55e; }
+.admin-gate button {
+  width: 100%; padding: 14px; border-radius: 12px;
+  border: none; background: #fff; color: #0a0a0a;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  font-family: inherit;
+}
+.admin-gate button:disabled { opacity: 0.55; cursor: wait; }
+.admin-gate .admin-error {
+  margin-top: 12px; padding: 10px;
+  background: rgba(220,38,38,0.14); color: #fca5a5;
+  border-radius: 10px; font-size: 12.5px; display: none;
+}
+.admin-gate .admin-error.show { display: block; }
+
+/* Tabs */
+.admin-tabs {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.admin-tab {
+  min-height: 42px; padding: 10px 18px;
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 100px; background: rgba(255,255,255,0.04);
+  color: #cbd5e1; font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+  transition: all 0.2s;
+}
+.admin-tab:hover { background: rgba(255,255,255,0.09); color: #fff; }
+.admin-tab.active { background: #fff; color: #0a0a0a; border-color: #fff; }
+
+/* Panels */
+.admin-panel { display: none; }
+.admin-panel.active { display: block; }
+
+.admin-panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap; margin-bottom: 16px;
+}
+.admin-panel-head h3 { font-family: 'Playfair Display', serif; font-size: 22px; }
+.admin-panel-head .admin-meta { color: #94a3b8; font-size: 12px; }
+
+.admin-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.admin-tools input[type="search"], .admin-tools input[type="text"] {
+  min-height: 40px; padding: 9px 14px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04); color: #fff;
+  font-size: 13px; font-family: inherit; min-width: 200px;
+}
+.admin-tools input::placeholder { color: #64748b; }
+.admin-btn {
+  min-height: 40px; padding: 9px 16px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06); color: #e2e8f0;
+  font-size: 12.5px; font-weight: 600; cursor: pointer;
+  font-family: inherit; transition: all 0.2s;
+}
+.admin-btn:hover:not(:disabled) { background: rgba(255,255,255,0.14); color: #fff; }
+.admin-btn:disabled { opacity: 0.5; cursor: wait; }
+.admin-btn.danger { background: rgba(220,38,38,0.16); border-color: rgba(220,38,38,0.4); color: #fca5a5; }
+.admin-btn.danger:hover:not(:disabled) { background: rgba(220,38,38,0.28); }
+.admin-btn.primary { background: #22c55e; border-color: #22c55e; color: #06210f; }
+.admin-btn.primary:hover:not(:disabled) { background: #16a34a; }
+
+/* Table */
+.admin-table {
+  width: 100%; border-collapse: collapse;
+  background: #141414; border-radius: 16px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: 13px;
+}
+.admin-table thead th {
+  text-align: left; padding: 12px 14px;
+  background: rgba(255,255,255,0.04);
+  color: #94a3b8; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  white-space: nowrap;
+}
+.admin-table tbody td {
+  padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.05);
+  color: #e2e8f0; vertical-align: top;
+}
+.admin-table tbody tr:last-child td { border-bottom: none; }
+.admin-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+.admin-table .admin-empty {
+  text-align: center; padding: 40px 20px; color: #94a3b8;
+}
+
+.admin-status {
+  display: inline-block; padding: 3px 10px; border-radius: 100px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.admin-status.success { background: rgba(34,197,94,0.16); color: #86efac; }
+.admin-status.created { background: rgba(59,130,246,0.16); color: #93c5fd; }
+.admin-status.existing { background: rgba(34,197,94,0.16); color: #86efac; }
+.admin-status.warning { background: rgba(245,158,11,0.18); color: #fcd34d; }
+.admin-status.failed { background: rgba(220,38,38,0.16); color: #fca5a5; }
+.admin-status.rate_limited { background: rgba(220,38,38,0.16); color: #fca5a5; }
+.admin-status.mismatch { background: rgba(245,158,11,0.18); color: #fcd34d; }
+.admin-status.going { background: rgba(34,197,94,0.16); color: #86efac; }
+.admin-status.planning { background: rgba(245,158,11,0.18); color: #fcd34d; }
+.admin-status.not_going { background: rgba(220,38,38,0.16); color: #fca5a5; }
+.admin-status.neutral { background: rgba(148,163,184,0.18); color: #cbd5e1; }
+
+.admin-stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px; margin-bottom: 20px;
+}
+.admin-stat {
+  padding: 14px 16px; border-radius: 14px;
+  background: #141414; border: 1px solid rgba(255,255,255,0.08);
+}
+.admin-stat .n { font-size: 24px; font-weight: 800; color: #fff; }
+.admin-stat .l { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #94a3b8; margin-top: 4px; }
+
+.admin-table-wrap { overflow-x: auto; border-radius: 16px; }
+
+@media (max-width: 640px) {
+  .admin-inner { padding: 16px 12px 60px; }
+  .admin-topbar { margin: -16px -12px 16px; padding: 12px 14px; }
+  .admin-brand { font-size: 11px; }
+  .admin-tabs { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+  .admin-tab { flex: 0 0 auto; padding: 9px 14px; font-size: 12px; }
+  .admin-table { font-size: 12px; }
+  .admin-table thead th, .admin-table tbody td { padding: 10px 10px; }
+  .admin-tools input[type="search"], .admin-tools input[type="text"] { min-width: 0; flex: 1; }
+}
   </style>
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(self), geolocation=(), payment=(), usb=()">
@@ -2825,6 +3004,157 @@ body.game-lock { overflow: hidden; }
         <button type="button" class="btn btn-primary" id="gcashQrModalDownload">Download QR</button>
       </div>
       <p class="qr-modal-help">Tap Download, or press and hold the image to save it manually.</p>
+    </div>
+  </div>
+
+  <!-- ⭐ ADMIN PANEL (hidden — open with ?admin=1) -->
+  <div class="admin-wrap" id="adminWrap" role="dialog" aria-modal="true" aria-label="Admin panel">
+    <div class="admin-inner">
+
+      <div class="admin-topbar">
+        <div class="admin-brand"><span class="dot-mark"></span><span>Admin Panel</span></div>
+        <button type="button" class="admin-close" id="adminCloseBtn" aria-label="Close admin panel">×</button>
+      </div>
+
+      <!-- LOGIN GATE -->
+      <div class="admin-gate" id="adminGate">
+        <h2>Admin Access</h2>
+        <p>Enter the admin password to continue.</p>
+        <input type="password" id="adminPassword" placeholder="Password" autocomplete="current-password">
+        <button type="button" id="adminLoginBtn">Sign In</button>
+        <div class="admin-error" id="adminError"></div>
+      </div>
+
+      <!-- MAIN PANEL (hidden until login) -->
+      <div id="adminMain" style="display:none;">
+
+        <div class="admin-tabs" role="tablist">
+          <button type="button" class="admin-tab active" data-panel="loginHistory">🔑 Login History</button>
+          <button type="button" class="admin-tab" data-panel="attendees">👥 Attendees</button>
+          <button type="button" class="admin-tab" data-panel="wall">💌 Wall of Love</button>
+          <button type="button" class="admin-tab" data-panel="leaderboard">🏆 Leaderboard</button>
+        </div>
+
+        <!-- LOGIN HISTORY -->
+        <div class="admin-panel active" id="panel-loginHistory">
+          <div class="admin-panel-head">
+            <div>
+              <h3>Login History</h3>
+              <div class="admin-meta" id="loginHistoryMeta">—</div>
+            </div>
+            <div class="admin-tools">
+              <input type="search" id="loginHistorySearch" placeholder="Search name or mobile…">
+              <button type="button" class="admin-btn" id="loginHistoryRefreshBtn">↻ Refresh</button>
+              <button type="button" class="admin-btn danger" id="loginHistoryClearBtn">Clear All</button>
+            </div>
+          </div>
+          <div class="admin-stats" id="loginHistoryStats"></div>
+          <div class="admin-table-wrap">
+            <table class="admin-table" id="loginHistoryTable">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Name</th>
+                  <th>Mobile</th>
+                  <th>Method</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="loginHistoryBody">
+                <tr><td colspan="5" class="admin-empty">Sign in to load history…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ATTENDEES -->
+        <div class="admin-panel" id="panel-attendees">
+          <div class="admin-panel-head">
+            <div>
+              <h3>Attendees</h3>
+              <div class="admin-meta" id="adminAttendeesMeta">—</div>
+            </div>
+            <div class="admin-tools">
+              <input type="search" id="adminAttendeesSearch" placeholder="Search name…">
+              <button type="button" class="admin-btn" id="adminAttendeesRefreshBtn">↻ Refresh</button>
+            </div>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Mobile</th>
+                  <th>Guests</th>
+                  <th>Attendance</th>
+                  <th>Ticket</th>
+                  <th>Checked In</th>
+                </tr>
+              </thead>
+              <tbody id="adminAttendeesBody">
+                <tr><td colspan="6" class="admin-empty">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- WALL OF LOVE -->
+        <div class="admin-panel" id="panel-wall">
+          <div class="admin-panel-head">
+            <div>
+              <h3>Wall of Love</h3>
+              <div class="admin-meta" id="adminWallMeta">—</div>
+            </div>
+            <div class="admin-tools">
+              <button type="button" class="admin-btn" id="adminWallRefreshBtn">↻ Refresh</button>
+            </div>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Source</th>
+                  <th>Name</th>
+                  <th>Message</th>
+                  <th>Hearts</th>
+                </tr>
+              </thead>
+              <tbody id="adminWallBody">
+                <tr><td colspan="4" class="admin-empty">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- LEADERBOARD -->
+        <div class="admin-panel" id="panel-leaderboard">
+          <div class="admin-panel-head">
+            <div>
+              <h3>Leaderboard</h3>
+              <div class="admin-meta" id="adminLeaderboardMeta">—</div>
+            </div>
+            <div class="admin-tools">
+              <button type="button" class="admin-btn" id="adminLeaderboardRefreshBtn">↻ Refresh</button>
+              <button type="button" class="admin-btn danger" id="adminLeaderboardResetBtn">Reset All Scores</button>
+            </div>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Name</th>
+                  <th>Score</th>
+                </tr>
+              </thead>
+              <tbody id="adminLeaderboardBody">
+                <tr><td colspan="3" class="admin-empty">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
@@ -6647,6 +6977,353 @@ if (typeof window.loadLeaderboard === 'function') window.loadLeaderboard();
 
 // Add leaderboard button listener
 $('viewLeaderboardBtn').addEventListener('click', openLeaderboard);
+/* ============================================================
+   ⭐ ADMIN PANEL — Login History, Attendees, Wall, Leaderboard
+   Access: add ?admin=1 to the URL
+   ============================================================ */
+(function initAdminPanel() {
+  const ADMIN_TOKEN_KEY = 'birthdayAdminToken';
+  const wrap = $('adminWrap');
+  if (!wrap) return;
+
+  let adminToken = null;
+
+  /* ---------- OPEN / CLOSE ---------- */
+  function openAdmin() {
+    wrap.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    const saved = safeStorageGet(ADMIN_TOKEN_KEY);
+    if (saved) {
+      adminToken = saved;
+      showMainPanel();
+      loadLoginHistory();
+    } else {
+      showGate();
+      setTimeout(function() { const p = $('adminPassword'); if (p) p.focus(); }, 200);
+    }
+  }
+
+  function closeAdmin() {
+    wrap.classList.remove('open');
+    document.body.style.overflow = '';
+    // Clean the ?admin=1 from URL so refresh doesn't reopen
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('admin');
+      window.history.replaceState({}, '', url.toString());
+    } catch (e) {}
+  }
+
+  function showGate() {
+    $('adminGate').style.display = '';
+    $('adminMain').style.display = 'none';
+  }
+
+  function showMainPanel() {
+    $('adminGate').style.display = 'none';
+    $('adminMain').style.display = '';
+  }
+
+  /* ---------- AUTO-OPEN ON ?admin=1 ---------- */
+  try {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('admin') === '1') {
+      // Small delay so the rest of the page finishes initializing
+      setTimeout(openAdmin, 300);
+    }
+  } catch (e) {}
+
+  /* ---------- CLOSE BUTTON ---------- */
+  $('adminCloseBtn').addEventListener('click', closeAdmin);
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && wrap.classList.contains('open')) closeAdmin();
+  });
+
+  /* ---------- LOGIN ---------- */
+  $('adminLoginBtn').addEventListener('click', async function() {
+    const pw = $('adminPassword').value;
+    const errEl = $('adminError');
+    const btn = $('adminLoginBtn');
+    if (!pw) { errEl.textContent = 'Please enter the password.'; errEl.classList.add('show'); return; }
+    btn.disabled = true; btn.textContent = 'Signing in…';
+    errEl.classList.remove('show');
+    try {
+      const res = await api('adminLogin', { password: pw });
+      if (res && res.success && res.token) {
+        adminToken = res.token;
+        safeStorageSet(ADMIN_TOKEN_KEY, adminToken);
+        $('adminPassword').value = '';
+        showMainPanel();
+        loadLoginHistory();
+      } else {
+        errEl.textContent = (res && res.message) || 'Login failed.';
+        errEl.classList.add('show');
+      }
+    } catch (e) {
+      errEl.textContent = 'Error: ' + (e && e.message ? e.message : 'Could not reach server.');
+      errEl.classList.add('show');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Sign In';
+    }
+  });
+  $('adminPassword').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); $('adminLoginBtn').click(); }
+  });
+
+  /* ---------- TABS ---------- */
+  document.querySelectorAll('.admin-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.admin-tab').forEach(function(t) { t.classList.remove('active'); });
+      document.querySelectorAll('.admin-panel').forEach(function(p) { p.classList.remove('active'); });
+      tab.classList.add('active');
+      const target = $('panel-' + tab.dataset.panel);
+      if (target) target.classList.add('active');
+      if (tab.dataset.panel === 'loginHistory') loadLoginHistory();
+      if (tab.dataset.panel === 'attendees') loadAdminAttendees();
+      if (tab.dataset.panel === 'wall') loadAdminWall();
+      if (tab.dataset.panel === 'leaderboard') loadAdminLeaderboard();
+    });
+  });
+
+  /* ---------- HELPERS ---------- */
+  function fmtTime(iso) {
+    if (!iso) return '—';
+    try {
+      const d = new Date(iso);
+      const now = new Date();
+      const isToday = d.toDateString() === now.toDateString();
+      const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      if (isToday) return time;
+      return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' · ' + time;
+    } catch (e) { return iso; }
+  }
+  function statusClass(status) {
+    const s = String(status || '').toLowerCase();
+    const known = ['success','created','existing','failed','rate_limited','mismatch','going','planning','not_going','account_updated','unauthorized'];
+    if (known.indexOf(s) !== -1) return s;
+    if (s === 'account_updated') return 'created';
+    if (s === 'unauthorized') return 'failed';
+    return 'neutral';
+  }
+  function humanStatus(status) {
+    const map = {
+      existing: 'Existing',
+      created: 'Created',
+      account_updated: 'Updated',
+      mismatch: 'Mismatch',
+      rate_limited: 'Rate Limited',
+      failed: 'Failed',
+      success: 'Success',
+      going: 'Going',
+      planning: 'Planning',
+      not_going: 'Not Going',
+      unauthorized: 'Unauthorized'
+    };
+    return map[status] || status;
+  }
+
+  /* ---------- LOGIN HISTORY ---------- */
+  let loginHistoryEntries = [];
+  let loginHistoryQuery = '';
+
+  async function loadLoginHistory() {
+    const body = $('loginHistoryBody');
+    if (!body) return;
+    body.innerHTML = '<tr><td colspan="5" class="admin-empty">Loading…</td></tr>';
+    try {
+      const res = await api('getAdminLoginHistory', { token: adminToken });
+      if (!res || !res.success) {
+        if (res && /expired/i.test(res.message || '')) { safeStorageRemove(ADMIN_TOKEN_KEY); adminToken = null; showGate(); }
+        throw new Error((res && res.message) || 'Could not load login history.');
+      }
+      loginHistoryEntries = Array.isArray(res.entries) ? res.entries : [];
+      renderLoginHistory();
+    } catch (e) {
+      body.innerHTML = '<tr><td colspan="5" class="admin-empty">' + escapeHtml(e.message || 'Error loading history.') + '</td></tr>';
+    }
+  }
+
+  function renderLoginHistory() {
+    const body = $('loginHistoryBody');
+    const meta = $('loginHistoryMeta');
+    const stats = $('loginHistoryStats');
+    const q = loginHistoryQuery.toLowerCase().trim();
+
+    const filtered = loginHistoryEntries.filter(function(e) {
+      if (!q) return true;
+      return String(e.name || '').toLowerCase().includes(q)
+          || String(e.mobile || '').toLowerCase().includes(q)
+          || String(e.status || '').toLowerCase().includes(q)
+          || String(e.method || '').toLowerCase().includes(q);
+    });
+
+    const total = loginHistoryEntries.length;
+    const today = loginHistoryEntries.filter(function(e) {
+      try {
+        const d = new Date(e.timestamp);
+        return d.toDateString() === new Date().toDateString();
+      } catch (err) { return false; }
+    }).length;
+    const successes = loginHistoryEntries.filter(function(e) {
+      return ['existing','created','success','account_updated','going','planning','not_going'].indexOf(e.status) !== -1;
+    }).length;
+    const failures = total - successes;
+
+    if (meta) meta.textContent = 'Showing ' + filtered.length + ' of ' + total + ' events';
+    if (stats) {
+      stats.innerHTML =
+        '<div class="admin-stat"><div class="n">' + total + '</div><div class="l">Total Events</div></div>' +
+        '<div class="admin-stat"><div class="n">' + today + '</div><div class="l">Today</div></div>' +
+        '<div class="admin-stat"><div class="n" style="color:#86efac">' + successes + '</div><div class="l">Successful</div></div>' +
+        '<div class="admin-stat"><div class="n" style="color:#fca5a5">' + failures + '</div><div class="l">Failed / Other</div></div>';
+    }
+
+    if (!filtered.length) {
+      body.innerHTML = '<tr><td colspan="5" class="admin-empty">' +
+        (loginHistoryQuery ? 'No matching events.' : 'No login activity yet.') +
+        '</td></tr>';
+      return;
+    }
+
+    body.innerHTML = filtered.slice(0, 300).map(function(e) {
+      return '<tr>' +
+        '<td>' + escapeHtml(fmtTime(e.timestamp)) + '</td>' +
+        '<td>' + escapeHtml(e.name || '—') + '</td>' +
+        '<td>' + escapeHtml(e.mobile || '—') + '</td>' +
+        '<td>' + escapeHtml(e.method || '—') + '</td>' +
+        '<td><span class="admin-status ' + statusClass(e.status) + '">' + escapeHtml(humanStatus(e.status)) + '</span></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  const searchInput = $('loginHistorySearch');
+  if (searchInput) searchInput.addEventListener('input', function() { loginHistoryQuery = this.value; renderLoginHistory(); });
+  const refreshBtn = $('loginHistoryRefreshBtn');
+  if (refreshBtn) refreshBtn.addEventListener('click', loadLoginHistory);
+  const clearBtn = $('loginHistoryClearBtn');
+  if (clearBtn) clearBtn.addEventListener('click', async function() {
+    if (!confirm('Delete ALL login history? This cannot be undone.')) return;
+    clearBtn.disabled = true;
+    try {
+      const res = await api('clearLoginHistory', { token: adminToken });
+      if (res && res.success) {
+        loginHistoryEntries = [];
+        renderLoginHistory();
+        showToast('Login history cleared.');
+      } else {
+        showToast((res && res.message) || 'Could not clear history.');
+      }
+    } catch (e) {
+      showToast('Error: ' + (e.message || 'Could not clear history.'));
+    } finally { clearBtn.disabled = false; }
+  });
+
+  /* ---------- ATTENDEES ---------- */
+  let adminAttendees = [];
+  let adminAttendeesQuery = '';
+  async function loadAdminAttendees() {
+    const body = $('adminAttendeesBody');
+    body.innerHTML = '<tr><td colspan="6" class="admin-empty">Loading…</td></tr>';
+    try {
+      const res = await api('getAdminAttendees', { token: adminToken });
+      if (!res || !res.success) throw new Error((res && res.message) || 'Could not load attendees.');
+      adminAttendees = res.attendees || [];
+      $('adminAttendeesMeta').textContent = adminAttendees.length + ' parties · ' + (res.totalGuests || 0) + ' guests';
+      renderAdminAttendees();
+    } catch (e) {
+      body.innerHTML = '<tr><td colspan="6" class="admin-empty">' + escapeHtml(e.message) + '</td></tr>';
+    }
+  }
+  function renderAdminAttendees() {
+    const body = $('adminAttendeesBody');
+    const q = adminAttendeesQuery.toLowerCase().trim();
+    const filtered = adminAttendees.filter(function(a) {
+      return !q || String(a.name || '').toLowerCase().includes(q) || String(a.mobile || '').includes(q);
+    });
+    if (!filtered.length) {
+      body.innerHTML = '<tr><td colspan="6" class="admin-empty">No attendees found.</td></tr>';
+      return;
+    }
+    body.innerHTML = filtered.map(function(a) {
+      return '<tr>' +
+        '<td>' + escapeHtml(a.name) + '</td>' +
+        '<td>' + escapeHtml(a.mobile || '—') + '</td>' +
+        '<td>' + (a.guests || 1) + '</td>' +
+        '<td><span class="admin-status ' + statusClass(a.attendance) + '">' + escapeHtml(humanStatus(a.attendance)) + '</span></td>' +
+        '<td>' + escapeHtml(a.ticketCode || '—') + '</td>' +
+        '<td>' + (a.checkedIn ? '✅' : '—') + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+  const attendeesSearch = $('adminAttendeesSearch');
+  if (attendeesSearch) attendeesSearch.addEventListener('input', function() { adminAttendeesQuery = this.value; renderAdminAttendees(); });
+  const adminAttendeesRefresh = $('adminAttendeesRefreshBtn');
+  if (adminAttendeesRefresh) adminAttendeesRefresh.addEventListener('click', loadAdminAttendees);
+
+  /* ---------- WALL ---------- */
+  async function loadAdminWall() {
+    const body = $('adminWallBody');
+    body.innerHTML = '<tr><td colspan="4" class="admin-empty">Loading…</td></tr>';
+    try {
+      const res = await api('getAdminWallOfLove', { token: adminToken });
+      if (!res || !res.success) throw new Error((res && res.message) || 'Could not load Wall of Love.');
+      const msgs = res.messages || [];
+      $('adminWallMeta').textContent = msgs.length + ' messages';
+      if (!msgs.length) { body.innerHTML = '<tr><td colspan="4" class="admin-empty">No messages yet.</td></tr>'; return; }
+      body.innerHTML = msgs.map(function(m) {
+        return '<tr>' +
+          '<td>' + escapeHtml(m.source) + '</td>' +
+          '<td>' + escapeHtml(m.name || 'Guest') + '</td>' +
+          '<td>' + escapeHtml(m.message || '') + '</td>' +
+          '<td>♥ ' + (m.hearts || 0) + '</td>' +
+        '</tr>';
+      }).join('');
+    } catch (e) {
+      body.innerHTML = '<tr><td colspan="4" class="admin-empty">' + escapeHtml(e.message) + '</td></tr>';
+    }
+  }
+  const adminWallRefresh = $('adminWallRefreshBtn');
+  if (adminWallRefresh) adminWallRefresh.addEventListener('click', loadAdminWall);
+
+  /* ---------- LEADERBOARD ---------- */
+  async function loadAdminLeaderboard() {
+    const body = $('adminLeaderboardBody');
+    body.innerHTML = '<tr><td colspan="3" class="admin-empty">Loading…</td></tr>';
+    try {
+      const res = await api('getAdminLeaderboard', { token: adminToken });
+      if (!res || !res.success) throw new Error((res && res.message) || 'Could not load leaderboard.');
+      const entries = res.entries || [];
+      $('adminLeaderboardMeta').textContent = entries.length + ' players';
+      if (!entries.length) { body.innerHTML = '<tr><td colspan="3" class="admin-empty">No scores yet.</td></tr>'; return; }
+      body.innerHTML = entries.map(function(e, i) {
+        return '<tr>' +
+          '<td>#' + (i + 1) + '</td>' +
+          '<td>' + escapeHtml(e.name) + '</td>' +
+          '<td>' + (e.score || 0) + ' pts</td>' +
+        '</tr>';
+      }).join('');
+    } catch (e) {
+      body.innerHTML = '<tr><td colspan="3" class="admin-empty">' + escapeHtml(e.message) + '</td></tr>';
+    }
+  }
+  const adminLbRefresh = $('adminLeaderboardRefreshBtn');
+  if (adminLbRefresh) adminLbRefresh.addEventListener('click', loadAdminLeaderboard);
+  const adminLbReset = $('adminLeaderboardResetBtn');
+  if (adminLbReset) adminLbReset.addEventListener('click', async function() {
+    if (!confirm('Delete ALL leaderboard scores? This cannot be undone.')) return;
+    adminLbReset.disabled = true;
+    try {
+      const res = await api('resetLeaderboard', { token: adminToken });
+      if (res && res.success) { loadAdminLeaderboard(); showToast('Leaderboard reset.'); }
+      else showToast((res && res.message) || 'Could not reset.');
+    } catch (e) { showToast('Error: ' + e.message); }
+    finally { adminLbReset.disabled = false; }
+  });
+
+  /* ---------- EXPOSE ---------- */
+  window.openAdminPanel = openAdmin;
+  window.closeAdminPanel = closeAdmin;
+})();
   </script>
 </body>
 </html>
