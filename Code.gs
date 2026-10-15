@@ -1488,6 +1488,32 @@ function submitForm(formData) {
   }
 }
 
+function duplicateSubmissionResult(name, mobile) {
+  const existingRsvp = checkExistingRSVP(name, mobile);
+  return {
+    success: false,
+    duplicate: true,
+    ticket: existingRsvp && existingRsvp.success ? existingRsvp.ticket : null,
+    message: 'This name has already submitted an RSVP. Each player may submit only once.'
+  };
+}
+
+function trashUploadedMedia(urls) {
+  (urls || []).forEach(function(url) {
+    const match = String(url || '').match(/\/d\/([a-zA-Z0-9_-]+)/) ||
+      String(url || '').match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (!match) {
+      Logger.log('Could not extract uploaded Drive file ID for cleanup.');
+      return;
+    }
+    try {
+      DriveApp.getFileById(match[1]).setTrashed(true);
+    } catch (error) {
+      Logger.log('Could not clean up uploaded media: ' + error.toString());
+    }
+  });
+}
+
 /* ============================================================
    Upload a data URL (image or video) to a Drive folder.
    ============================================================ */
